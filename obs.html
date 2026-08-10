@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overlay OBS</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/bebas-neue@5.0.0/index.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/anton@5.0.0/index.min.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { 
+    font-family: 'Inter', sans-serif; 
+    background: transparent; 
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  .obs-container {
+    width: 1080px;
+    height: 608px;
+    position: relative;
+    transform-origin: top left;
+  }
+  
+  /* ===== 🖼️ LOGO DE FONDO (OPTIMIZADO PARA MÓVIL) ===== */
+  .bg-logo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;      /* Ajusta el 16:9 sin deformar */
+    z-index: 1;               /* Detrás del marcador (10) */
+    pointer-events: none;     /* No intercepta toques */
+    user-select: none;
+    opacity: 1;               /* Cámbialo a 0.5 si lo quieres tipo marca de agua */
+  }
+  
+  .scorebug { 
+    position: absolute; 
+    top: 50px; 
+    left: 50px; 
+    background: #000000;
+    border: none;
+    border-radius: 0;
+    padding: 0 0 0 8px;
+    display: flex; 
+    align-items: center; 
+    gap: 6px;
+    z-index: 10;
+    overflow: hidden;
+  }
+  
+  .scorebug.goal-flash {
+    animation: barBlink 0.5s steps(1, end) 6;
+  }
+  
+  .scorebug::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(16,185,129,0.9) 50%, transparent 100%);
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  .scorebug.goal-flash::after {
+    animation: barSweep 1s ease-in-out 3;
+  }
+  
+  @keyframes barBlink {
+    0%, 100% { background: #000000; }
+    50% { background: #065f46; }
+  }
+  
+  @keyframes barSweep {
+    0% { transform: translateX(-100%); opacity: 1; }
+    100% { transform: translateX(100%); opacity: 1; }
+  }
+  
+  .team-section {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .team-name { 
+    background: transparent;
+    color: #ffffff; 
+    font-size: 12.5px; 
+    font-weight: 900; 
+    letter-spacing: 0.4px; 
+    text-transform: uppercase; 
+    padding: 0 3px;
+    min-width: 34px;
+    text-align: center;
+  }
+  
+  .score-num { 
+    font-family: 'Bebas Neue', sans-serif; 
+    font-size: 17.5px; 
+    color: #ffffff; 
+    line-height: 1; 
+    min-width: 16px; 
+    text-align: center;
+    padding: 0 3px;
+    font-weight: 900;
+  }
+  
+  .separator {
+    width: 1px;
+    height: 15px;
+    background: #ffffff;
+    margin: 0 3px;
+    opacity: 0.6;
+  }
+  
+  .timer-section {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-left: auto;
+  }
+  
+  .timer-box { 
+    background: #ff3b3b; 
+    padding: 6px 9px;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+  }
+  
+  .timer-display { 
+    font-family: 'Bebas Neue', sans-serif; 
+    font-size: 16px;
+    color: #ffffff; 
+    letter-spacing: 0.8px; 
+    line-height: 1; 
+    text-align: center; 
+  }
+  
+  .extra-timer-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    color: #f59e0b;
+    letter-spacing: 0.8px;
+    line-height: 1;
+    text-align: center;
+    display: none;
+    padding: 6px 9px;
+    background: transparent;
+  }
+  
+  .extra-timer-display.active {
+    display: block;
+  }
+
+  .goal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    z-index: 20;
+  }
+  
+  .goal-text {
+    font-family: 'Anton', sans-serif;
+    font-size: 200px;
+    color: #ffffff;
+    letter-spacing: 12px;
+    line-height: 1;
+    text-shadow:
+      5px 0 0 #10b981,
+      -5px 0 0 #10b981,
+      0 5px 0 #10b981,
+      0 -5px 0 #10b981,
+      4px 4px 0 #10b981,
+      -4px -4px 0 #10b981,
+      4px -4px 0 #10b981,
+      -4px 4px 0 #10b981,
+      0 0 60px rgba(16,185,129,0.9);
+    transform: scale(0);
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+  
+  .goal-overlay.active .goal-text {
+    animation: golZoom 3s ease-out forwards;
+  }
+  
+  @keyframes golZoom {
+    0%   { transform: scale(0);    opacity: 0; }
+    12%  { transform: scale(1.25); opacity: 1; }
+    20%  { transform: scale(1);    opacity: 1; }
+    80%  { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1.15); opacity: 0; }
+  }
+
+  .sponsor-video-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+    display: none;
+    background: transparent;
+    justify-content: center;
+    align-items: center;
+    padding-top: 650px;
+  }
+  
+  .sponsor-video-container.active {
+    display: flex;
+  }
+  
+  .sponsor-video-container video {
+    width: 600px;
+    height: auto;
+    max-width: 90%;
+    object-fit: contain;
+  }
+</style>
+</head>
+<body>
+  <div class="obs-container" id="obsContainer">
+    
+    <!-- 🖼️ LOGO DE FONDO (si lo conviertes a WebP, cambia a logo.webp) -->
+    <img src="logo.png" alt="" class="bg-logo" draggable="false" decoding="async">
+    
+    <div class="scorebug" id="scorebug">
+      <div class="team-section">
+        <div class="team-name" id="nameHome">LOC</div>
+        <div class="score-num" id="scoreHome">0</div>
+      </div>
+      
+      <div class="separator"></div>
+      
+      <div class="team-section">
+        <div class="score-num" id="scoreAway">0</div>
+        <div class="team-name" id="nameAway">VIS</div>
+      </div>
+      
+      <div class="separator"></div>
+      
+      <div class="timer-section">
+        <div class="timer-box">
+          <div class="timer-display" id="timerDisplay">00:00</div>
+        </div>
+        
+        <div class="extra-timer-display" id="extraTimerDisplay">00:00</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="goal-overlay" id="goalOverlay">
+    <div class="goal-text">¡GOL!</div>
+  </div>
+
+  <div class="sponsor-video-container" id="sponsorVideoContainer">
+    <video id="sponsorVideo" muted playsinline>
+      <source src="patrocinadores.webm" type="video/webm">
+    </video>
+  </div>
+
+<script>
+  const SUPABASE_URL = 'https://ccjggxrjmuahaaoujspu.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjamdneHJqbXVhaGFhb3Vqc3B1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2MzQwNjksImV4cCI6MjEwMTIxMDA2OX0.vWVJ2gpgw8-jvu714R1x8rNPQbzQpjKA4RTXmVwPlks';
+  
+  const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let state = { 
+    nameHome: 'LOC', 
+    nameAway: 'VIS', 
+    scoreHome: 0, 
+    scoreAway: 0, 
+    timerSeconds: 0, 
+    isRunning: false, 
+    sessionStart: 0
+  };
+  
+  let extraActive = false;
+  let extraTimerSeconds = 0;
+  let extraInterval = null;
+  const MAIN_TIME_LIMIT = 45 * 60;
+
+  const SPONSOR_INTERVAL_MS = 10 * 60 * 1000;
+  
+  const sponsorVideo = document.getElementById('sponsorVideo');
+  const sponsorContainer = document.getElementById('sponsorVideoContainer');
+  let sponsorInterval = null;
+
+  let goalTimeout = null;
+  function showGoal() {
+    const overlay = document.getElementById('goalOverlay');
+    const scorebug = document.getElementById('scorebug');
+    
+    overlay.classList.remove('active');
+    scorebug.classList.remove('goal-flash');
+    void overlay.offsetWidth;
+    overlay.classList.add('active');
+    scorebug.classList.add('goal-flash');
+    
+    if (goalTimeout) clearTimeout(goalTimeout);
+    goalTimeout = setTimeout(() => {
+      overlay.classList.remove('active');
+      scorebug.classList.remove('goal-flash');
+    }, 3100);
+  }
+
+  function showSponsorVideo() {
+    sponsorContainer.classList.add('active');
+    sponsorVideo.currentTime = 0;
+    sponsorVideo.play().catch(e => console.log('Error al reproducir:', e));
+  }
+
+  sponsorVideo.addEventListener('ended', () => {
+    sponsorContainer.classList.remove('active');
+    sponsorVideo.pause();
+  });
+
+  function startSponsorCycle() {
+    showSponsorVideo();
+    sponsorInterval = setInterval(() => {
+      showSponsorVideo();
+    }, SPONSOR_INTERVAL_MS);
+  }
+
+  function formatTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  }
+
+  function updateUI() {
+    document.getElementById('nameHome').textContent = state.nameHome;
+    document.getElementById('nameAway').textContent = state.nameAway;
+    document.getElementById('scoreHome').textContent = state.scoreHome;
+    document.getElementById('scoreAway').textContent = state.scoreAway;
+    document.getElementById('timerDisplay').textContent = formatTime(state.timerSeconds);
+  }
+
+  function startExtraTimer() {
+    if (extraActive) return;
+    extraActive = true;
+    extraTimerSeconds = 0;
+    document.getElementById('extraTimerDisplay').classList.add('active');
+    
+    extraInterval = setInterval(() => {
+      extraTimerSeconds++;
+      document.getElementById('extraTimerDisplay').textContent = formatTime(extraTimerSeconds);
+    }, 1000);
+  }
+
+  function resetExtraTimer() {
+    extraActive = false;
+    extraTimerSeconds = 0;
+    if (extraInterval) clearInterval(extraInterval);
+    document.getElementById('extraTimerDisplay').classList.remove('active');
+    document.getElementById('extraTimerDisplay').textContent = '00:00';
+  }
+
+  function startTimerLocal() {
+    state.sessionStart = Date.now() - (state.timerSeconds * 1000);
+    const interval = setInterval(() => {
+      state.timerSeconds = Math.floor((Date.now() - state.sessionStart) / 1000);
+      
+      if (state.timerSeconds >= MAIN_TIME_LIMIT) {
+        state.timerSeconds = MAIN_TIME_LIMIT;
+        startExtraTimer();
+      }
+      
+      document.getElementById('timerDisplay').textContent = formatTime(state.timerSeconds);
+    }, 1000);
+    return interval;
+  }
+
+  let mainInterval = null;
+
+  async function loadFromSupabase() {
+    console.log('Cargando estado desde Supabase...');
+    try {
+      const { data, error } = await sbClient.from('overlay_state').select('*').eq('id', 1).single();
+      if (error) { console.error('Error al cargar:', error); return; }
+      
+      state.nameHome = data.name_home || 'LOC';
+      state.nameAway = data.name_away || 'VIS';
+      state.scoreHome = data.score_home || 0;
+      state.scoreAway = data.score_away || 0;
+      state.timerSeconds = data.timer_seconds || 0;
+      state.isRunning = data.is_running || false;
+      state.sessionStart = data.session_start || 0;
+
+      if (state.isRunning) {
+        mainInterval = startTimerLocal();
+      }
+
+      if (state.timerSeconds >= MAIN_TIME_LIMIT) {
+        startExtraTimer();
+      }
+      
+      updateUI();
+    } catch (e) { console.error('Error:', e); }
+  }
+
+  loadFromSupabase();
+
+  sbClient.channel('overlay_obs')
+    .on('postgres_changes', 
+      { event: '*', schema: 'public', table: 'overlay_state', filter: 'id=eq.1' },
+      (payload) => {
+        const d = payload.new;
+        
+        const prevHome = state.scoreHome;
+        const prevAway = state.scoreAway;
+        
+        state.nameHome = d.name_home; 
+        state.nameAway = d.name_away;
+        state.scoreHome = d.score_home; 
+        state.scoreAway = d.score_away;
+        state.timerSeconds = d.timer_seconds; 
+        state.isRunning = d.is_running; 
+        state.sessionStart = d.session_start;
+        
+        if (d.score_home > prevHome || d.score_away > prevAway) {
+          showGoal();
+        }
+        
+        if (state.timerSeconds < MAIN_TIME_LIMIT) {
+          resetExtraTimer();
+        }
+        
+        if (state.isRunning) {
+          if (mainInterval) clearInterval(mainInterval);
+          mainInterval = startTimerLocal();
+        } else {
+          if (mainInterval) clearInterval(mainInterval);
+          mainInterval = null;
+        }
+        
+        updateUI();
+      }
+    )
+    .subscribe();
+
+  startSponsorCycle();
+
+  function scaleToFit() {
+    const container = document.getElementById('obsContainer');
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    const designWidth = 1080;
+    const designHeight = 608;
+    
+    const scaleX = windowWidth / designWidth;
+    const scaleY = windowHeight / designHeight;
+    const scale = Math.min(scaleX, scaleY);
+    
+    container.style.transform = `scale(${scale})`;
+  }
+
+  window.addEventListener('resize', scaleToFit);
+  window.addEventListener('load', scaleToFit);
+  scaleToFit();
+</script>
+</body>
+</html>

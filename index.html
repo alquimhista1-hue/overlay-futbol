@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Panel de Control</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/bebas-neue@5.0.0/index.min.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { 
+    font-family: 'Inter', sans-serif; 
+    background: #1a1a2e; 
+    color: white; 
+    width: 100%;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: pan-y;
+  }
+  body { padding: 20px; }
+  .container { 
+    max-width: 600px; 
+    margin: 0 auto; 
+    background: #16213e; 
+    border-radius: 20px; 
+    padding: 25px; 
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+  h1 { font-size: 24px; margin-bottom: 10px; color: #ff3b3b; letter-spacing: 2px; text-align: center; }
+  .status { display: block; text-align: center; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 1px; margin: 0 auto 20px; background: #ef4444; max-width: 200px; }
+  .section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .section:last-of-type { border-bottom: none; }
+  .section-title { font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #94a3b8; margin-bottom: 12px; }
+  .input { width: 100%; background: #0f172a; border: 2px solid #334155; color: white; padding: 12px 16px; border-radius: 10px; font-size: 15px; font-family: inherit; font-weight: 600; margin-bottom: 8px; -webkit-user-select: text; user-select: text; }
+  .input:focus { outline: none; border-color: #ff3b3b; }
+  .score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .score-label { flex: 1; font-weight: 700; font-size: 14px; }
+  .score-btn { width: 44px; height: 44px; border: none; border-radius: 10px; font-size: 22px; font-weight: 900; cursor: pointer; color: white; flex-shrink: 0; }
+  .score-btn.minus { background: #ef4444; }
+  .score-btn.plus { background: #10b981; }
+  .score-value { width: 55px; text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 28px; background: #0f172a; border-radius: 10px; padding: 6px 0; flex-shrink: 0; }
+  .btn-row { display: flex; gap: 8px; }
+  .btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-family: inherit; font-weight: 800; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; color: white; }
+  .btn-start { background: #10b981; }
+  .btn-pause { background: #f59e0b; }
+  .btn-reset { background: #6b7280; }
+  .btn-clear { background: #dc2626; width: 100%; margin-top: 8px; }
+  .btn-obs { background: #3b82f6; width: 100%; margin-top: 8px; }
+  
+  /* 🔗 NUEVO: hace que el enlace <a> se vea igual que un botón */
+  a.btn { display: block; text-decoration: none; text-align: center; }
+  
+  .timer-preview { text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: #ff3b3b; margin: 10px 0; letter-spacing: 4px; }
+  .info-box { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: 10px; padding: 12px; margin-top: 15px; }
+  .info-box p { font-size: 12px; color: #94a3b8; line-height: 1.5; }
+  .info-box code { background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; color: #60a5fa; font-size: 11px; }
+  .log-box { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 10px; margin-top: 12px; font-size: 10px; font-family: monospace; color: #94a3b8; max-height: 100px; overflow-y: auto; }
+  .log-box .ok { color: #10b981; }
+  .log-box .err { color: #ef4444; }
+  .log-box .info { color: #60a5fa; }
+
+  @media (max-width: 480px) {
+    body { padding: 12px; }
+    .container { padding: 18px; border-radius: 15px; }
+    h1 { font-size: 20px; }
+    .timer-preview { font-size: 36px; }
+    .score-btn { width: 40px; height: 40px; font-size: 20px; }
+    .score-value { font-size: 24px; width: 50px; }
+    .btn { font-size: 12px; padding: 12px; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1> PANEL DE CONTROL</h1>
+    <div class="status" id="status">INICIANDO...</div>
+
+    <div class="section">
+      <div class="section-title">📝 Nombres de Equipos</div>
+      <input type="text" class="input" id="inputHome" value="EQUIPO LOCAL">
+      <input type="text" class="input" id="inputAway" value="EQUIPO VISITANTE">
+    </div>
+
+    <div class="section">
+      <div class="section-title">⚽ Marcador</div>
+      <div class="score-row">
+        <div class="score-label" id="labelHome">EQUIPO LOCAL</div>
+        <button class="score-btn minus" onclick="changeScore('home', -1)">−</button>
+        <div class="score-value" id="displayScoreHome">0</div>
+        <button class="score-btn plus" onclick="changeScore('home', 1)">+</button>
+      </div>
+      <div class="score-row">
+        <div class="score-label" id="labelAway">EQUIPO VISITANTE</div>
+        <button class="score-btn minus" onclick="changeScore('away', -1)">−</button>
+        <div class="score-value" id="displayScoreAway">0</div>
+        <button class="score-btn plus" onclick="changeScore('away', 1)">+</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">⏱️ Cronómetro</div>
+      <div class="timer-preview" id="timerPreview">00:00</div>
+      <div class="btn-row">
+        <button class="btn btn-start" onclick="startTimer()">▶ Iniciar</button>
+        <button class="btn btn-pause" onclick="pauseTimer()">❚ Pausar</button>
+        <button class="btn btn-reset" onclick="resetTimer()">↺ Reset</button>
+      </div>
+      <input type="number" class="input" id="inputTimer" value="0" min="0" style="margin-top:12px;">
+    </div>
+
+    <button class="btn btn-clear" onclick="clearAll()"> LIMPIAR TODO</button>
+    
+    <!-- 🔗🔗 AQUÍ ESTÁ LA CONEXIÓN CON LA OTRA PÁGINA (obs.html) 🔗🔗🔗 -->
+    <a href="obs.html" target="_blank" class="btn btn-obs">📺 ABRIR OVERLAY PARA OBS</a>
+
+    <div class="log-box" id="logBox"></div>
+
+    <div class="info-box">
+      <p><strong>📋 Instrucciones:</strong></p>
+      <p>1. Panel: <code>index.html</code><br>
+         2. Overlay OBS: <code>obs.html</code><br>
+         3. URL OBS: <code>https://tu-sitio.netlify.app/obs.html</code><br>
+         4. Dimensiones: <code>1080 x 608</code></p>
+    </div>
+  </div>
+
+<script>
+  const SUPABASE_URL = 'https://ccjggxrjmuahaaoujspu.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjamdneHJqbXVhaGFhb3Vqc3B1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2MzQwNjksImV4cCI6MjEwMTIxMDA2OX0.vWVJ2gpgw8-jvu714R1x8rNPQbzQpjKA4RTXmVwPlks';
+  
+  const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let state = { 
+    nameHome: 'EQUIPO LOCAL', 
+    nameAway: 'EQUIPO VISITANTE', 
+    scoreHome: 0, 
+    scoreAway: 0, 
+    timerSeconds: 0, 
+    isRunning: false, 
+    sessionStart: 0
+  };
+  let timerInterval = null;
+
+  function log(msg, type = 'info') {
+    const box = document.getElementById('logBox');
+    const time = new Date().toLocaleTimeString();
+    box.innerHTML += `<div class="${type}">[${time}] ${msg}</div>`;
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function formatTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  }
+
+  function updateUI() {
+    document.getElementById('inputHome').value = state.nameHome;
+    document.getElementById('inputAway').value = state.nameAway;
+    document.getElementById('labelHome').textContent = state.nameHome;
+    document.getElementById('labelAway').textContent = state.nameAway;
+    document.getElementById('displayScoreHome').textContent = state.scoreHome;
+    document.getElementById('displayScoreAway').textContent = state.scoreAway;
+    document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
+  }
+
+  function updateStatus(text, color) {
+    const el = document.getElementById('status');
+    el.textContent = text;
+    el.style.background = color;
+  }
+
+  async function saveToSupabase() {
+    log('Guardando...', 'info');
+    try {
+      const { error } = await sbClient.from('overlay_state').upsert({
+        id: 1, 
+        name_home: state.nameHome, 
+        name_away: state.nameAway,
+        score_home: state.scoreHome, 
+        score_away: state.scoreAway,
+        timer_seconds: state.timerSeconds, 
+        is_running: state.isRunning, 
+        session_start: state.sessionStart
+      });
+      if (error) log('❌ Error: ' + error.message, 'err');
+      else log('✅ Guardado OK', 'ok');
+    } catch (e) { log('⚠️ Excepción: ' + e.message, 'err'); }
+  }
+
+  function startTimer() {
+    if (state.isRunning) return;
+    state.isRunning = true;
+    state.sessionStart = Date.now() - (state.timerSeconds * 1000);
+    
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      state.timerSeconds = Math.floor((Date.now() - state.sessionStart) / 1000);
+      document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
+    }, 1000);
+    
+    saveToSupabase();
+    updateStatus('▶ CORRIENDO', '#10b981');
+  }
+
+  function pauseTimer() {
+    state.isRunning = false;
+    if (timerInterval) clearInterval(timerInterval);
+    saveToSupabase();
+    updateStatus('⏸ PAUSADO', '#f59e0b');
+  }
+
+  function resetTimer() {
+    state.isRunning = false;
+    if (timerInterval) clearInterval(timerInterval);
+    const mins = parseInt(document.getElementById('inputTimer').value) || 0;
+    state.timerSeconds = mins * 60;
+    state.sessionStart = 0;
+    updateUI();
+    saveToSupabase();
+    updateStatus('🔄 RESET', '#6b7280');
+  }
+
+  function changeScore(team, amount) {
+    if (team === 'home') {
+      state.scoreHome = Math.max(0, state.scoreHome + amount);
+    } else {
+      state.scoreAway = Math.max(0, state.scoreAway + amount);
+    }
+    updateUI();
+    saveToSupabase();
+  }
+
+  async function init() {
+    log('Conectando...', 'info');
+    try {
+      const { data, error } = await sbClient.from('overlay_state').select('*').eq('id', 1).single();
+      if (error) { log('❌ Error: ' + error.message, 'err'); updateStatus('⚠️ ERROR', '#ef4444'); return; }
+      
+      state = { 
+        nameHome: data.name_home || 'EQUIPO LOCAL', 
+        nameAway: data.name_away || 'EQUIPO VISITANTE', 
+        scoreHome: data.score_home || 0, 
+        scoreAway: data.score_away || 0, 
+        timerSeconds: data.timer_seconds || 0, 
+        isRunning: data.is_running || false, 
+        sessionStart: data.session_start || 0
+      };
+      updateUI();
+      
+      if (state.isRunning) {
+        state.sessionStart = Date.now() - (state.timerSeconds * 1000);
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+          state.timerSeconds = Math.floor((Date.now() - state.sessionStart) / 1000);
+          document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
+        }, 1000);
+        updateStatus('▶ CORRIENDO', '#10b981');
+      } else {
+        updateStatus('✅ CONECTADO', '#10b981');
+      }
+      log('✅ Conectado', 'ok');
+    } catch (e) { log('⚠️ Excepción: ' + e.message, 'err'); updateStatus('⚠️ ERROR', '#ef4444'); }
+  }
+
+  sbClient.channel('overlay_changes')
+    .on('postgres_changes', 
+      { event: '*', schema: 'public', table: 'overlay_state', filter: 'id=eq.1' },
+      (payload) => {
+        const d = payload.new;
+        if (d.name_home !== state.nameHome || d.score_home !== state.scoreHome || d.timer_seconds !== state.timerSeconds) {
+          state.nameHome = d.name_home;
+          state.nameAway = d.name_away;
+          state.scoreHome = d.score_home;
+          state.scoreAway = d.score_away;
+          state.timerSeconds = d.timer_seconds;
+          state.isRunning = d.is_running;
+          state.sessionStart = d.session_start;
+          
+          if (state.isRunning && !timerInterval) {
+            state.sessionStart = Date.now() - (state.timerSeconds * 1000);
+            timerInterval = setInterval(() => {
+              state.timerSeconds = Math.floor((Date.now() - state.sessionStart) / 1000);
+              document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
+            }, 1000);
+            updateStatus('▶ CORRIENDO', '#10b981');
+          }
+          updateUI();
+        }
+      }
+    )
+    .subscribe();
+
+  document.getElementById('inputHome').addEventListener('input', (e) => { state.nameHome = e.target.value.toUpperCase(); updateUI(); saveToSupabase(); });
+  document.getElementById('inputAway').addEventListener('input', (e) => { state.nameAway = e.target.value.toUpperCase(); updateUI(); saveToSupabase(); });
+  
+  function clearAll() {
+    if(confirm('¿Borrar todo?')) {
+      state = { nameHome: 'EQUIPO LOCAL', nameAway: 'EQUIPO VISITANTE', scoreHome: 0, scoreAway: 0, timerSeconds: 0, isRunning: false, sessionStart: 0 };
+      if (timerInterval) clearInterval(timerInterval);
+      updateUI();
+      saveToSupabase();
+      updateStatus('🔄 LIMPIO', '#6b7280');
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
