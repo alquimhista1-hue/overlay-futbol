@@ -48,12 +48,10 @@
   .btn-start { background: #10b981; }
   .btn-pause { background: #f59e0b; }
   .btn-reset { background: #6b7280; }
+  .btn-toggle { background: #10b981; width: 100%; margin-top: 8px; }
   .btn-clear { background: #dc2626; width: 100%; margin-top: 8px; }
   .btn-obs { background: #3b82f6; width: 100%; margin-top: 8px; }
-  
-  /* 🔗 NUEVO: hace que el enlace <a> se vea igual que un botón */
   a.btn { display: block; text-decoration: none; text-align: center; }
-  
   .timer-preview { text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: #ff3b3b; margin: 10px 0; letter-spacing: 4px; }
   .info-box { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: 10px; padding: 12px; margin-top: 15px; }
   .info-box p { font-size: 12px; color: #94a3b8; line-height: 1.5; }
@@ -112,9 +110,11 @@
       <input type="number" class="input" id="inputTimer" value="0" min="0" style="margin-top:12px;">
     </div>
 
+    <!-- 👁 NUEVO BOTÓN: MOSTRAR / OCULTAR MARCADOR EN EL OVERLAY -->
+    <button class="btn btn-toggle" id="btnVisibility" onclick="toggleVisibility()">👁 MARCADOR VISIBLE</button>
+
     <button class="btn btn-clear" onclick="clearAll()"> LIMPIAR TODO</button>
     
-    <!-- 🔗🔗 AQUÍ ESTÁ LA CONEXIÓN CON LA OTRA PÁGINA (obs.html) 🔗🔗🔗 -->
     <a href="obs.html" target="_blank" class="btn btn-obs">📺 ABRIR OVERLAY PARA OBS</a>
 
     <div class="log-box" id="logBox"></div>
@@ -141,7 +141,8 @@
     scoreAway: 0, 
     timerSeconds: 0, 
     isRunning: false, 
-    sessionStart: 0
+    sessionStart: 0,
+    visible: true
   };
   let timerInterval = null;
 
@@ -166,6 +167,23 @@
     document.getElementById('displayScoreHome').textContent = state.scoreHome;
     document.getElementById('displayScoreAway').textContent = state.scoreAway;
     document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
+    
+    // Actualiza el botón de mostrar/ocultar
+    const btnVis = document.getElementById('btnVisibility');
+    if (state.visible) {
+      btnVis.textContent = '👁 MARCADOR VISIBLE';
+      btnVis.style.background = '#10b981';
+    } else {
+      btnVis.textContent = '🚫 MARCADOR OCULTO';
+      btnVis.style.background = '#6b7280';
+    }
+  }
+
+  function toggleVisibility() {
+    state.visible = !state.visible;
+    updateUI();
+    saveToSupabase();
+    log(state.visible ? '👁 Marcador visible en overlay' : '🚫 Marcador oculto en overlay', 'info');
   }
 
   function updateStatus(text, color) {
@@ -185,7 +203,8 @@
         score_away: state.scoreAway,
         timer_seconds: state.timerSeconds, 
         is_running: state.isRunning, 
-        session_start: state.sessionStart
+        session_start: state.sessionStart,
+        visible: state.visible
       });
       if (error) log('❌ Error: ' + error.message, 'err');
       else log('✅ Guardado OK', 'ok');
@@ -248,7 +267,8 @@
         scoreAway: data.score_away || 0, 
         timerSeconds: data.timer_seconds || 0, 
         isRunning: data.is_running || false, 
-        sessionStart: data.session_start || 0
+        sessionStart: data.session_start || 0,
+        visible: data.visible !== false
       };
       updateUI();
       
@@ -272,7 +292,7 @@
       { event: '*', schema: 'public', table: 'overlay_state', filter: 'id=eq.1' },
       (payload) => {
         const d = payload.new;
-        if (d.name_home !== state.nameHome || d.score_home !== state.scoreHome || d.timer_seconds !== state.timerSeconds) {
+        if (d.name_home !== state.nameHome || d.score_home !== state.scoreHome || d.timer_seconds !== state.timerSeconds || d.visible !== state.visible) {
           state.nameHome = d.name_home;
           state.nameAway = d.name_away;
           state.scoreHome = d.score_home;
@@ -280,6 +300,7 @@
           state.timerSeconds = d.timer_seconds;
           state.isRunning = d.is_running;
           state.sessionStart = d.session_start;
+          state.visible = d.visible !== false;
           
           if (state.isRunning && !timerInterval) {
             state.sessionStart = Date.now() - (state.timerSeconds * 1000);
@@ -300,7 +321,7 @@
   
   function clearAll() {
     if(confirm('¿Borrar todo?')) {
-      state = { nameHome: 'EQUIPO LOCAL', nameAway: 'EQUIPO VISITANTE', scoreHome: 0, scoreAway: 0, timerSeconds: 0, isRunning: false, sessionStart: 0 };
+      state = { nameHome: 'EQUIPO LOCAL', nameAway: 'EQUIPO VISITANTE', scoreHome: 0, scoreAway: 0, timerSeconds: 0, isRunning: false, sessionStart: 0, visible: true };
       if (timerInterval) clearInterval(timerInterval);
       updateUI();
       saveToSupabase();
