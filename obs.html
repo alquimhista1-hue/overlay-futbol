@@ -25,18 +25,17 @@
     transform-origin: top left;
   }
   
-  /* ===== 🖼️ LOGO DE FONDO (OPTIMIZADO PARA MÓVIL) ===== */
   .bg-logo {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain;      /* Ajusta el 16:9 sin deformar */
-    z-index: 1;               /* Detrás del marcador (10) */
-    pointer-events: none;     /* No intercepta toques */
+    object-fit: contain;
+    z-index: 1;
+    pointer-events: none;
     user-select: none;
-    opacity: 1;               /* Cámbialo a 0.5 si lo quieres tipo marca de agua */
+    opacity: 1;
   }
   
   .scorebug { 
@@ -46,10 +45,10 @@
     background: #000000;
     border: none;
     border-radius: 0;
-    padding: 0 0 0 8px;
+    padding: 0 0 0 10px;
     display: flex; 
     align-items: center; 
-    gap: 6px;
+    gap: 8px;
     z-index: 10;
     overflow: hidden;
   }
@@ -88,37 +87,37 @@
   .team-section {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
   }
   
   .team-name { 
     background: transparent;
     color: #ffffff; 
-    font-size: 12.5px; 
+    font-size: 15.6px; 
     font-weight: 900; 
-    letter-spacing: 0.4px; 
+    letter-spacing: 0.5px; 
     text-transform: uppercase; 
-    padding: 0 3px;
-    min-width: 34px;
+    padding: 0 4px;
+    min-width: 42px;
     text-align: center;
   }
   
   .score-num { 
     font-family: 'Bebas Neue', sans-serif; 
-    font-size: 17.5px; 
+    font-size: 22px; 
     color: #ffffff; 
     line-height: 1; 
-    min-width: 16px; 
+    min-width: 20px; 
     text-align: center;
-    padding: 0 3px;
+    padding: 0 4px;
     font-weight: 900;
   }
   
   .separator {
     width: 1px;
-    height: 15px;
+    height: 19px;
     background: #ffffff;
-    margin: 0 3px;
+    margin: 0 4px;
     opacity: 0.6;
   }
   
@@ -131,7 +130,7 @@
   
   .timer-box { 
     background: #ff3b3b; 
-    padding: 6px 9px;
+    padding: 8px 11px;
     border-radius: 0;
     display: flex;
     align-items: center;
@@ -139,22 +138,22 @@
   
   .timer-display { 
     font-family: 'Bebas Neue', sans-serif; 
-    font-size: 16px;
+    font-size: 20px;
     color: #ffffff; 
-    letter-spacing: 0.8px; 
+    letter-spacing: 1px; 
     line-height: 1; 
     text-align: center; 
   }
   
   .extra-timer-display {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 16px;
+    font-size: 20px;
     color: #f59e0b;
-    letter-spacing: 0.8px;
+    letter-spacing: 1px;
     line-height: 1;
     text-align: center;
     display: none;
-    padding: 6px 9px;
+    padding: 8px 11px;
     background: transparent;
   }
   
@@ -237,7 +236,6 @@
 <body>
   <div class="obs-container" id="obsContainer">
     
-    <!-- 🖼️ LOGO DE FONDO (si lo conviertes a WebP, cambia a logo.webp) -->
     <img src="logo.png" alt="" class="bg-logo" draggable="false" decoding="async">
     
     <div class="scorebug" id="scorebug">
@@ -288,7 +286,8 @@
     scoreAway: 0, 
     timerSeconds: 0, 
     isRunning: false, 
-    sessionStart: 0
+    sessionStart: 0,
+    visible: true
   };
   
   let extraActive = false;
@@ -344,12 +343,17 @@
     return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
   }
 
+  function applyVisibility() {
+    document.getElementById('scorebug').style.display = state.visible ? 'flex' : 'none';
+  }
+
   function updateUI() {
     document.getElementById('nameHome').textContent = state.nameHome;
     document.getElementById('nameAway').textContent = state.nameAway;
     document.getElementById('scoreHome').textContent = state.scoreHome;
     document.getElementById('scoreAway').textContent = state.scoreAway;
     document.getElementById('timerDisplay').textContent = formatTime(state.timerSeconds);
+    applyVisibility();
   }
 
   function startExtraTimer() {
@@ -402,6 +406,7 @@
       state.timerSeconds = data.timer_seconds || 0;
       state.isRunning = data.is_running || false;
       state.sessionStart = data.session_start || 0;
+      state.visible = data.visible !== false;
 
       if (state.isRunning) {
         mainInterval = startTimerLocal();
@@ -423,8 +428,10 @@
       (payload) => {
         const d = payload.new;
         
-        const prevHome = state.scoreHome;
-        const prevAway = state.scoreAway;
+        /* ⚽ ANIMACIÓN DE GOL DESACTIVADA POR AHORA
+           Para reactivarla, borra los // de las 3 líneas de abajo */
+        // const prevHome = state.scoreHome;
+        // const prevAway = state.scoreAway;
         
         state.nameHome = d.name_home; 
         state.nameAway = d.name_away;
@@ -433,10 +440,11 @@
         state.timerSeconds = d.timer_seconds; 
         state.isRunning = d.is_running; 
         state.sessionStart = d.session_start;
+        state.visible = d.visible !== false;
         
-        if (d.score_home > prevHome || d.score_away > prevAway) {
-          showGoal();
-        }
+        // if (d.score_home > prevHome || d.score_away > prevAway) {
+        //   showGoal();
+        // }
         
         if (state.timerSeconds < MAIN_TIME_LIMIT) {
           resetExtraTimer();
