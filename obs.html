@@ -267,8 +267,10 @@
     <div class="goal-text">¡GOL!</div>
   </div>
 
+  <!-- 🎬 VIDEO DE PATROCINADORES: MP4 primero (universal) + WebM de respaldo -->
   <div class="sponsor-video-container" id="sponsorVideoContainer">
-    <video id="sponsorVideo" muted playsinline>
+    <video id="sponsorVideo" muted playsinline preload="auto">
+      <source src="patrocinadores.mp4" type="video/mp4">
       <source src="patrocinadores.webm" type="video/webm">
     </video>
   </div>
