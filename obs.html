@@ -19,12 +19,13 @@
   }
   
   .obs-container {
-    width: 1080px;
-    height: 608px;
+    width: 1280px;
+    height: 720px;
     position: relative;
     transform-origin: top left;
   }
   
+  /* ===== 🖼️ LOGO DE FONDO ===== */
   .bg-logo {
     position: absolute;
     top: 0;
@@ -45,10 +46,10 @@
     background: #000000;
     border: none;
     border-radius: 0;
-    padding: 0 0 0 10px;
+    padding: 0 0 0 8px;
     display: flex; 
     align-items: center; 
-    gap: 8px;
+    gap: 6px;
     z-index: 10;
     overflow: hidden;
   }
@@ -87,37 +88,37 @@
   .team-section {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
   }
   
   .team-name { 
     background: transparent;
     color: #ffffff; 
-    font-size: 15.6px; 
+    font-size: 12.5px; 
     font-weight: 900; 
-    letter-spacing: 0.5px; 
+    letter-spacing: 0.4px; 
     text-transform: uppercase; 
-    padding: 0 4px;
-    min-width: 42px;
+    padding: 0 3px;
+    min-width: 34px;
     text-align: center;
   }
   
   .score-num { 
     font-family: 'Bebas Neue', sans-serif; 
-    font-size: 22px; 
+    font-size: 17.5px; 
     color: #ffffff; 
     line-height: 1; 
-    min-width: 20px; 
+    min-width: 16px; 
     text-align: center;
-    padding: 0 4px;
+    padding: 0 3px;
     font-weight: 900;
   }
   
   .separator {
     width: 1px;
-    height: 19px;
+    height: 15px;
     background: #ffffff;
-    margin: 0 4px;
+    margin: 0 3px;
     opacity: 0.6;
   }
   
@@ -130,7 +131,7 @@
   
   .timer-box { 
     background: #ff3b3b; 
-    padding: 8px 11px;
+    padding: 6px 9px;
     border-radius: 0;
     display: flex;
     align-items: center;
@@ -138,22 +139,22 @@
   
   .timer-display { 
     font-family: 'Bebas Neue', sans-serif; 
-    font-size: 20px;
+    font-size: 16px;
     color: #ffffff; 
-    letter-spacing: 1px; 
+    letter-spacing: 0.8px; 
     line-height: 1; 
     text-align: center; 
   }
   
   .extra-timer-display {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px;
+    font-size: 16px;
     color: #f59e0b;
-    letter-spacing: 1px;
+    letter-spacing: 0.8px;
     line-height: 1;
     text-align: center;
     display: none;
-    padding: 8px 11px;
+    padding: 6px 9px;
     background: transparent;
   }
   
@@ -207,8 +208,9 @@
     100% { transform: scale(1.15); opacity: 0; }
   }
 
+  /* ===== CONTENEDOR DEL VIDEO (ABAJO, CASI PEGADO AL BORDE) ===== */
   .sponsor-video-container {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
@@ -217,8 +219,8 @@
     display: none;
     background: transparent;
     justify-content: center;
-    align-items: center;
-    padding-top: 650px;
+    align-items: flex-end;        /* ← Alinea el video abajo */
+    padding-bottom: 30px;          /* ← Separación desde el borde inferior (ajústalo si quieres) */
   }
   
   .sponsor-video-container.active {
@@ -236,6 +238,7 @@
 <body>
   <div class="obs-container" id="obsContainer">
     
+    <!-- 🖼️ LOGO DE FONDO -->
     <img src="logo.png" alt="" class="bg-logo" draggable="false" decoding="async">
     
     <div class="scorebug" id="scorebug">
@@ -261,18 +264,18 @@
         <div class="extra-timer-display" id="extraTimerDisplay">00:00</div>
       </div>
     </div>
+
+    <!-- 📹 VIDEO DEL PATROCINADOR (DENTRO DEL LIENZO, ABAJO) -->
+    <div class="sponsor-video-container" id="sponsorVideoContainer">
+      <video id="sponsorVideo" muted playsinline>
+        <source src="patrocinadores.webm" type="video/webm">
+      </video>
+    </div>
   </div>
 
+  <!-- GOL OVERLAY (se mantiene global para que salga en toda la pantalla) -->
   <div class="goal-overlay" id="goalOverlay">
     <div class="goal-text">¡GOL!</div>
-  </div>
-
-  <!-- 🎬 VIDEO DE PATROCINADORES: MP4 primero (universal) + WebM de respaldo -->
-  <div class="sponsor-video-container" id="sponsorVideoContainer">
-    <video id="sponsorVideo" muted playsinline preload="auto">
-      <source src="patrocinadores.mp4" type="video/mp4">
-      <source src="patrocinadores.webm" type="video/webm">
-    </video>
   </div>
 
 <script>
@@ -288,8 +291,7 @@
     scoreAway: 0, 
     timerSeconds: 0, 
     isRunning: false, 
-    sessionStart: 0,
-    visible: true
+    sessionStart: 0
   };
   
   let extraActive = false;
@@ -345,17 +347,12 @@
     return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
   }
 
-  function applyVisibility() {
-    document.getElementById('scorebug').style.display = state.visible ? 'flex' : 'none';
-  }
-
   function updateUI() {
     document.getElementById('nameHome').textContent = state.nameHome;
     document.getElementById('nameAway').textContent = state.nameAway;
     document.getElementById('scoreHome').textContent = state.scoreHome;
     document.getElementById('scoreAway').textContent = state.scoreAway;
     document.getElementById('timerDisplay').textContent = formatTime(state.timerSeconds);
-    applyVisibility();
   }
 
   function startExtraTimer() {
@@ -408,7 +405,6 @@
       state.timerSeconds = data.timer_seconds || 0;
       state.isRunning = data.is_running || false;
       state.sessionStart = data.session_start || 0;
-      state.visible = data.visible !== false;
 
       if (state.isRunning) {
         mainInterval = startTimerLocal();
@@ -430,10 +426,8 @@
       (payload) => {
         const d = payload.new;
         
-        /* ⚽ ANIMACIÓN DE GOL DESACTIVADA POR AHORA
-           Para reactivarla, borra los // de las 3 líneas de abajo */
-        // const prevHome = state.scoreHome;
-        // const prevAway = state.scoreAway;
+        const prevHome = state.scoreHome;
+        const prevAway = state.scoreAway;
         
         state.nameHome = d.name_home; 
         state.nameAway = d.name_away;
@@ -442,11 +436,10 @@
         state.timerSeconds = d.timer_seconds; 
         state.isRunning = d.is_running; 
         state.sessionStart = d.session_start;
-        state.visible = d.visible !== false;
         
-        // if (d.score_home > prevHome || d.score_away > prevAway) {
-        //   showGoal();
-        // }
+        if (d.score_home > prevHome || d.score_away > prevAway) {
+          showGoal();
+        }
         
         if (state.timerSeconds < MAIN_TIME_LIMIT) {
           resetExtraTimer();
@@ -471,14 +464,18 @@
     const container = document.getElementById('obsContainer');
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
-    const designWidth = 1080;
-    const designHeight = 608;
+    const designWidth = 1280;
+    const designHeight = 720;
     
     const scaleX = windowWidth / designWidth;
     const scaleY = windowHeight / designHeight;
     const scale = Math.min(scaleX, scaleY);
     
-    container.style.transform = `scale(${scale})`;
+    const offsetX = (windowWidth - designWidth * scale) / 2;
+    const offsetY = (windowHeight - designHeight * scale) / 2;
+    
+    container.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+    container.style.transformOrigin = 'top left';
   }
 
   window.addEventListener('resize', scaleToFit);
