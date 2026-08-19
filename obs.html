@@ -39,6 +39,7 @@
     opacity: 1;
   }
   
+  /* ===== 📊 MARCADOR (AGRANDADO 30%) ===== */
   .scorebug { 
     position: absolute; 
     top: 50px; 
@@ -46,79 +47,53 @@
     background: #000000;
     border: none;
     border-radius: 0;
-    padding: 0 0 0 8px;
+    padding: 0 0 0 10px;
     display: flex; 
     align-items: center; 
-    gap: 6px;
+    gap: 8px;
     z-index: 10;
     overflow: hidden;
   }
   
-  .scorebug.goal-flash {
-    animation: barBlink 0.5s steps(1, end) 6;
-  }
-  
-  .scorebug::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent 0%, rgba(16,185,129,0.9) 50%, transparent 100%);
-    transform: translateX(-100%);
-    opacity: 0;
-    pointer-events: none;
-  }
-  
-  .scorebug.goal-flash::after {
-    animation: barSweep 1s ease-in-out 3;
-  }
-  
-  @keyframes barBlink {
-    0%, 100% { background: #000000; }
-    50% { background: #065f46; }
-  }
-  
-  @keyframes barSweep {
-    0% { transform: translateX(-100%); opacity: 1; }
-    100% { transform: translateX(100%); opacity: 1; }
+  /* Ocultar marcador si el panel lo indica */
+  .scorebug.hidden {
+    display: none;
   }
   
   .team-section {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
   }
   
   .team-name { 
     background: transparent;
     color: #ffffff; 
-    font-size: 12.5px; 
+    font-size: 16px;
     font-weight: 900; 
-    letter-spacing: 0.4px; 
+    letter-spacing: 0.5px;
     text-transform: uppercase; 
-    padding: 0 3px;
-    min-width: 34px;
+    padding: 0 4px;
+    min-width: 44px;
     text-align: center;
   }
   
   .score-num { 
     font-family: 'Bebas Neue', sans-serif; 
-    font-size: 17.5px; 
+    font-size: 23px;
     color: #ffffff; 
     line-height: 1; 
-    min-width: 16px; 
+    min-width: 21px;
     text-align: center;
-    padding: 0 3px;
+    padding: 0 4px;
     font-weight: 900;
   }
   
   .separator {
     width: 1px;
-    height: 15px;
+    height: 20px;
     background: #ffffff;
-    margin: 0 3px;
+    margin: 0 4px;
     opacity: 0.6;
   }
   
@@ -131,7 +106,7 @@
   
   .timer-box { 
     background: #ff3b3b; 
-    padding: 6px 9px;
+    padding: 8px 12px;
     border-radius: 0;
     display: flex;
     align-items: center;
@@ -139,22 +114,22 @@
   
   .timer-display { 
     font-family: 'Bebas Neue', sans-serif; 
-    font-size: 16px;
+    font-size: 21px;
     color: #ffffff; 
-    letter-spacing: 0.8px; 
+    letter-spacing: 1px;
     line-height: 1; 
     text-align: center; 
   }
   
   .extra-timer-display {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 16px;
+    font-size: 21px;
     color: #f59e0b;
-    letter-spacing: 0.8px;
+    letter-spacing: 1px;
     line-height: 1;
     text-align: center;
     display: none;
-    padding: 6px 9px;
+    padding: 8px 12px;
     background: transparent;
   }
   
@@ -162,53 +137,7 @@
     display: block;
   }
 
-  .goal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    pointer-events: none;
-    z-index: 20;
-  }
-  
-  .goal-text {
-    font-family: 'Anton', sans-serif;
-    font-size: 200px;
-    color: #ffffff;
-    letter-spacing: 12px;
-    line-height: 1;
-    text-shadow:
-      5px 0 0 #10b981,
-      -5px 0 0 #10b981,
-      0 5px 0 #10b981,
-      0 -5px 0 #10b981,
-      4px 4px 0 #10b981,
-      -4px -4px 0 #10b981,
-      4px -4px 0 #10b981,
-      -4px 4px 0 #10b981,
-      0 0 60px rgba(16,185,129,0.9);
-    transform: scale(0);
-    opacity: 0;
-    will-change: transform, opacity;
-  }
-  
-  .goal-overlay.active .goal-text {
-    animation: golZoom 3s ease-out forwards;
-  }
-  
-  @keyframes golZoom {
-    0%   { transform: scale(0);    opacity: 0; }
-    12%  { transform: scale(1.25); opacity: 1; }
-    20%  { transform: scale(1);    opacity: 1; }
-    80%  { transform: scale(1.05); opacity: 1; }
-    100% { transform: scale(1.15); opacity: 0; }
-  }
-
-  /* ===== CONTENEDOR DEL VIDEO (ABAJO, CASI PEGADO AL BORDE) ===== */
+  /* ===== 📹 CONTENEDOR DEL VIDEO (ABAJO, CASI PEGADO AL BORDE) ===== */
   .sponsor-video-container {
     position: absolute;
     top: 0;
@@ -219,8 +148,8 @@
     display: none;
     background: transparent;
     justify-content: center;
-    align-items: flex-end;        /* ← Alinea el video abajo */
-    padding-bottom: 30px;          /* ← Separación desde el borde inferior (ajústalo si quieres) */
+    align-items: flex-end;
+    padding-bottom: 30px;
   }
   
   .sponsor-video-container.active {
@@ -268,14 +197,9 @@
     <!-- 📹 VIDEO DEL PATROCINADOR (DENTRO DEL LIENZO, ABAJO) -->
     <div class="sponsor-video-container" id="sponsorVideoContainer">
       <video id="sponsorVideo" muted playsinline>
-        <source src="patrocinadores.webm" type="video/webm">
+        <source src="patrocinadores.mp4" type="video/mp4">
       </video>
     </div>
-  </div>
-
-  <!-- GOL OVERLAY (se mantiene global para que salga en toda la pantalla) -->
-  <div class="goal-overlay" id="goalOverlay">
-    <div class="goal-text">¡GOL!</div>
   </div>
 
 <script>
@@ -291,7 +215,8 @@
     scoreAway: 0, 
     timerSeconds: 0, 
     isRunning: false, 
-    sessionStart: 0
+    sessionStart: 0,
+    visible: true
   };
   
   let extraActive = false;
@@ -304,24 +229,6 @@
   const sponsorVideo = document.getElementById('sponsorVideo');
   const sponsorContainer = document.getElementById('sponsorVideoContainer');
   let sponsorInterval = null;
-
-  let goalTimeout = null;
-  function showGoal() {
-    const overlay = document.getElementById('goalOverlay');
-    const scorebug = document.getElementById('scorebug');
-    
-    overlay.classList.remove('active');
-    scorebug.classList.remove('goal-flash');
-    void overlay.offsetWidth;
-    overlay.classList.add('active');
-    scorebug.classList.add('goal-flash');
-    
-    if (goalTimeout) clearTimeout(goalTimeout);
-    goalTimeout = setTimeout(() => {
-      overlay.classList.remove('active');
-      scorebug.classList.remove('goal-flash');
-    }, 3100);
-  }
 
   function showSponsorVideo() {
     sponsorContainer.classList.add('active');
@@ -353,6 +260,14 @@
     document.getElementById('scoreHome').textContent = state.scoreHome;
     document.getElementById('scoreAway').textContent = state.scoreAway;
     document.getElementById('timerDisplay').textContent = formatTime(state.timerSeconds);
+    
+    // Mostrar u ocultar el marcador según el campo "visible"
+    const scorebug = document.getElementById('scorebug');
+    if (state.visible) {
+      scorebug.classList.remove('hidden');
+    } else {
+      scorebug.classList.add('hidden');
+    }
   }
 
   function startExtraTimer() {
@@ -405,6 +320,7 @@
       state.timerSeconds = data.timer_seconds || 0;
       state.isRunning = data.is_running || false;
       state.sessionStart = data.session_start || 0;
+      state.visible = data.visible !== false;   // ← Nuevo campo
 
       if (state.isRunning) {
         mainInterval = startTimerLocal();
@@ -426,9 +342,6 @@
       (payload) => {
         const d = payload.new;
         
-        const prevHome = state.scoreHome;
-        const prevAway = state.scoreAway;
-        
         state.nameHome = d.name_home; 
         state.nameAway = d.name_away;
         state.scoreHome = d.score_home; 
@@ -436,10 +349,7 @@
         state.timerSeconds = d.timer_seconds; 
         state.isRunning = d.is_running; 
         state.sessionStart = d.session_start;
-        
-        if (d.score_home > prevHome || d.score_away > prevAway) {
-          showGoal();
-        }
+        state.visible = d.visible !== false;   // ← Actualiza visibilidad
         
         if (state.timerSeconds < MAIN_TIME_LIMIT) {
           resetExtraTimer();
