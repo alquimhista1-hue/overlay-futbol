@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Overlay OBS</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/bebas-neue@5.0.0/index.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/anton@5.0.0/index.min.css" />
@@ -103,39 +102,41 @@
       opacity: 0.6;
     }
 
-    /* ===== CRONÓMETRO (abajo, centrado, grande) ===== */
+    /* ===== CRONÓMETRO (abajo izquierda, aumentado 50%) ===== */
     #timerContainer {
       position: absolute;
       bottom: 40px;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 50px; /* Alineado a la izquierda */
       z-index: 20;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      text-align: center;
+      align-items: flex-start; /* Alineación del contenido a la izquierda */
+      gap: 8px;
+      text-align: left;
       pointer-events: none;
-      /* para que no interfiera con clics */;
     }
 
     #mainTimerDisplay {
       font-family: 'Anton', sans-serif;
-      font-size: 80px;
+      font-size: 120px; /* 80px + 50% = 120px */
       color: #ffffff;
-      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
+      text-shadow: 3px 3px 10px rgba(0, 0, 0, 0.95);
       line-height: 1;
       letter-spacing: 2px;
     }
 
     #extraTimerDisplay {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 40px;
+      font-family: 'Anton', sans-serif; /* Tipografía ancha y de gran altura para máxima visibilidad */
+      font-size: 60px; /* 40px + 50% = 60px */
       color: #f59e0b;
-      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
+      text-shadow: 3px 3px 10px rgba(0, 0, 0, 0.95);
       line-height: 1;
+      letter-spacing: 2px;
       display: none;
-      letter-spacing: 1px;
+      background: rgba(0, 0, 0, 0.8); /* Fondo negro con 80% de opacidad */
+      padding: 8px 20px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.15); /* Borde sutil para mayor definición */
     }
 
     #extraTimerDisplay.active {
@@ -190,7 +191,7 @@
       </div>
     </div>
 
-    <!-- CRONÓMETRO (nuevo, abajo) -->
+    <!-- CRONÓMETRO (abajo a la izquierda, tamaño aumentado) -->
     <div id="timerContainer">
       <div id="mainTimerDisplay">00:00</div>
       <div id="extraTimerDisplay">00:00</div>
