@@ -74,7 +74,7 @@
 </head>
 <body>
   <div class="container">
-    <h1> PANEL DE CONTROL</h1>
+    <h1>🎮 PANEL DE CONTROL</h1>
     <div class="status" id="status">INICIANDO...</div>
 
     <div class="section">
@@ -100,7 +100,7 @@
     </div>
 
     <div class="section">
-      <div class="section-title">⏱️ Cronómetro</div>
+      <div class="section-title">️ Cronómetro</div>
       <div class="timer-preview" id="timerPreview">00:00</div>
       <div class="btn-row">
         <button class="btn btn-start" onclick="startTimer()">▶ Iniciar</button>
@@ -110,11 +110,8 @@
       <input type="number" class="input" id="inputTimer" value="0" min="0" style="margin-top:12px;">
     </div>
 
-    <!-- 👁 NUEVO BOTÓN: MOSTRAR / OCULTAR MARCADOR EN EL OVERLAY -->
     <button class="btn btn-toggle" id="btnVisibility" onclick="toggleVisibility()">👁 MARCADOR VISIBLE</button>
-
     <button class="btn btn-clear" onclick="clearAll()"> LIMPIAR TODO</button>
-    
     <a href="obs.html" target="_blank" class="btn btn-obs">📺 ABRIR OVERLAY PARA OBS</a>
 
     <div class="log-box" id="logBox"></div>
@@ -129,8 +126,9 @@
   </div>
 
 <script>
-  const SUPABASE_URL = 'https://ccjggxrjmuahaaoujspu.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjamdneHJqbXVhaGFhb3Vqc3B1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2MzQwNjksImV4cCI6MjEwMTIxMDA2OX0.vWVJ2gpgw8-jvu714R1x8rNPQbzQpjKA4RTXmVwPlks';
+  // ===== NUEVAS CREDENCIALES DE SUPABASE =====
+  const SUPABASE_URL = 'https://xwhtvfcsbvwyymenqmva.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3aHR2ZmNzYnZ3eXltZW5xbXZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczNjc1MjUsImV4cCI6MjEwMjk0MzUyNX0.NDqptVkHHmTasYeO6tN91GIh5_cNGAaYyBIfRps_fR4';
   
   const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -168,13 +166,12 @@
     document.getElementById('displayScoreAway').textContent = state.scoreAway;
     document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
     
-    // Actualiza el botón de mostrar/ocultar
     const btnVis = document.getElementById('btnVisibility');
     if (state.visible) {
-      btnVis.textContent = '👁 MARCADOR VISIBLE';
+      btnVis.textContent = ' MARCADOR VISIBLE';
       btnVis.style.background = '#10b981';
     } else {
-      btnVis.textContent = '🚫 MARCADOR OCULTO';
+      btnVis.textContent = ' MARCADOR OCULTO';
       btnVis.style.background = '#6b7280';
     }
   }
@@ -255,10 +252,14 @@
   }
 
   async function init() {
-    log('Conectando...', 'info');
+    log('🔄 Conectando con Supabase...', 'info');
     try {
       const { data, error } = await sbClient.from('overlay_state').select('*').eq('id', 1).single();
-      if (error) { log('❌ Error: ' + error.message, 'err'); updateStatus('⚠️ ERROR', '#ef4444'); return; }
+      if (error) { 
+        log(' Error: ' + error.message, 'err'); 
+        updateStatus('⚠️ ERROR DE CONEXIÓN', '#ef4444'); 
+        return; 
+      }
       
       state = { 
         nameHome: data.name_home || 'EQUIPO LOCAL', 
@@ -283,8 +284,11 @@
       } else {
         updateStatus('✅ CONECTADO', '#10b981');
       }
-      log('✅ Conectado', 'ok');
-    } catch (e) { log('⚠️ Excepción: ' + e.message, 'err'); updateStatus('⚠️ ERROR', '#ef4444'); }
+      log('✅ Conectado correctamente', 'ok');
+    } catch (e) { 
+      log('⚠️ Excepción: ' + e.message, 'err'); 
+      updateStatus('️ ERROR', '#ef4444'); 
+    }
   }
 
   sbClient.channel('overlay_changes')
@@ -314,7 +318,13 @@
         }
       }
     )
-    .subscribe();
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        log('✅ Suscripción en tiempo real activa', 'ok');
+      } else if (status === 'CHANNEL_ERROR') {
+        log('❌ Error en canal en tiempo real', 'err');
+      }
+    });
 
   document.getElementById('inputHome').addEventListener('input', (e) => { state.nameHome = e.target.value.toUpperCase(); updateUI(); saveToSupabase(); });
   document.getElementById('inputAway').addEventListener('input', (e) => { state.nameAway = e.target.value.toUpperCase(); updateUI(); saveToSupabase(); });
