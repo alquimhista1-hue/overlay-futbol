@@ -25,7 +25,6 @@
     transform-origin: top left;
   }
   
-  /* ===== 🖼️ LOGO DE FONDO ===== */
   .bg-logo {
     position: absolute;
     top: 0;
@@ -39,7 +38,6 @@
     opacity: 1;
   }
   
-  /* ===== 📊 MARCADOR (AGRANDADO 30%) ===== */
   .scorebug { 
     position: absolute; 
     top: 50px; 
@@ -55,119 +53,50 @@
     overflow: hidden;
   }
   
-  /* Ocultar marcador si el panel lo indica */
-  .scorebug.hidden {
-    display: none;
-  }
+  .scorebug.hidden { display: none; }
   
-  .team-section {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
+  .team-section { display: flex; align-items: center; gap: 6px; }
   
   .team-name { 
-    background: transparent;
-    color: #ffffff; 
-    font-size: 16px;
-    font-weight: 900; 
-    letter-spacing: 0.5px;
-    text-transform: uppercase; 
-    padding: 0 4px;
-    min-width: 44px;
-    text-align: center;
+    background: transparent; color: #ffffff; font-size: 16px; font-weight: 900; 
+    letter-spacing: 0.5px; text-transform: uppercase; padding: 0 4px; min-width: 44px; text-align: center;
   }
   
   .score-num { 
-    font-family: 'Bebas Neue', sans-serif; 
-    font-size: 23px;
-    color: #ffffff; 
-    line-height: 1; 
-    min-width: 21px;
-    text-align: center;
-    padding: 0 4px;
-    font-weight: 900;
+    font-family: 'Bebas Neue', sans-serif; font-size: 23px; color: #ffffff; 
+    line-height: 1; min-width: 21px; text-align: center; padding: 0 4px; font-weight: 900;
   }
   
-  .separator {
-    width: 1px;
-    height: 20px;
-    background: #ffffff;
-    margin: 0 4px;
-    opacity: 0.6;
-  }
+  .separator { width: 1px; height: 20px; background: #ffffff; margin: 0 4px; opacity: 0.6; }
   
-  .timer-section {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    margin-left: auto;
-  }
+  .timer-section { display: flex; align-items: center; gap: 0; margin-left: auto; }
   
-  .timer-box { 
-    background: #ff3b3b; 
-    padding: 8px 12px;
-    border-radius: 0;
-    display: flex;
-    align-items: center;
-  }
+  .timer-box { background: #ff3b3b; padding: 8px 12px; border-radius: 0; display: flex; align-items: center; }
   
   .timer-display { 
-    font-family: 'Bebas Neue', sans-serif; 
-    font-size: 21px;
-    color: #ffffff; 
-    letter-spacing: 1px;
-    line-height: 1; 
-    text-align: center; 
+    font-family: 'Bebas Neue', sans-serif; font-size: 21px; color: #ffffff; 
+    letter-spacing: 1px; line-height: 1; text-align: center; 
   }
   
   .extra-timer-display {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 21px;
-    color: #f59e0b;
-    letter-spacing: 1px;
-    line-height: 1;
-    text-align: center;
-    display: none;
-    padding: 8px 12px;
-    background: transparent;
+    font-family: 'Bebas Neue', sans-serif; font-size: 21px; color: #f59e0b;
+    letter-spacing: 1px; line-height: 1; text-align: center; display: none; padding: 8px 12px; background: transparent;
   }
   
-  .extra-timer-display.active {
-    display: block;
-  }
+  .extra-timer-display.active { display: block; }
 
-  /* ===== 📹 CONTENEDOR DEL VIDEO (ABAJO, CASI PEGADO AL BORDE) ===== */
   .sponsor-video-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 5;
-    display: none;
-    background: transparent;
-    justify-content: center;
-    align-items: flex-end;
-    padding-bottom: 30px;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5;
+    display: none; background: transparent; justify-content: center; align-items: flex-end; padding-bottom: 30px;
   }
   
-  .sponsor-video-container.active {
-    display: flex;
-  }
+  .sponsor-video-container.active { display: flex; }
   
-  .sponsor-video-container video {
-    width: 600px;
-    height: auto;
-    max-width: 90%;
-    object-fit: contain;
-  }
+  .sponsor-video-container video { width: 600px; height: auto; max-width: 90%; object-fit: contain; }
 </style>
 </head>
 <body>
   <div class="obs-container" id="obsContainer">
-    
-    <!-- 🖼️ LOGO DE FONDO -->
     <img src="logo.png" alt="" class="bg-logo" draggable="false" decoding="async">
     
     <div class="scorebug" id="scorebug">
@@ -175,26 +104,20 @@
         <div class="team-name" id="nameHome">LOC</div>
         <div class="score-num" id="scoreHome">0</div>
       </div>
-      
       <div class="separator"></div>
-      
       <div class="team-section">
         <div class="score-num" id="scoreAway">0</div>
         <div class="team-name" id="nameAway">VIS</div>
       </div>
-      
       <div class="separator"></div>
-      
       <div class="timer-section">
         <div class="timer-box">
           <div class="timer-display" id="timerDisplay">00:00</div>
         </div>
-        
         <div class="extra-timer-display" id="extraTimerDisplay">00:00</div>
       </div>
     </div>
 
-    <!-- 📹 VIDEO DEL PATROCINADOR (DENTRO DEL LIENZO, ABAJO) -->
     <div class="sponsor-video-container" id="sponsorVideoContainer">
       <video id="sponsorVideo" muted playsinline>
         <source src="patrocinadores.mp4" type="video/mp4">
@@ -203,27 +126,26 @@
   </div>
 
 <script>
-  const SUPABASE_URL = 'https://ccjggxrjmuahaaoujspu.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjamdneHJqbXVhaGFhb3Vqc3B1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2MzQwNjksImV4cCI6MjEwMTIxMDA2OX0.vWVJ2gpgw8-jvu714R1x8rNPQbzQpjKA4RTXmVwPlks';
+  // ===== NUEVAS CREDENCIALES DE SUPABASE =====
+  const SUPABASE_URL = 'https://xwhtvfcsbvwyymenqmva.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3aHR2ZmNzYnZ3eXltZW5xbXZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczNjc1MjUsImV4cCI6MjEwMjk0MzUyNX0.NDqptVkHHmTasYeO6tN91GIh5_cNGAaYyBIfRps_fR4';
+  
+  if (!window.supabase) {
+    console.error(' ERROR: La librería de Supabase no se cargó');
+  }
   
   const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  console.log('✅ Cliente de Supabase inicializado');
 
   let state = { 
-    nameHome: 'LOC', 
-    nameAway: 'VIS', 
-    scoreHome: 0, 
-    scoreAway: 0, 
-    timerSeconds: 0, 
-    isRunning: false, 
-    sessionStart: 0,
-    visible: true
+    nameHome: 'LOC', nameAway: 'VIS', scoreHome: 0, scoreAway: 0, 
+    timerSeconds: 0, isRunning: false, sessionStart: 0, visible: true
   };
   
   let extraActive = false;
   let extraTimerSeconds = 0;
   let extraInterval = null;
   const MAIN_TIME_LIMIT = 45 * 60;
-
   const SPONSOR_INTERVAL_MS = 10 * 60 * 1000;
   
   const sponsorVideo = document.getElementById('sponsorVideo');
@@ -233,7 +155,7 @@
   function showSponsorVideo() {
     sponsorContainer.classList.add('active');
     sponsorVideo.currentTime = 0;
-    sponsorVideo.play().catch(e => console.log('Error al reproducir:', e));
+    sponsorVideo.play().catch(e => console.log('⚠️ Error video:', e));
   }
 
   sponsorVideo.addEventListener('ended', () => {
@@ -243,9 +165,7 @@
 
   function startSponsorCycle() {
     showSponsorVideo();
-    sponsorInterval = setInterval(() => {
-      showSponsorVideo();
-    }, SPONSOR_INTERVAL_MS);
+    sponsorInterval = setInterval(() => { showSponsorVideo(); }, SPONSOR_INTERVAL_MS);
   }
 
   function formatTime(s) {
@@ -261,13 +181,9 @@
     document.getElementById('scoreAway').textContent = state.scoreAway;
     document.getElementById('timerDisplay').textContent = formatTime(state.timerSeconds);
     
-    // Mostrar u ocultar el marcador según el campo "visible"
     const scorebug = document.getElementById('scorebug');
-    if (state.visible) {
-      scorebug.classList.remove('hidden');
-    } else {
-      scorebug.classList.add('hidden');
-    }
+    if (state.visible) scorebug.classList.remove('hidden');
+    else scorebug.classList.add('hidden');
   }
 
   function startExtraTimer() {
@@ -294,12 +210,10 @@
     state.sessionStart = Date.now() - (state.timerSeconds * 1000);
     const interval = setInterval(() => {
       state.timerSeconds = Math.floor((Date.now() - state.sessionStart) / 1000);
-      
       if (state.timerSeconds >= MAIN_TIME_LIMIT) {
         state.timerSeconds = MAIN_TIME_LIMIT;
         startExtraTimer();
       }
-      
       document.getElementById('timerDisplay').textContent = formatTime(state.timerSeconds);
     }, 1000);
     return interval;
@@ -307,11 +221,18 @@
 
   let mainInterval = null;
 
+  // ===== CARGA INICIAL =====
   async function loadFromSupabase() {
-    console.log('Cargando estado desde Supabase...');
+    console.log('🔄 Cargando desde Supabase...');
     try {
       const { data, error } = await sbClient.from('overlay_state').select('*').eq('id', 1).single();
-      if (error) { console.error('Error al cargar:', error); return; }
+      
+      if (error) { 
+        console.error('❌ Error:', error.message); 
+        return; 
+      }
+      
+      console.log('✅ Datos recibidos:', data);
       
       state.nameHome = data.name_home || 'LOC';
       state.nameAway = data.name_away || 'VIS';
@@ -320,10 +241,11 @@
       state.timerSeconds = data.timer_seconds || 0;
       state.isRunning = data.is_running || false;
       state.sessionStart = data.session_start || 0;
-      state.visible = data.visible !== false;   // ← Nuevo campo
+      state.visible = data.visible !== false;
 
       if (state.isRunning) {
         mainInterval = startTimerLocal();
+        console.log('▶ Cronómetro corriendo');
       }
 
       if (state.timerSeconds >= MAIN_TIME_LIMIT) {
@@ -331,15 +253,20 @@
       }
       
       updateUI();
-    } catch (e) { console.error('Error:', e); }
+    } catch (e) { 
+      console.error('❌ Excepción:', e); 
+    }
   }
 
   loadFromSupabase();
 
+  // ===== SUSCRIPCIÓN EN TIEMPO REAL =====
+  console.log('📡 Suscribiendo a cambios...');
   sbClient.channel('overlay_obs')
     .on('postgres_changes', 
       { event: '*', schema: 'public', table: 'overlay_state', filter: 'id=eq.1' },
       (payload) => {
+        console.log('📩 Cambio detectado:', payload.new);
         const d = payload.new;
         
         state.nameHome = d.name_home; 
@@ -349,11 +276,9 @@
         state.timerSeconds = d.timer_seconds; 
         state.isRunning = d.is_running; 
         state.sessionStart = d.session_start;
-        state.visible = d.visible !== false;   // ← Actualiza visibilidad
+        state.visible = d.visible !== false;
         
-        if (state.timerSeconds < MAIN_TIME_LIMIT) {
-          resetExtraTimer();
-        }
+        if (state.timerSeconds < MAIN_TIME_LIMIT) resetExtraTimer();
         
         if (state.isRunning) {
           if (mainInterval) clearInterval(mainInterval);
@@ -362,27 +287,24 @@
           if (mainInterval) clearInterval(mainInterval);
           mainInterval = null;
         }
-        
         updateUI();
       }
     )
-    .subscribe();
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') console.log('✅ Conexión en tiempo real establecida');
+      else if (status === 'CHANNEL_ERROR') console.error('❌ Error en canal');
+    });
 
   startSponsorCycle();
 
+  // ===== ESCALADO =====
   function scaleToFit() {
     const container = document.getElementById('obsContainer');
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    const designWidth = 1280;
-    const designHeight = 720;
-    
-    const scaleX = windowWidth / designWidth;
-    const scaleY = windowHeight / designHeight;
+    const scaleX = window.innerWidth / 1280;
+    const scaleY = window.innerHeight / 720;
     const scale = Math.min(scaleX, scaleY);
-    
-    const offsetX = (windowWidth - designWidth * scale) / 2;
-    const offsetY = (windowHeight - designHeight * scale) / 2;
+    const offsetX = (window.innerWidth - 1280 * scale) / 2;
+    const offsetY = (window.innerHeight - 720 * scale) / 2;
     
     container.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     container.style.transformOrigin = 'top left';
