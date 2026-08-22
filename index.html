@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Panel de Control - Marcador</title>
+<title>Panel Control</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/bebas-neue@5.0.0/index.min.css">
@@ -21,288 +21,205 @@
     user-select: none;
     touch-action: pan-y;
   }
-  body { padding: 15px; }
+  body { padding: 10px; }
   
   .container { 
-    max-width: 700px; 
+    max-width: 600px; 
     margin: 0 auto; 
     background: rgba(22, 33, 62, 0.9); 
-    border-radius: 25px; 
-    padding: 30px; 
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    backdrop-filter: blur(10px);
+    border-radius: 15px; 
+    padding: 15px; 
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
   }
   
-  h1 { 
-    font-size: 28px; 
-    margin-bottom: 15px; 
-    color: #ff3b3b; 
-    letter-spacing: 2px; 
-    text-align: center;
-    text-transform: uppercase;
-    font-weight: 900;
-  }
-  
-  .status { 
-    display: block; 
-    text-align: center; 
-    padding: 10px 20px; 
-    border-radius: 25px; 
-    font-size: 14px; 
-    font-weight: 800; 
-    letter-spacing: 1px; 
-    margin: 0 auto 25px; 
-    background: #ef4444; 
-    max-width: 250px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-  }
-
-  /* BOTÓN PARA MOSTRAR/OCULTAR EQUIPOS */
-  .toggle-section-btn {
-    width: 100%;
-    padding: 18px;
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    border: none;
-    border-radius: 15px;
-    color: white;
-    font-size: 16px;
-    font-weight: 800;
-    cursor: pointer;
-    margin-bottom: 15px;
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-    transition: all 0.3s ease;
+  /* HEADER COMPACTO */
+  .header {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
     gap: 10px;
   }
   
-  .toggle-section-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+  h1 { 
+    font-size: 16px; 
+    color: #ff3b3b; 
+    letter-spacing: 1px; 
+    font-weight: 900;
+    text-transform: uppercase;
+    flex: 1;
   }
   
-  .toggle-section-btn:active {
-    transform: translateY(0);
+  .status { 
+    font-size: 10px; 
+    font-weight: 700; 
+    padding: 4px 10px; 
+    border-radius: 12px;
+    white-space: nowrap;
+    background: #ef4444;
   }
 
-  /* SECCIÓN DE EQUIPOS (COLAPSABLE) */
+  /* BOTÓN CONFIGURAR - COMPACTO */
+  .toggle-section-btn {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  /* SECCIÓN EQUIPOS - COMPACTA */
   .teams-section {
     display: none;
-    margin-bottom: 25px;
-    padding: 25px;
+    margin-bottom: 12px;
+    padding: 12px;
     background: rgba(15, 23, 42, 0.6);
-    border-radius: 20px;
+    border-radius: 10px;
     border: 2px solid rgba(59, 130, 246, 0.3);
-    animation: slideDown 0.3s ease-out;
   }
   
-  .teams-section.visible {
-    display: block;
-  }
-  
-  @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  .teams-section.visible { display: block; }
   
   .section-title { 
-    font-size: 14px; 
-    font-weight: 800; 
-    letter-spacing: 2px; 
+    font-size: 10px; 
+    font-weight: 700; 
     text-transform: uppercase; 
     color: #94a3b8; 
-    margin-bottom: 15px;
+    margin-bottom: 8px;
     text-align: center;
   }
   
   .input { 
     width: 100%; 
     background: #0f172a; 
-    border: 3px solid #334155; 
+    border: 2px solid #334155; 
     color: white; 
-    padding: 16px 20px; 
-    border-radius: 12px; 
-    font-size: 16px; 
-    font-family: inherit; 
-    font-weight: 700; 
-    margin-bottom: 12px;
-    transition: all 0.3s ease;
+    padding: 8px 12px; 
+    border-radius: 6px; 
+    font-size: 13px; 
+    font-weight: 600; 
+    margin-bottom: 8px;
     -webkit-user-select: text; 
     user-select: text;
   }
-  
-  .input:focus { 
-    outline: none; 
-    border-color: #ff3b3b;
-    box-shadow: 0 0 0 4px rgba(255, 59, 59, 0.2);
-  }
 
-  /* MARCADOR MEJORADO */
+  /* MARCADOR - RESPONSIVE */
   .scoreboard {
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-radius: 20px;
-    padding: 30px;
-    margin-bottom: 25px;
-    border: 3px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
   }
   
   .score-row { 
     display: flex; 
     align-items: center; 
-    gap: 15px; 
-    margin-bottom: 20px;
-    padding: 20px;
+    gap: 8px; 
+    margin-bottom: 10px;
+    padding: 10px;
     background: rgba(255,255,255,0.05);
-    border-radius: 15px;
-    transition: all 0.3s ease;
+    border-radius: 8px;
   }
   
-  .score-row:hover {
-    background: rgba(255,255,255,0.08);
-    transform: translateX(5px);
-  }
-  
-  .score-row:last-child {
-    margin-bottom: 0;
-  }
+  .score-row:last-child { margin-bottom: 0; }
   
   .score-label { 
     flex: 1; 
-    font-weight: 800; 
-    font-size: 16px;
+    font-weight: 700; 
+    font-size: 11px;
     text-align: center;
     color: #e2e8f0;
     text-transform: uppercase;
-    letter-spacing: 1px;
   }
   
-  /* BOTONES DE GOL - DOBLE TAMAÑO */
   .score-btn { 
-    width: 80px; 
-    height: 80px; 
+    width: 45px; 
+    height: 45px; 
     border: none; 
-    border-radius: 15px; 
-    font-size: 40px; 
+    border-radius: 8px; 
+    font-size: 24px; 
     font-weight: 900; 
     cursor: pointer; 
-    color: white; 
-    flex-shrink: 0;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-    transition: all 0.2s ease;
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
   }
   
-  .score-btn:hover {
-    transform: scale(1.05);
-  }
-  
-  .score-btn:active {
-    transform: scale(0.95);
-  }
-  
-  .score-btn.minus { 
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
-  }
-  
-  .score-btn.plus { 
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
-  }
+  .score-btn.minus { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+  .score-btn.plus { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
   
   .score-value { 
-    width: 100px; 
+    width: 60px; 
     text-align: center; 
     font-family: 'Bebas Neue', sans-serif; 
-    font-size: 56px; 
+    font-size: 36px; 
     background: linear-gradient(135deg, #ff3b3b 0%, #dc2626 100%);
-    border-radius: 15px; 
-    padding: 10px 0; 
-    flex-shrink: 0;
-    box-shadow: 0 6px 20px rgba(255, 59, 59, 0.4);
+    border-radius: 8px; 
+    padding: 5px 0; 
     color: white;
-    letter-spacing: 2px;
   }
 
-  /* CRONÓMETRO - DOBLE TAMAÑO */
+  /* CRONÓMETRO - RESPONSIVE */
   .timer-section {
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-radius: 20px;
-    padding: 35px;
-    margin-bottom: 25px;
-    border: 3px solid rgba(255, 59, 59, 0.3);
-    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 12px;
+    border: 2px solid rgba(255, 59, 59, 0.3);
   }
   
   .timer-preview { 
     text-align: center; 
     font-family: 'Bebas Neue', sans-serif; 
-    font-size: 100px; /* DOBLE TAMAÑO (era 42px) */
+    font-size: 56px;
     color: #ff3b3b; 
-    margin: 20px 0 30px; 
-    letter-spacing: 8px;
-    text-shadow: 0 0 30px rgba(255, 59, 59, 0.6);
+    margin: 10px 0 15px; 
+    letter-spacing: 4px;
     font-weight: 900;
   }
   
   .btn-row { 
-    display: flex; 
-    gap: 12px;
-    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
   }
   
   .btn { 
-    flex: 1; 
-    padding: 20px; 
+    padding: 12px; 
     border: none; 
-    border-radius: 15px; 
+    border-radius: 8px; 
     font-family: inherit; 
-    font-weight: 900; 
-    font-size: 15px; 
-    letter-spacing: 1px; 
+    font-weight: 800; 
+    font-size: 11px; 
     text-transform: uppercase; 
     cursor: pointer; 
     color: white;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-    transition: all 0.3s ease;
   }
   
-  .btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-  }
-  
-  .btn:active {
-    transform: translateY(0);
-  }
-  
-  .btn-start { 
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
-  }
-  
-  .btn-pause { 
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
-  }
-  
-  .btn-reset { 
-    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-    box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
-  }
+  .btn-start { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+  .btn-pause { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+  .btn-reset { background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); }
   
   .input-timer {
     width: 100%;
     background: #0f172a;
-    border: 3px solid #334155;
+    border: 2px solid #334155;
     color: white;
-    padding: 16px 20px;
-    border-radius: 12px;
-    font-size: 18px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
     font-weight: 700;
     text-align: center;
   }
@@ -311,46 +228,63 @@
   .main-buttons {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 25px;
+    gap: 8px;
+    margin-bottom: 12px;
   }
   
   .btn-toggle { 
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 12px;
+    cursor: pointer;
+    color: white;
+    text-transform: uppercase;
   }
   
   .btn-toggle.hidden-mode {
     background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-    box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
   }
   
   .btn-clear { 
     background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 12px;
+    cursor: pointer;
+    color: white;
+    text-transform: uppercase;
   }
   
   .btn-obs { 
     background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-  }
-  
-  a.btn { 
-    display: block; 
-    text-decoration: none; 
-    text-align: center; 
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 12px;
+    cursor: pointer;
+    color: white;
+    text-transform: uppercase;
+    text-decoration: none;
+    text-align: center;
+    display: block;
   }
 
   .log-box { 
     background: #0f172a; 
     border: 2px solid #334155; 
-    border-radius: 12px; 
-    padding: 12px; 
-    margin-top: 20px; 
-    font-size: 11px; 
+    border-radius: 8px; 
+    padding: 8px; 
+    margin-top: 12px; 
+    font-size: 9px; 
     font-family: 'Courier New', monospace; 
     color: #94a3b8; 
-    max-height: 120px; 
+    max-height: 80px; 
     overflow-y: auto;
   }
   
@@ -358,108 +292,88 @@
   .log-box .err { color: #ef4444; }
   .log-box .info { color: #60a5fa; }
 
-  .info-box { 
-    background: rgba(59,130,246,0.1); 
-    border: 2px solid rgba(59,130,246,0.3); 
-    border-radius: 12px; 
-    padding: 15px; 
-    margin-top: 20px;
-  }
-  
-  .info-box p { 
-    font-size: 12px; 
-    color: #94a3b8; 
-    line-height: 1.6; 
-  }
-  
-  .info-box code { 
-    background: rgba(0,0,0,0.4); 
-    padding: 3px 8px; 
-    border-radius: 5px; 
-    color: #60a5fa; 
-    font-size: 11px;
-    font-family: 'Courier New', monospace;
-  }
-
+  /* MEDIA QUERIES PARA MÓVIL */
   @media (max-width: 480px) {
-    body { padding: 10px; }
-    .container { padding: 20px; border-radius: 20px; }
-    h1 { font-size: 24px; }
-    .timer-preview { font-size: 80px; }
-    .score-btn { width: 70px; height: 70px; font-size: 35px; }
-    .score-value { font-size: 48px; width: 90px; }
-    .btn { font-size: 14px; padding: 18px; }
-    .scoreboard, .timer-section { padding: 20px; }
+    body { padding: 8px; }
+    .container { padding: 12px; border-radius: 12px; }
+    
+    h1 { font-size: 14px; }
+    .status { font-size: 9px; padding: 3px 8px; }
+    
+    .score-btn { width: 40px; height: 40px; font-size: 20px; }
+    .score-value { width: 50px; font-size: 32px; }
+    .score-label { font-size: 10px; }
+    
+    .timer-preview { font-size: 48px; }
+    .btn { font-size: 10px; padding: 10px; }
+    
+    .scoreboard, .timer-section { padding: 10px; }
+  }
+  
+  @media (max-width: 360px) {
+    .score-btn { width: 36px; height: 36px; font-size: 18px; }
+    .score-value { width: 45px; font-size: 28px; }
+    .timer-preview { font-size: 42px; }
+    .btn { font-size: 9px; padding: 8px; }
   }
 </style>
 </head>
 <body>
   <div class="container">
-    <h1>🎮 PANEL DE CONTROL</h1>
-    <div class="status" id="status">INICIANDO...</div>
-
-    <!-- BOTÓN PARA MOSTRAR/OCULTAR EQUIPOS -->
-    <button class="toggle-section-btn" onclick="toggleTeamsSection()">
-      <span id="teamsToggleIcon">️</span>
-      <span id="teamsToggleText">CONFIGURAR EQUIPOS</span>
-    </button>
-
-    <!-- SECCIÓN DE EQUIPOS (COLAPSABLE) -->
-    <div class="teams-section" id="teamsSection">
-      <div class="section-title">📝 NOMBRES DE LOS EQUIPOS</div>
-      <input type="text" class="input" id="inputHome" placeholder="EQUIPO LOCAL" value="EQUIPO LOCAL">
-      <input type="text" class="input" id="inputAway" placeholder="EQUIPO VISITANTE" value="EQUIPO VISITANTE">
+    <div class="header">
+      <h1>PANEL CONTROL</h1>
+      <div class="status" id="status">INICIANDO</div>
     </div>
 
-    <!-- MARCADOR MEJORADO -->
+    <button class="toggle-section-btn" onclick="toggleTeamsSection()">
+      <span id="teamsToggleIcon">️</span>
+      <span id="teamsToggleText">CONFIGURAR</span>
+    </button>
+
+    <div class="teams-section" id="teamsSection">
+      <div class="section-title">NOMBRES DE EQUIPOS</div>
+      <input type="text" class="input" id="inputHome" placeholder="LOCAL" value="LOCAL">
+      <input type="text" class="input" id="inputAway" placeholder="VISITANTE" value="VISITANTE">
+    </div>
+
     <div class="scoreboard">
-      <div class="section-title"> MARCADOR</div>
+      <div class="section-title">MARCADOR</div>
       
       <div class="score-row">
-        <div class="score-label" id="labelHome">EQUIPO LOCAL</div>
+        <div class="score-label" id="labelHome">LOCAL</div>
         <button class="score-btn minus" onclick="changeScore('home', -1)">−</button>
         <div class="score-value" id="displayScoreHome">0</div>
         <button class="score-btn plus" onclick="changeScore('home', 1)">+</button>
       </div>
       
       <div class="score-row">
-        <div class="score-label" id="labelAway">EQUIPO VISITANTE</div>
+        <div class="score-label" id="labelAway">VISITANTE</div>
         <button class="score-btn minus" onclick="changeScore('away', -1)">−</button>
         <div class="score-value" id="displayScoreAway">0</div>
         <button class="score-btn plus" onclick="changeScore('away', 1)">+</button>
       </div>
     </div>
 
-    <!-- CRONÓMETRO MEJORADO (DOBLE TAMAÑO) -->
     <div class="timer-section">
-      <div class="section-title">⏱️ CRONÓMETRO</div>
+      <div class="section-title">CRONÓMETRO</div>
       <div class="timer-preview" id="timerPreview">00:00</div>
       
       <div class="btn-row">
-        <button class="btn btn-start" onclick="startTimer()">▶ INICIAR</button>
-        <button class="btn btn-pause" onclick="pauseTimer()">⏸ PAUSAR</button>
-        <button class="btn btn-reset" onclick="resetTimer()">↻ RESET</button>
+        <button class="btn btn-start" onclick="startTimer()">INICIAR</button>
+        <button class="btn btn-pause" onclick="pauseTimer()">PAUSAR</button>
+        <button class="btn btn-reset" onclick="resetTimer()">RESET</button>
       </div>
       
       <input type="number" class="input-timer" id="inputTimer" value="0" min="0" placeholder="Minutos">
     </div>
 
-    <!-- BOTONES PRINCIPALES -->
     <div class="main-buttons">
-      <button class="btn btn-toggle" id="btnVisibility" onclick="toggleVisibility()">👁 MARCADOR VISIBLE</button>
-      <button class="btn btn-clear" onclick="clearAll()"> LIMPIAR TODO</button>
-      <a href="obs.html" target="_blank" class="btn btn-obs">📺 ABRIR OVERLAY PARA OBS</a>
+      <button class="btn-toggle" id="btnVisibility" onclick="toggleVisibility()">👁 MARCADOR VISIBLE</button>
+      <button class="btn-clear" onclick="clearAll()">LIMPIAR TODO</button>
+      <a href="obs.html" target="_blank" class="btn-obs"> ABRIR OBS</a>
     </div>
 
     <div class="log-box" id="logBox"></div>
-
-    <div class="info-box">
-      <p><strong>📋 INSTRUCCIONES RÁPIDAS:</strong></p>
-      <p>1️ Configura los equipos (una sola vez)<br>
-         2️⃣ Usa los botones grandes para goles<br>
-         3️⃣ Controla el cronómetro<br>
-         4️⃣ Muestra/oculta con el botón verde</p>
-    </div>
   </div>
 
 <script>
@@ -469,8 +383,8 @@
   const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let state = { 
-    nameHome: 'EQUIPO LOCAL', 
-    nameAway: 'EQUIPO VISITANTE', 
+    nameHome: 'LOCAL', 
+    nameAway: 'VISITANTE', 
     scoreHome: 0, 
     scoreAway: 0, 
     timerSeconds: 0, 
@@ -480,7 +394,6 @@
   };
   let timerInterval = null;
 
-  // MOSTRAR/OCULTAR SECCIÓN DE EQUIPOS
   function toggleTeamsSection() {
     const section = document.getElementById('teamsSection');
     const icon = document.getElementById('teamsToggleIcon');
@@ -489,11 +402,11 @@
     if (section.classList.contains('visible')) {
       section.classList.remove('visible');
       icon.textContent = '⚙️';
-      text.textContent = 'CONFIGURAR EQUIPOS';
+      text.textContent = 'CONFIGURAR';
     } else {
       section.classList.add('visible');
       icon.textContent = '✖️';
-      text.textContent = 'CERRAR CONFIGURACIÓN';
+      text.textContent = 'CERRAR';
     }
   }
 
@@ -521,7 +434,7 @@
     
     const btnVis = document.getElementById('btnVisibility');
     if (state.visible) {
-      btnVis.textContent = ' MARCADOR VISIBLE';
+      btnVis.textContent = '👁 MARCADOR VISIBLE';
       btnVis.classList.remove('hidden-mode');
     } else {
       btnVis.textContent = '🚫 MARCADOR OCULTO';
@@ -533,7 +446,6 @@
     state.visible = !state.visible;
     updateUI();
     saveToSupabase();
-    log(state.visible ? '👁 Marcador visible en overlay' : '🚫 Marcador oculto en overlay', 'info');
   }
 
   function updateStatus(text, color) {
@@ -543,7 +455,6 @@
   }
 
   async function saveToSupabase() {
-    log('Guardando...', 'info');
     try {
       const { error } = await sbClient.from('overlay_state').upsert({
         id: 1, 
@@ -556,9 +467,8 @@
         session_start: state.sessionStart,
         visible: state.visible
       });
-      if (error) log('❌ Error: ' + error.message, 'err');
-      else log('✅ Guardado OK', 'ok');
-    } catch (e) { log('️ Excepción: ' + e.message, 'err'); }
+      if (error) log('Error: ' + error.message, 'err');
+    } catch (e) { log('Excepción: ' + e.message, 'err'); }
   }
 
   function startTimer() {
@@ -573,14 +483,14 @@
     }, 1000);
     
     saveToSupabase();
-    updateStatus('▶ CORRIENDO', '#10b981');
+    updateStatus('CORRIENDO', '#10b981');
   }
 
   function pauseTimer() {
     state.isRunning = false;
     if (timerInterval) clearInterval(timerInterval);
     saveToSupabase();
-    updateStatus('⏸ PAUSADO', '#f59e0b');
+    updateStatus('PAUSADO', '#f59e0b');
   }
 
   function resetTimer() {
@@ -591,7 +501,7 @@
     state.sessionStart = 0;
     updateUI();
     saveToSupabase();
-    updateStatus(' RESET', '#6b7280');
+    updateStatus('RESET', '#6b7280');
   }
 
   function changeScore(team, amount) {
@@ -602,28 +512,19 @@
     }
     updateUI();
     saveToSupabase();
-    
-    // Efecto visual en el botón
-    const btn = event.target;
-    btn.style.transform = 'scale(0.9)';
-    setTimeout(() => {
-      btn.style.transform = 'scale(1)';
-    }, 100);
   }
 
   async function init() {
-    log('🔄 Conectando con Supabase...', 'info');
     try {
       const { data, error } = await sbClient.from('overlay_state').select('*').eq('id', 1).single();
       if (error) { 
-        log('❌ Error: ' + error.message, 'err'); 
-        updateStatus('⚠️ ERROR DE CONEXIÓN', '#ef4444'); 
+        updateStatus('ERROR', '#ef4444'); 
         return; 
       }
       
       state = { 
-        nameHome: data.name_home || 'EQUIPO LOCAL', 
-        nameAway: data.name_away || 'EQUIPO VISITANTE', 
+        nameHome: data.name_home || 'LOCAL', 
+        nameAway: data.name_away || 'VISITANTE', 
         scoreHome: data.score_home || 0, 
         scoreAway: data.score_away || 0, 
         timerSeconds: data.timer_seconds || 0, 
@@ -640,14 +541,12 @@
           state.timerSeconds = Math.floor((Date.now() - state.sessionStart) / 1000);
           document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
         }, 1000);
-        updateStatus('▶ CORRIENDO', '#10b981');
+        updateStatus('CORRIENDO', '#10b981');
       } else {
-        updateStatus('✅ CONECTADO', '#10b981');
+        updateStatus('CONECTADO', '#10b981');
       }
-      log('✅ Conectado correctamente', 'ok');
     } catch (e) { 
-      log('️ Excepción: ' + e.message, 'err'); 
-      updateStatus('⚠️ ERROR', '#ef4444'); 
+      updateStatus('ERROR', '#ef4444'); 
     }
   }
 
@@ -656,46 +555,38 @@
       { event: '*', schema: 'public', table: 'overlay_state', filter: 'id=eq.1' },
       (payload) => {
         const d = payload.new;
-        if (d.name_home !== state.nameHome || d.score_home !== state.scoreHome || d.timer_seconds !== state.timerSeconds || d.visible !== state.visible) {
-          state.nameHome = d.name_home;
-          state.nameAway = d.name_away;
-          state.scoreHome = d.score_home;
-          state.scoreAway = d.score_away;
-          state.timerSeconds = d.timer_seconds;
-          state.isRunning = d.is_running;
-          state.sessionStart = d.session_start;
-          state.visible = d.visible !== false;
-          
-          if (state.isRunning && !timerInterval) {
-            state.sessionStart = Date.now() - (state.timerSeconds * 1000);
-            timerInterval = setInterval(() => {
-              state.timerSeconds = Math.floor((Date.now() - state.sessionStart) / 1000);
-              document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
-            }, 1000);
-            updateStatus('▶ CORRIENDO', '#10b981');
-          }
-          updateUI();
+        state.nameHome = d.name_home;
+        state.nameAway = d.name_away;
+        state.scoreHome = d.score_home;
+        state.scoreAway = d.score_away;
+        state.timerSeconds = d.timer_seconds;
+        state.isRunning = d.is_running;
+        state.sessionStart = d.session_start;
+        state.visible = d.visible !== false;
+        
+        if (state.isRunning && !timerInterval) {
+          state.sessionStart = Date.now() - (state.timerSeconds * 1000);
+          timerInterval = setInterval(() => {
+            state.timerSeconds = Math.floor((Date.now() - state.sessionStart) / 1000);
+            document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
+          }, 1000);
+          updateStatus('CORRIENDO', '#10b981');
         }
+        updateUI();
       }
     )
-    .subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        log('✅ Suscripción en tiempo real activa', 'ok');
-      } else if (status === 'CHANNEL_ERROR') {
-        log('❌ Error en canal en tiempo real', 'err');
-      }
-    });
+    .subscribe();
 
   document.getElementById('inputHome').addEventListener('input', (e) => { state.nameHome = e.target.value.toUpperCase(); updateUI(); saveToSupabase(); });
   document.getElementById('inputAway').addEventListener('input', (e) => { state.nameAway = e.target.value.toUpperCase(); updateUI(); saveToSupabase(); });
   
   function clearAll() {
     if(confirm('¿Borrar todo?')) {
-      state = { nameHome: 'EQUIPO LOCAL', nameAway: 'EQUIPO VISITANTE', scoreHome: 0, scoreAway: 0, timerSeconds: 0, isRunning: false, sessionStart: 0, visible: true };
+      state = { nameHome: 'LOCAL', nameAway: 'VISITANTE', scoreHome: 0, scoreAway: 0, timerSeconds: 0, isRunning: false, sessionStart: 0, visible: true };
       if (timerInterval) clearInterval(timerInterval);
       updateUI();
       saveToSupabase();
-      updateStatus('🔄 LIMPIO', '#6b7280');
+      updateStatus('LIMPIO', '#6b7280');
     }
   }
 
