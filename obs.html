@@ -23,67 +23,99 @@
     height: 720px;
     position: relative;
     transform-origin: top left;
+    background: #87CEEB; /* Celeste de prueba */
   }
   
   .bg-logo {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     object-fit: contain;
     z-index: 1;
     pointer-events: none;
     user-select: none;
-    opacity: 1;
+    opacity: 0.3;
   }
   
+  /*  MARCADOR */
   .scorebug { 
     position: absolute; 
-    top: 50px; 
-    left: 50px; 
+    top: 50px; left: 50px; 
     background: #000000;
-    border: none;
-    border-radius: 0;
-    padding: 0 0 0 10px;
+    padding: 0 0 0 15px;
     display: flex; 
     align-items: center; 
-    gap: 8px;
+    gap: 10px;
     z-index: 10;
-    overflow: hidden;
   }
   
   .scorebug.hidden { display: none; }
   
-  .team-section { display: flex; align-items: center; gap: 6px; }
+  .team-section { display: flex; align-items: center; gap: 8px; }
   
   .team-name { 
-    background: transparent; color: #ffffff; font-size: 16px; font-weight: 900; 
-    letter-spacing: 0.5px; text-transform: uppercase; padding: 0 4px; min-width: 44px; text-align: center;
+    color: #ffffff; 
+    font-size: 20px;
+    font-weight: 900; 
+    letter-spacing: 1px;
+    text-transform: uppercase; 
+    padding: 0 8px;
+    min-width: 140px;
+    text-align: center;
   }
   
   .score-num { 
-    font-family: 'Bebas Neue', sans-serif; font-size: 23px; color: #ffffff; 
-    line-height: 1; min-width: 21px; text-align: center; padding: 0 4px; font-weight: 900;
+    font-family: 'Bebas Neue', sans-serif; 
+    font-size: 32px;
+    color: #ffffff; 
+    line-height: 1; 
+    min-width: 35px;
+    text-align: center;
+    padding: 0 8px;
+    font-weight: 900;
   }
   
-  .separator { width: 1px; height: 20px; background: #ffffff; margin: 0 4px; opacity: 0.6; }
-  
-  .timer-section { display: flex; align-items: center; gap: 0; margin-left: auto; }
-  
-  .timer-box { background: #ff3b3b; padding: 8px 12px; border-radius: 0; display: flex; align-items: center; }
-  
-  .timer-display { 
-    font-family: 'Bebas Neue', sans-serif; font-size: 21px; color: #ffffff; 
-    letter-spacing: 1px; line-height: 1; text-align: center; 
+  .separator { width: 2px; height: 28px; background: #ffffff; margin: 0 6px; opacity: 0.6; }
+
+  /* ⏱️ CRONÓMETRO COMPACTO - NÚMEROS GRANDES QUE OCUPAN TODO EL FONDO */
+  .timer-container {
+    position: absolute;
+    bottom: 50px;
+    left: 50px;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
   
-  .extra-timer-display {
-    font-family: 'Bebas Neue', sans-serif; font-size: 21px; color: #f59e0b;
-    letter-spacing: 1px; line-height: 1; text-align: center; display: none; padding: 8px 12px; background: transparent;
+  .main-timer {
+    font-family: 'Anton', sans-serif;
+    font-size: 64px; /* Números bien grandes */
+    color: #ffffff;
+    background: #000000;
+    padding: 4px 12px; /* Padding mínimo - compacto */
+    line-height: 1;
+    letter-spacing: 2px;
+    display: inline-block;
+    /* Estirar verticalmente para que se vean más altos */
+    transform: scaleY(1.25);
+    transform-origin: center center;
   }
   
-  .extra-timer-display.active { display: block; }
+  .extra-timer {
+    font-family: 'Anton', sans-serif;
+    font-size: 64px;
+    color: #f59e0b;
+    background: #000000;
+    padding: 4px 12px;
+    line-height: 1;
+    letter-spacing: 2px;
+    display: none;
+    transform: scaleY(1.25);
+    transform-origin: center center;
+  }
+  
+  .extra-timer.active { display: inline-block; }
 
   .sponsor-video-container {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5;
@@ -109,13 +141,11 @@
         <div class="score-num" id="scoreAway">0</div>
         <div class="team-name" id="nameAway">VIS</div>
       </div>
-      <div class="separator"></div>
-      <div class="timer-section">
-        <div class="timer-box">
-          <div class="timer-display" id="timerDisplay">00:00</div>
-        </div>
-        <div class="extra-timer-display" id="extraTimerDisplay">00:00</div>
-      </div>
+    </div>
+
+    <div class="timer-container">
+      <div class="main-timer" id="timerDisplay">00:00</div>
+      <div class="extra-timer" id="extraTimerDisplay">00:00</div>
     </div>
 
     <div class="sponsor-video-container" id="sponsorVideoContainer">
@@ -126,16 +156,10 @@
   </div>
 
 <script>
-  // ===== NUEVAS CREDENCIALES DE SUPABASE =====
   const SUPABASE_URL = 'https://xwhtvfcsbvwyymenqmva.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3aHR2ZmNzYnZ3eXltZW5xbXZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczNjc1MjUsImV4cCI6MjEwMjk0MzUyNX0.NDqptVkHHmTasYeO6tN91GIh5_cNGAaYyBIfRps_fR4';
   
-  if (!window.supabase) {
-    console.error(' ERROR: La librería de Supabase no se cargó');
-  }
-  
   const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  console.log('✅ Cliente de Supabase inicializado');
 
   let state = { 
     nameHome: 'LOC', nameAway: 'VIS', scoreHome: 0, scoreAway: 0, 
@@ -221,7 +245,6 @@
 
   let mainInterval = null;
 
-  // ===== CARGA INICIAL =====
   async function loadFromSupabase() {
     console.log('🔄 Cargando desde Supabase...');
     try {
@@ -245,7 +268,6 @@
 
       if (state.isRunning) {
         mainInterval = startTimerLocal();
-        console.log('▶ Cronómetro corriendo');
       }
 
       if (state.timerSeconds >= MAIN_TIME_LIMIT) {
@@ -260,13 +282,22 @@
 
   loadFromSupabase();
 
-  // ===== SUSCRIPCIÓN EN TIEMPO REAL =====
-  console.log('📡 Suscribiendo a cambios...');
-  sbClient.channel('overlay_obs')
+  // ===== 🔔 SUSCRIPCIÓN EN TIEMPO REAL (CANAL UNIFICADO) =====
+  console.log('📡 Suscribiendo al canal "overlay_changes"...');
+  
+  const channel = sbClient.channel('overlay_changes');
+  
+  channel
     .on('postgres_changes', 
-      { event: '*', schema: 'public', table: 'overlay_state', filter: 'id=eq.1' },
+      { 
+        event: '*', 
+        schema: 'public', 
+        table: 'overlay_state', 
+        filter: 'id=eq.1' 
+      },
       (payload) => {
-        console.log('📩 Cambio detectado:', payload.new);
+        console.log(' CAMBIO RECIBIDO:', payload);
+        
         const d = payload.new;
         
         state.nameHome = d.name_home; 
@@ -278,26 +309,35 @@
         state.sessionStart = d.session_start;
         state.visible = d.visible !== false;
         
-        if (state.timerSeconds < MAIN_TIME_LIMIT) resetExtraTimer();
+        if (state.timerSeconds < MAIN_TIME_LIMIT) {
+          resetExtraTimer();
+        }
         
         if (state.isRunning) {
           if (mainInterval) clearInterval(mainInterval);
           mainInterval = startTimerLocal();
         } else {
-          if (mainInterval) clearInterval(mainInterval);
-          mainInterval = null;
+          if (mainInterval) {
+            clearInterval(mainInterval);
+            mainInterval = null;
+          }
         }
+        
         updateUI();
+        console.log('✅ UI actualizada');
       }
     )
     .subscribe((status) => {
-      if (status === 'SUBSCRIBED') console.log('✅ Conexión en tiempo real establecida');
-      else if (status === 'CHANNEL_ERROR') console.error('❌ Error en canal');
+      console.log('🔌 Estado:', status);
+      if (status === 'SUBSCRIBED') {
+        console.log('✅ ✅ ✅ TIEMPO REAL ACTIVO ✅ ✅ ✅');
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('❌ ERROR EN CANAL - Ejecuta: ALTER TABLE overlay_state REPLICA IDENTITY FULL;');
+      }
     });
 
   startSponsorCycle();
 
-  // ===== ESCALADO =====
   function scaleToFit() {
     const container = document.getElementById('obsContainer');
     const scaleX = window.innerWidth / 1280;
