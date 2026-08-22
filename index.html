@@ -24,20 +24,20 @@
   body { padding: 10px; }
   
   .container { 
-    max-width: 600px; 
+    max-width: 500px; 
     margin: 0 auto; 
     background: rgba(22, 33, 62, 0.9); 
-    border-radius: 15px; 
+    border-radius: 20px; 
     padding: 15px; 
     box-shadow: 0 10px 40px rgba(0,0,0,0.5);
   }
   
-  /* HEADER COMPACTO */
+  /* HEADER */
   .header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 15px;
     gap: 10px;
   }
   
@@ -53,173 +53,221 @@
   .status { 
     font-size: 10px; 
     font-weight: 700; 
-    padding: 4px 10px; 
-    border-radius: 12px;
+    padding: 5px 12px; 
+    border-radius: 15px;
     white-space: nowrap;
     background: #ef4444;
   }
 
-  /* BOTÓN CONFIGURAR - COMPACTO */
+  /* BOTÓN CONFIGURAR */
   .toggle-section-btn {
     width: 100%;
-    padding: 10px;
+    padding: 14px;
     background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     color: white;
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 800;
     cursor: pointer;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
   }
 
-  /* SECCIÓN EQUIPOS - COMPACTA */
+  /* SECCIÓN EQUIPOS - VERTICAL */
   .teams-section {
     display: none;
-    margin-bottom: 12px;
-    padding: 12px;
+    margin-bottom: 15px;
+    padding: 15px;
     background: rgba(15, 23, 42, 0.6);
-    border-radius: 10px;
+    border-radius: 15px;
     border: 2px solid rgba(59, 130, 246, 0.3);
   }
   
   .teams-section.visible { display: block; }
   
   .section-title { 
-    font-size: 10px; 
-    font-weight: 700; 
+    font-size: 12px; 
+    font-weight: 800; 
     text-transform: uppercase; 
     color: #94a3b8; 
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     text-align: center;
   }
   
   .input { 
     width: 100%; 
     background: #0f172a; 
-    border: 2px solid #334155; 
+    border: 3px solid #334155; 
     color: white; 
-    padding: 8px 12px; 
-    border-radius: 6px; 
-    font-size: 13px; 
-    font-weight: 600; 
-    margin-bottom: 8px;
+    padding: 14px; 
+    border-radius: 10px; 
+    font-size: 16px; 
+    font-weight: 700; 
+    margin-bottom: 12px;
     -webkit-user-select: text; 
     user-select: text;
   }
 
-  /* MARCADOR - RESPONSIVE */
+  /* MARCADOR - BOTONES GRANDES */
   .scoreboard {
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .team-block {
+    margin-bottom: 15px;
+    background: rgba(255,255,255,0.05);
     border-radius: 12px;
     padding: 12px;
-    margin-bottom: 12px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
   }
   
-  .score-row { 
-    display: flex; 
-    align-items: center; 
-    gap: 8px; 
-    margin-bottom: 10px;
-    padding: 10px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 8px;
-  }
+  .team-block:last-child { margin-bottom: 0; }
   
-  .score-row:last-child { margin-bottom: 0; }
-  
-  .score-label { 
-    flex: 1; 
-    font-weight: 700; 
-    font-size: 11px;
+  .team-name-display {
     text-align: center;
+    font-weight: 800; 
+    font-size: 14px;
     color: #e2e8f0;
     text-transform: uppercase;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
   }
   
+  .score-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+  
+  /* BOTONES DE GOL - MUY GRANDES */
   .score-btn { 
-    width: 45px; 
-    height: 45px; 
+    width: 70px; 
+    height: 70px; 
     border: none; 
-    border-radius: 8px; 
-    font-size: 24px; 
+    border-radius: 15px; 
+    font-size: 36px; 
     font-weight: 900; 
     cursor: pointer; 
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    transition: transform 0.1s;
   }
   
-  .score-btn.minus { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-  .score-btn.plus { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+  .score-btn:active {
+    transform: scale(0.95);
+  }
+  
+  .score-btn.minus { 
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+  }
+  
+  .score-btn.plus { 
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  }
   
   .score-value { 
-    width: 60px; 
+    width: 90px; 
     text-align: center; 
     font-family: 'Bebas Neue', sans-serif; 
-    font-size: 36px; 
+    font-size: 56px; 
     background: linear-gradient(135deg, #ff3b3b 0%, #dc2626 100%);
-    border-radius: 8px; 
-    padding: 5px 0; 
+    border-radius: 12px; 
+    padding: 8px 0; 
     color: white;
+    box-shadow: 0 6px 20px rgba(255, 59, 59, 0.4);
+    letter-spacing: 2px;
   }
 
-  /* CRONÓMETRO - RESPONSIVE */
+  /* CRONÓMETRO - MUY GRANDE */
   .timer-section {
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-radius: 12px;
-    padding: 15px;
-    margin-bottom: 12px;
-    border: 2px solid rgba(255, 59, 59, 0.3);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border: 3px solid rgba(255, 59, 59, 0.3);
   }
   
   .timer-preview { 
     text-align: center; 
     font-family: 'Bebas Neue', sans-serif; 
-    font-size: 56px;
+    font-size: 80px;
     color: #ff3b3b; 
-    margin: 10px 0 15px; 
-    letter-spacing: 4px;
+    margin: 15px 0 20px; 
+    letter-spacing: 6px;
     font-weight: 900;
+    text-shadow: 0 0 30px rgba(255, 59, 59, 0.6);
   }
   
-  .btn-row { 
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+  /* BOTÓN INICIAR - EL MÁS GRANDE */
+  .btn-start-main {
+    width: 100%;
+    padding: 25px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    border-radius: 15px;
+    font-family: inherit;
+    font-weight: 900;
+    font-size: 20px;
+    text-transform: uppercase;
+    cursor: pointer;
+    color: white;
+    box-shadow: 0 8px 30px rgba(16, 185, 129, 0.5);
     margin-bottom: 12px;
+    letter-spacing: 2px;
   }
   
-  .btn { 
-    padding: 12px; 
+  .btn-start-main:active {
+    transform: scale(0.98);
+  }
+  
+  .btn-row-secondary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .btn-secondary { 
+    padding: 18px; 
     border: none; 
-    border-radius: 8px; 
+    border-radius: 12px; 
     font-family: inherit; 
     font-weight: 800; 
-    font-size: 11px; 
+    font-size: 14px; 
     text-transform: uppercase; 
     cursor: pointer; 
     color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
   }
   
-  .btn-start { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-  .btn-pause { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-  .btn-reset { background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); }
+  .btn-pause { 
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+  }
+  
+  .btn-reset { 
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    box-shadow: 0 4px 15px rgba(107, 114, 128, 0.4);
+  }
   
   .input-timer {
     width: 100%;
     background: #0f172a;
-    border: 2px solid #334155;
+    border: 3px solid #334155;
     color: white;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 14px;
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 18px;
     font-weight: 700;
     text-align: center;
   }
@@ -228,63 +276,67 @@
   .main-buttons {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 10px;
+    margin-bottom: 15px;
   }
   
   .btn-toggle { 
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    padding: 12px;
+    padding: 16px;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     font-weight: 800;
-    font-size: 12px;
+    font-size: 14px;
     cursor: pointer;
     color: white;
     text-transform: uppercase;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
   }
   
   .btn-toggle.hidden-mode {
     background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    box-shadow: 0 4px 15px rgba(107, 114, 128, 0.4);
   }
   
   .btn-clear { 
     background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    padding: 12px;
+    padding: 16px;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     font-weight: 800;
-    font-size: 12px;
+    font-size: 14px;
     cursor: pointer;
     color: white;
     text-transform: uppercase;
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
   }
   
   .btn-obs { 
     background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    padding: 12px;
+    padding: 16px;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     font-weight: 800;
-    font-size: 12px;
+    font-size: 14px;
     cursor: pointer;
     color: white;
     text-transform: uppercase;
     text-decoration: none;
     text-align: center;
     display: block;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
   }
 
   .log-box { 
     background: #0f172a; 
     border: 2px solid #334155; 
-    border-radius: 8px; 
-    padding: 8px; 
-    margin-top: 12px; 
-    font-size: 9px; 
+    border-radius: 10px; 
+    padding: 10px; 
+    margin-top: 15px; 
+    font-size: 10px; 
     font-family: 'Courier New', monospace; 
     color: #94a3b8; 
-    max-height: 80px; 
+    max-height: 100px; 
     overflow-y: auto;
   }
   
@@ -292,29 +344,76 @@
   .log-box .err { color: #ef4444; }
   .log-box .info { color: #60a5fa; }
 
-  /* MEDIA QUERIES PARA MÓVIL */
+  /* OPTIMIZADO PARA MÓVILES */
   @media (max-width: 480px) {
     body { padding: 8px; }
-    .container { padding: 12px; border-radius: 12px; }
+    .container { padding: 12px; }
     
-    h1 { font-size: 14px; }
-    .status { font-size: 9px; padding: 3px 8px; }
+    /* Botones aún más grandes en móvil */
+    .score-btn { 
+      width: 75px; 
+      height: 75px; 
+      font-size: 38px;
+    }
     
-    .score-btn { width: 40px; height: 40px; font-size: 20px; }
-    .score-value { width: 50px; font-size: 32px; }
-    .score-label { font-size: 10px; }
+    .score-value { 
+      width: 95px; 
+      font-size: 58px;
+    }
     
-    .timer-preview { font-size: 48px; }
-    .btn { font-size: 10px; padding: 10px; }
+    .timer-preview { 
+      font-size: 85px;
+    }
     
-    .scoreboard, .timer-section { padding: 10px; }
+    .btn-start-main {
+      padding: 28px;
+      font-size: 22px;
+    }
+    
+    .btn-secondary {
+      padding: 20px;
+      font-size: 15px;
+    }
   }
   
   @media (max-width: 360px) {
-    .score-btn { width: 36px; height: 36px; font-size: 18px; }
-    .score-value { width: 45px; font-size: 28px; }
-    .timer-preview { font-size: 42px; }
-    .btn { font-size: 9px; padding: 8px; }
+    .score-btn { 
+      width: 65px; 
+      height: 65px; 
+      font-size: 32px;
+    }
+    
+    .score-value { 
+      width: 85px; 
+      font-size: 52px;
+    }
+    
+    .timer-preview { 
+      font-size: 70px;
+    }
+    
+    .btn-start-main {
+      padding: 24px;
+      font-size: 20px;
+    }
+  }
+  
+  /* Desktop - mantener proporciones */
+  @media (min-width: 768px) {
+    .container { 
+      max-width: 600px;
+      padding: 20px;
+    }
+    
+    .score-btn { 
+      width: 70px; 
+      height: 70px; 
+      font-size: 36px;
+    }
+    
+    .timer-preview { 
+      font-size: 80px;
+    }
   }
 </style>
 </head>
@@ -326,42 +425,51 @@
     </div>
 
     <button class="toggle-section-btn" onclick="toggleTeamsSection()">
-      <span id="teamsToggleIcon">️</span>
-      <span id="teamsToggleText">CONFIGURAR</span>
+      <span id="teamsToggleIcon">⚙️</span>
+      <span id="teamsToggleText">CONFIGURAR EQUIPOS</span>
     </button>
 
     <div class="teams-section" id="teamsSection">
       <div class="section-title">NOMBRES DE EQUIPOS</div>
-      <input type="text" class="input" id="inputHome" placeholder="LOCAL" value="LOCAL">
-      <input type="text" class="input" id="inputAway" placeholder="VISITANTE" value="VISITANTE">
+      <input type="text" class="input" id="inputHome" placeholder="EQUIPO LOCAL" value="LOCAL">
+      <input type="text" class="input" id="inputAway" placeholder="EQUIPO VISITANTE" value="VISITANTE">
     </div>
 
     <div class="scoreboard">
-      <div class="section-title">MARCADOR</div>
+      <div class="section-title">⚽ MARCADOR</div>
       
-      <div class="score-row">
-        <div class="score-label" id="labelHome">LOCAL</div>
-        <button class="score-btn minus" onclick="changeScore('home', -1)">−</button>
-        <div class="score-value" id="displayScoreHome">0</div>
-        <button class="score-btn plus" onclick="changeScore('home', 1)">+</button>
+      <!-- Equipo Local - Vertical -->
+      <div class="team-block">
+        <div class="team-name-display" id="labelHome">LOCAL</div>
+        <div class="score-controls">
+          <button class="score-btn minus" onclick="changeScore('home', -1)">−</button>
+          <div class="score-value" id="displayScoreHome">0</div>
+          <button class="score-btn plus" onclick="changeScore('home', 1)">+</button>
+        </div>
       </div>
       
-      <div class="score-row">
-        <div class="score-label" id="labelAway">VISITANTE</div>
-        <button class="score-btn minus" onclick="changeScore('away', -1)">−</button>
-        <div class="score-value" id="displayScoreAway">0</div>
-        <button class="score-btn plus" onclick="changeScore('away', 1)">+</button>
+      <!-- Equipo Visitante - Vertical -->
+      <div class="team-block">
+        <div class="team-name-display" id="labelAway">VISITANTE</div>
+        <div class="score-controls">
+          <button class="score-btn minus" onclick="changeScore('away', -1)">−</button>
+          <div class="score-value" id="displayScoreAway">0</div>
+          <button class="score-btn plus" onclick="changeScore('away', 1)">+</button>
+        </div>
       </div>
     </div>
 
     <div class="timer-section">
-      <div class="section-title">CRONÓMETRO</div>
+      <div class="section-title">⏱️ CRONÓMETRO</div>
       <div class="timer-preview" id="timerPreview">00:00</div>
       
-      <div class="btn-row">
-        <button class="btn btn-start" onclick="startTimer()">INICIAR</button>
-        <button class="btn btn-pause" onclick="pauseTimer()">PAUSAR</button>
-        <button class="btn btn-reset" onclick="resetTimer()">RESET</button>
+      <!-- BOTÓN INICIAR - EL MÁS GRANDE -->
+      <button class="btn-start-main" onclick="startTimer()">▶ INICIAR CRONÓMETRO</button>
+      
+      <!-- Botones secundarios -->
+      <div class="btn-row-secondary">
+        <button class="btn-secondary btn-pause" onclick="pauseTimer()"> PAUSAR</button>
+        <button class="btn-secondary btn-reset" onclick="resetTimer()">↻ RESET</button>
       </div>
       
       <input type="number" class="input-timer" id="inputTimer" value="0" min="0" placeholder="Minutos">
@@ -369,8 +477,8 @@
 
     <div class="main-buttons">
       <button class="btn-toggle" id="btnVisibility" onclick="toggleVisibility()">👁 MARCADOR VISIBLE</button>
-      <button class="btn-clear" onclick="clearAll()">LIMPIAR TODO</button>
-      <a href="obs.html" target="_blank" class="btn-obs"> ABRIR OBS</a>
+      <button class="btn-clear" onclick="clearAll()"> LIMPIAR TODO</button>
+      <a href="obs.html" target="_blank" class="btn-obs">📺 ABRIR OVERLAY OBS</a>
     </div>
 
     <div class="log-box" id="logBox"></div>
@@ -402,11 +510,11 @@
     if (section.classList.contains('visible')) {
       section.classList.remove('visible');
       icon.textContent = '⚙️';
-      text.textContent = 'CONFIGURAR';
+      text.textContent = 'CONFIGURAR EQUIPOS';
     } else {
       section.classList.add('visible');
       icon.textContent = '✖️';
-      text.textContent = 'CERRAR';
+      text.textContent = 'CERRAR CONFIGURACIÓN';
     }
   }
 
@@ -437,7 +545,7 @@
       btnVis.textContent = '👁 MARCADOR VISIBLE';
       btnVis.classList.remove('hidden-mode');
     } else {
-      btnVis.textContent = '🚫 MARCADOR OCULTO';
+      btnVis.textContent = ' MARCADOR OCULTO';
       btnVis.classList.add('hidden-mode');
     }
   }
