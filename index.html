@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Panel Control</title>
+<title>Panel de Control</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/bebas-neue@5.0.0/index.min.css">
@@ -11,7 +11,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { 
     font-family: 'Inter', sans-serif; 
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); 
+    background: #1a1a2e; 
     color: white; 
     width: 100%;
     min-height: 100vh;
@@ -21,478 +21,122 @@
     user-select: none;
     touch-action: pan-y;
   }
-  body { padding: 10px; }
-  
+  body { padding: 20px; }
   .container { 
-    max-width: 500px; 
+    max-width: 600px; 
     margin: 0 auto; 
-    background: rgba(22, 33, 62, 0.9); 
+    background: #16213e; 
     border-radius: 20px; 
-    padding: 15px; 
+    padding: 25px; 
     box-shadow: 0 10px 40px rgba(0,0,0,0.5);
   }
-  
-  /* HEADER */
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 15px;
-    gap: 10px;
-  }
-  
-  h1 { 
-    font-size: 16px; 
-    color: #ff3b3b; 
-    letter-spacing: 1px; 
-    font-weight: 900;
-    text-transform: uppercase;
-    flex: 1;
-  }
-  
-  .status { 
-    font-size: 10px; 
-    font-weight: 700; 
-    padding: 5px 12px; 
-    border-radius: 15px;
-    white-space: nowrap;
-    background: #ef4444;
-  }
-
-  /* BOTÓN CONFIGURAR */
-  .toggle-section-btn {
-    width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    border: none;
-    border-radius: 12px;
-    color: white;
-    font-size: 14px;
-    font-weight: 800;
-    cursor: pointer;
-    margin-bottom: 15px;
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-  }
-
-  /* SECCIÓN EQUIPOS - VERTICAL */
-  .teams-section {
-    display: none;
-    margin-bottom: 15px;
-    padding: 15px;
-    background: rgba(15, 23, 42, 0.6);
-    border-radius: 15px;
-    border: 2px solid rgba(59, 130, 246, 0.3);
-  }
-  
-  .teams-section.visible { display: block; }
-  
-  .section-title { 
-    font-size: 12px; 
-    font-weight: 800; 
-    text-transform: uppercase; 
-    color: #94a3b8; 
-    margin-bottom: 12px;
-    text-align: center;
-  }
-  
-  .input { 
-    width: 100%; 
-    background: #0f172a; 
-    border: 3px solid #334155; 
-    color: white; 
-    padding: 14px; 
-    border-radius: 10px; 
-    font-size: 16px; 
-    font-weight: 700; 
-    margin-bottom: 12px;
-    -webkit-user-select: text; 
-    user-select: text;
-  }
-
-  /* MARCADOR - BOTONES GRANDES */
-  .scoreboard {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-radius: 15px;
-    padding: 15px;
-    margin-bottom: 15px;
-    border: 3px solid rgba(255, 255, 255, 0.1);
-  }
-  
-  .team-block {
-    margin-bottom: 15px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 12px;
-    padding: 12px;
-  }
-  
-  .team-block:last-child { margin-bottom: 0; }
-  
-  .team-name-display {
-    text-align: center;
-    font-weight: 800; 
-    font-size: 14px;
-    color: #e2e8f0;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-    letter-spacing: 1px;
-  }
-  
-  .score-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-  }
-  
-  /* BOTONES DE GOL - MUY GRANDES */
-  .score-btn { 
-    width: 70px; 
-    height: 70px; 
-    border: none; 
-    border-radius: 15px; 
-    font-size: 36px; 
-    font-weight: 900; 
-    cursor: pointer; 
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-    transition: transform 0.1s;
-  }
-  
-  .score-btn:active {
-    transform: scale(0.95);
-  }
-  
-  .score-btn.minus { 
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
-  }
-  
-  .score-btn.plus { 
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
-  }
-  
-  .score-value { 
-    width: 90px; 
-    text-align: center; 
-    font-family: 'Bebas Neue', sans-serif; 
-    font-size: 56px; 
-    background: linear-gradient(135deg, #ff3b3b 0%, #dc2626 100%);
-    border-radius: 12px; 
-    padding: 8px 0; 
-    color: white;
-    box-shadow: 0 6px 20px rgba(255, 59, 59, 0.4);
-    letter-spacing: 2px;
-  }
-
-  /* CRONÓMETRO - MUY GRANDE */
-  .timer-section {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-radius: 15px;
-    padding: 20px;
-    margin-bottom: 15px;
-    border: 3px solid rgba(255, 59, 59, 0.3);
-  }
-  
-  .timer-preview { 
-    text-align: center; 
-    font-family: 'Bebas Neue', sans-serif; 
-    font-size: 80px;
-    color: #ff3b3b; 
-    margin: 15px 0 20px; 
-    letter-spacing: 6px;
-    font-weight: 900;
-    text-shadow: 0 0 30px rgba(255, 59, 59, 0.6);
-  }
-  
-  /* BOTÓN INICIAR - EL MÁS GRANDE */
-  .btn-start-main {
-    width: 100%;
-    padding: 25px;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    border: none;
-    border-radius: 15px;
-    font-family: inherit;
-    font-weight: 900;
-    font-size: 20px;
-    text-transform: uppercase;
-    cursor: pointer;
-    color: white;
-    box-shadow: 0 8px 30px rgba(16, 185, 129, 0.5);
-    margin-bottom: 12px;
-    letter-spacing: 2px;
-  }
-  
-  .btn-start-main:active {
-    transform: scale(0.98);
-  }
-  
-  .btn-row-secondary {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 15px;
-  }
-  
-  .btn-secondary { 
-    padding: 18px; 
-    border: none; 
-    border-radius: 12px; 
-    font-family: inherit; 
-    font-weight: 800; 
-    font-size: 14px; 
-    text-transform: uppercase; 
-    cursor: pointer; 
-    color: white;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-  }
-  
-  .btn-pause { 
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
-  }
-  
-  .btn-reset { 
-    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-    box-shadow: 0 4px 15px rgba(107, 114, 128, 0.4);
-  }
-  
-  .input-timer {
-    width: 100%;
-    background: #0f172a;
-    border: 3px solid #334155;
-    color: white;
-    padding: 14px;
-    border-radius: 10px;
-    font-size: 18px;
-    font-weight: 700;
-    text-align: center;
-  }
-
-  /* BOTONES PRINCIPALES */
-  .main-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 15px;
-  }
-  
-  .btn-toggle { 
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    padding: 16px;
-    border: none;
-    border-radius: 12px;
-    font-weight: 800;
-    font-size: 14px;
-    cursor: pointer;
-    color: white;
-    text-transform: uppercase;
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-  }
-  
-  .btn-toggle.hidden-mode {
-    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-    box-shadow: 0 4px 15px rgba(107, 114, 128, 0.4);
-  }
-  
-  .btn-clear { 
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    padding: 16px;
-    border: none;
-    border-radius: 12px;
-    font-weight: 800;
-    font-size: 14px;
-    cursor: pointer;
-    color: white;
-    text-transform: uppercase;
-    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
-  }
-  
-  .btn-obs { 
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    padding: 16px;
-    border: none;
-    border-radius: 12px;
-    font-weight: 800;
-    font-size: 14px;
-    cursor: pointer;
-    color: white;
-    text-transform: uppercase;
-    text-decoration: none;
-    text-align: center;
-    display: block;
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-  }
-
-  .log-box { 
-    background: #0f172a; 
-    border: 2px solid #334155; 
-    border-radius: 10px; 
-    padding: 10px; 
-    margin-top: 15px; 
-    font-size: 10px; 
-    font-family: 'Courier New', monospace; 
-    color: #94a3b8; 
-    max-height: 100px; 
-    overflow-y: auto;
-  }
-  
+  h1 { font-size: 24px; margin-bottom: 10px; color: #ff3b3b; letter-spacing: 2px; text-align: center; }
+  .status { display: block; text-align: center; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 1px; margin: 0 auto 20px; background: #ef4444; max-width: 200px; }
+  .section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .section:last-of-type { border-bottom: none; }
+  .section-title { font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #94a3b8; margin-bottom: 12px; }
+  .input { width: 100%; background: #0f172a; border: 2px solid #334155; color: white; padding: 12px 16px; border-radius: 10px; font-size: 15px; font-family: inherit; font-weight: 600; margin-bottom: 8px; -webkit-user-select: text; user-select: text; }
+  .input:focus { outline: none; border-color: #ff3b3b; }
+  .score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .score-label { flex: 1; font-weight: 700; font-size: 14px; }
+  .score-btn { width: 44px; height: 44px; border: none; border-radius: 10px; font-size: 22px; font-weight: 900; cursor: pointer; color: white; flex-shrink: 0; }
+  .score-btn.minus { background: #ef4444; }
+  .score-btn.plus { background: #10b981; }
+  .score-value { width: 55px; text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 28px; background: #0f172a; border-radius: 10px; padding: 6px 0; flex-shrink: 0; }
+  .btn-row { display: flex; gap: 8px; }
+  .btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-family: inherit; font-weight: 800; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; color: white; }
+  .btn-start { background: #10b981; }
+  .btn-pause { background: #f59e0b; }
+  .btn-reset { background: #6b7280; }
+  .btn-toggle { background: #10b981; width: 100%; margin-top: 8px; }
+  .btn-clear { background: #dc2626; width: 100%; margin-top: 8px; }
+  .btn-obs { background: #3b82f6; width: 100%; margin-top: 8px; }
+  a.btn { display: block; text-decoration: none; text-align: center; }
+  .timer-preview { text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: #ff3b3b; margin: 10px 0; letter-spacing: 4px; }
+  .info-box { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: 10px; padding: 12px; margin-top: 15px; }
+  .info-box p { font-size: 12px; color: #94a3b8; line-height: 1.5; }
+  .info-box code { background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; color: #60a5fa; font-size: 11px; }
+  .log-box { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 10px; margin-top: 12px; font-size: 10px; font-family: monospace; color: #94a3b8; max-height: 100px; overflow-y: auto; }
   .log-box .ok { color: #10b981; }
   .log-box .err { color: #ef4444; }
   .log-box .info { color: #60a5fa; }
 
-  /* OPTIMIZADO PARA MÓVILES */
   @media (max-width: 480px) {
-    body { padding: 8px; }
-    .container { padding: 12px; }
-    
-    /* Botones aún más grandes en móvil */
-    .score-btn { 
-      width: 75px; 
-      height: 75px; 
-      font-size: 38px;
-    }
-    
-    .score-value { 
-      width: 95px; 
-      font-size: 58px;
-    }
-    
-    .timer-preview { 
-      font-size: 85px;
-    }
-    
-    .btn-start-main {
-      padding: 28px;
-      font-size: 22px;
-    }
-    
-    .btn-secondary {
-      padding: 20px;
-      font-size: 15px;
-    }
-  }
-  
-  @media (max-width: 360px) {
-    .score-btn { 
-      width: 65px; 
-      height: 65px; 
-      font-size: 32px;
-    }
-    
-    .score-value { 
-      width: 85px; 
-      font-size: 52px;
-    }
-    
-    .timer-preview { 
-      font-size: 70px;
-    }
-    
-    .btn-start-main {
-      padding: 24px;
-      font-size: 20px;
-    }
-  }
-  
-  /* Desktop - mantener proporciones */
-  @media (min-width: 768px) {
-    .container { 
-      max-width: 600px;
-      padding: 20px;
-    }
-    
-    .score-btn { 
-      width: 70px; 
-      height: 70px; 
-      font-size: 36px;
-    }
-    
-    .timer-preview { 
-      font-size: 80px;
-    }
+    body { padding: 12px; }
+    .container { padding: 18px; border-radius: 15px; }
+    h1 { font-size: 20px; }
+    .timer-preview { font-size: 36px; }
+    .score-btn { width: 40px; height: 40px; font-size: 20px; }
+    .score-value { font-size: 24px; width: 50px; }
+    .btn { font-size: 12px; padding: 12px; }
   }
 </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>PANEL CONTROL</h1>
-      <div class="status" id="status">INICIANDO</div>
+    <h1> PANEL DE CONTROL</h1>
+    <div class="status" id="status">INICIANDO...</div>
+
+    <div class="section">
+      <div class="section-title">📝 Nombres de Equipos</div>
+      <input type="text" class="input" id="inputHome" value="EQUIPO LOCAL">
+      <input type="text" class="input" id="inputAway" value="EQUIPO VISITANTE">
     </div>
 
-    <button class="toggle-section-btn" onclick="toggleTeamsSection()">
-      <span id="teamsToggleIcon">⚙️</span>
-      <span id="teamsToggleText">CONFIGURAR EQUIPOS</span>
-    </button>
-
-    <div class="teams-section" id="teamsSection">
-      <div class="section-title">NOMBRES DE EQUIPOS</div>
-      <input type="text" class="input" id="inputHome" placeholder="EQUIPO LOCAL" value="LOCAL">
-      <input type="text" class="input" id="inputAway" placeholder="EQUIPO VISITANTE" value="VISITANTE">
-    </div>
-
-    <div class="scoreboard">
-      <div class="section-title">⚽ MARCADOR</div>
-      
-      <!-- Equipo Local - Vertical -->
-      <div class="team-block">
-        <div class="team-name-display" id="labelHome">LOCAL</div>
-        <div class="score-controls">
-          <button class="score-btn minus" onclick="changeScore('home', -1)">−</button>
-          <div class="score-value" id="displayScoreHome">0</div>
-          <button class="score-btn plus" onclick="changeScore('home', 1)">+</button>
-        </div>
+    <div class="section">
+      <div class="section-title">⚽ Marcador</div>
+      <div class="score-row">
+        <div class="score-label" id="labelHome">EQUIPO LOCAL</div>
+        <button class="score-btn minus" onclick="changeScore('home', -1)">−</button>
+        <div class="score-value" id="displayScoreHome">0</div>
+        <button class="score-btn plus" onclick="changeScore('home', 1)">+</button>
       </div>
-      
-      <!-- Equipo Visitante - Vertical -->
-      <div class="team-block">
-        <div class="team-name-display" id="labelAway">VISITANTE</div>
-        <div class="score-controls">
-          <button class="score-btn minus" onclick="changeScore('away', -1)">−</button>
-          <div class="score-value" id="displayScoreAway">0</div>
-          <button class="score-btn plus" onclick="changeScore('away', 1)">+</button>
-        </div>
+      <div class="score-row">
+        <div class="score-label" id="labelAway">EQUIPO VISITANTE</div>
+        <button class="score-btn minus" onclick="changeScore('away', -1)">−</button>
+        <div class="score-value" id="displayScoreAway">0</div>
+        <button class="score-btn plus" onclick="changeScore('away', 1)">+</button>
       </div>
     </div>
 
-    <div class="timer-section">
-      <div class="section-title">⏱️ CRONÓMETRO</div>
+    <div class="section">
+      <div class="section-title">⏱️ Cronómetro</div>
       <div class="timer-preview" id="timerPreview">00:00</div>
-      
-      <!-- BOTÓN INICIAR - EL MÁS GRANDE -->
-      <button class="btn-start-main" onclick="startTimer()">▶ INICIAR CRONÓMETRO</button>
-      
-      <!-- Botones secundarios -->
-      <div class="btn-row-secondary">
-        <button class="btn-secondary btn-pause" onclick="pauseTimer()"> PAUSAR</button>
-        <button class="btn-secondary btn-reset" onclick="resetTimer()">↻ RESET</button>
+      <div class="btn-row">
+        <button class="btn btn-start" onclick="startTimer()">▶ Iniciar</button>
+        <button class="btn btn-pause" onclick="pauseTimer()">❚ Pausar</button>
+        <button class="btn btn-reset" onclick="resetTimer()">↺ Reset</button>
       </div>
-      
-      <input type="number" class="input-timer" id="inputTimer" value="0" min="0" placeholder="Minutos">
+      <input type="number" class="input" id="inputTimer" value="0" min="0" style="margin-top:12px;">
     </div>
 
-    <div class="main-buttons">
-      <button class="btn-toggle" id="btnVisibility" onclick="toggleVisibility()">👁 MARCADOR VISIBLE</button>
-      <button class="btn-clear" onclick="clearAll()"> LIMPIAR TODO</button>
-      <a href="obs.html" target="_blank" class="btn-obs">📺 ABRIR OVERLAY OBS</a>
-    </div>
+    <!-- 👁 NUEVO BOTÓN: MOSTRAR / OCULTAR MARCADOR EN EL OVERLAY -->
+    <button class="btn btn-toggle" id="btnVisibility" onclick="toggleVisibility()">👁 MARCADOR VISIBLE</button>
+
+    <button class="btn btn-clear" onclick="clearAll()"> LIMPIAR TODO</button>
+    
+    <a href="obs.html" target="_blank" class="btn btn-obs">📺 ABRIR OVERLAY PARA OBS</a>
 
     <div class="log-box" id="logBox"></div>
+
+    <div class="info-box">
+      <p><strong>📋 Instrucciones:</strong></p>
+      <p>1. Panel: <code>index.html</code><br>
+         2. Overlay OBS: <code>obs.html</code><br>
+         3. URL OBS: <code>https://tu-sitio.netlify.app/obs.html</code><br>
+         4. Dimensiones: <code>1080 x 608</code></p>
+    </div>
   </div>
 
 <script>
-  const SUPABASE_URL = 'https://xwhtvfcsbvwyymenqmva.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3aHR2ZmNzYnZ3eXltZW5xbXZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczNjc1MjUsImV4cCI6MjEwMjk0MzUyNX0.NDqptVkHHmTasYeO6tN91GIh5_cNGAaYyBIfRps_fR4';
+  const SUPABASE_URL = 'https://ccjggxrjmuahaaoujspu.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjamdneHJqbXVhaGFhb3Vqc3B1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2MzQwNjksImV4cCI6MjEwMTIxMDA2OX0.vWVJ2gpgw8-jvu714R1x8rNPQbzQpjKA4RTXmVwPlks';
   
   const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let state = { 
-    nameHome: 'LOCAL', 
-    nameAway: 'VISITANTE', 
+    nameHome: 'EQUIPO LOCAL', 
+    nameAway: 'EQUIPO VISITANTE', 
     scoreHome: 0, 
     scoreAway: 0, 
     timerSeconds: 0, 
@@ -501,22 +145,6 @@
     visible: true
   };
   let timerInterval = null;
-
-  function toggleTeamsSection() {
-    const section = document.getElementById('teamsSection');
-    const icon = document.getElementById('teamsToggleIcon');
-    const text = document.getElementById('teamsToggleText');
-    
-    if (section.classList.contains('visible')) {
-      section.classList.remove('visible');
-      icon.textContent = '⚙️';
-      text.textContent = 'CONFIGURAR EQUIPOS';
-    } else {
-      section.classList.add('visible');
-      icon.textContent = '✖️';
-      text.textContent = 'CERRAR CONFIGURACIÓN';
-    }
-  }
 
   function log(msg, type = 'info') {
     const box = document.getElementById('logBox');
@@ -540,13 +168,14 @@
     document.getElementById('displayScoreAway').textContent = state.scoreAway;
     document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
     
+    // Actualiza el botón de mostrar/ocultar
     const btnVis = document.getElementById('btnVisibility');
     if (state.visible) {
       btnVis.textContent = '👁 MARCADOR VISIBLE';
-      btnVis.classList.remove('hidden-mode');
+      btnVis.style.background = '#10b981';
     } else {
-      btnVis.textContent = ' MARCADOR OCULTO';
-      btnVis.classList.add('hidden-mode');
+      btnVis.textContent = '🚫 MARCADOR OCULTO';
+      btnVis.style.background = '#6b7280';
     }
   }
 
@@ -554,6 +183,7 @@
     state.visible = !state.visible;
     updateUI();
     saveToSupabase();
+    log(state.visible ? '👁 Marcador visible en overlay' : '🚫 Marcador oculto en overlay', 'info');
   }
 
   function updateStatus(text, color) {
@@ -563,6 +193,7 @@
   }
 
   async function saveToSupabase() {
+    log('Guardando...', 'info');
     try {
       const { error } = await sbClient.from('overlay_state').upsert({
         id: 1, 
@@ -575,8 +206,9 @@
         session_start: state.sessionStart,
         visible: state.visible
       });
-      if (error) log('Error: ' + error.message, 'err');
-    } catch (e) { log('Excepción: ' + e.message, 'err'); }
+      if (error) log('❌ Error: ' + error.message, 'err');
+      else log('✅ Guardado OK', 'ok');
+    } catch (e) { log('⚠️ Excepción: ' + e.message, 'err'); }
   }
 
   function startTimer() {
@@ -591,14 +223,14 @@
     }, 1000);
     
     saveToSupabase();
-    updateStatus('CORRIENDO', '#10b981');
+    updateStatus('▶ CORRIENDO', '#10b981');
   }
 
   function pauseTimer() {
     state.isRunning = false;
     if (timerInterval) clearInterval(timerInterval);
     saveToSupabase();
-    updateStatus('PAUSADO', '#f59e0b');
+    updateStatus('⏸ PAUSADO', '#f59e0b');
   }
 
   function resetTimer() {
@@ -609,7 +241,7 @@
     state.sessionStart = 0;
     updateUI();
     saveToSupabase();
-    updateStatus('RESET', '#6b7280');
+    updateStatus('🔄 RESET', '#6b7280');
   }
 
   function changeScore(team, amount) {
@@ -623,16 +255,14 @@
   }
 
   async function init() {
+    log('Conectando...', 'info');
     try {
       const { data, error } = await sbClient.from('overlay_state').select('*').eq('id', 1).single();
-      if (error) { 
-        updateStatus('ERROR', '#ef4444'); 
-        return; 
-      }
+      if (error) { log('❌ Error: ' + error.message, 'err'); updateStatus('⚠️ ERROR', '#ef4444'); return; }
       
       state = { 
-        nameHome: data.name_home || 'LOCAL', 
-        nameAway: data.name_away || 'VISITANTE', 
+        nameHome: data.name_home || 'EQUIPO LOCAL', 
+        nameAway: data.name_away || 'EQUIPO VISITANTE', 
         scoreHome: data.score_home || 0, 
         scoreAway: data.score_away || 0, 
         timerSeconds: data.timer_seconds || 0, 
@@ -649,13 +279,12 @@
           state.timerSeconds = Math.floor((Date.now() - state.sessionStart) / 1000);
           document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
         }, 1000);
-        updateStatus('CORRIENDO', '#10b981');
+        updateStatus('▶ CORRIENDO', '#10b981');
       } else {
-        updateStatus('CONECTADO', '#10b981');
+        updateStatus('✅ CONECTADO', '#10b981');
       }
-    } catch (e) { 
-      updateStatus('ERROR', '#ef4444'); 
-    }
+      log('✅ Conectado', 'ok');
+    } catch (e) { log('⚠️ Excepción: ' + e.message, 'err'); updateStatus('⚠️ ERROR', '#ef4444'); }
   }
 
   sbClient.channel('overlay_changes')
@@ -663,24 +292,26 @@
       { event: '*', schema: 'public', table: 'overlay_state', filter: 'id=eq.1' },
       (payload) => {
         const d = payload.new;
-        state.nameHome = d.name_home;
-        state.nameAway = d.name_away;
-        state.scoreHome = d.score_home;
-        state.scoreAway = d.score_away;
-        state.timerSeconds = d.timer_seconds;
-        state.isRunning = d.is_running;
-        state.sessionStart = d.session_start;
-        state.visible = d.visible !== false;
-        
-        if (state.isRunning && !timerInterval) {
-          state.sessionStart = Date.now() - (state.timerSeconds * 1000);
-          timerInterval = setInterval(() => {
-            state.timerSeconds = Math.floor((Date.now() - state.sessionStart) / 1000);
-            document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
-          }, 1000);
-          updateStatus('CORRIENDO', '#10b981');
+        if (d.name_home !== state.nameHome || d.score_home !== state.scoreHome || d.timer_seconds !== state.timerSeconds || d.visible !== state.visible) {
+          state.nameHome = d.name_home;
+          state.nameAway = d.name_away;
+          state.scoreHome = d.score_home;
+          state.scoreAway = d.score_away;
+          state.timerSeconds = d.timer_seconds;
+          state.isRunning = d.is_running;
+          state.sessionStart = d.session_start;
+          state.visible = d.visible !== false;
+          
+          if (state.isRunning && !timerInterval) {
+            state.sessionStart = Date.now() - (state.timerSeconds * 1000);
+            timerInterval = setInterval(() => {
+              state.timerSeconds = Math.floor((Date.now() - state.sessionStart) / 1000);
+              document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
+            }, 1000);
+            updateStatus('▶ CORRIENDO', '#10b981');
+          }
+          updateUI();
         }
-        updateUI();
       }
     )
     .subscribe();
@@ -690,11 +321,11 @@
   
   function clearAll() {
     if(confirm('¿Borrar todo?')) {
-      state = { nameHome: 'LOCAL', nameAway: 'VISITANTE', scoreHome: 0, scoreAway: 0, timerSeconds: 0, isRunning: false, sessionStart: 0, visible: true };
+      state = { nameHome: 'EQUIPO LOCAL', nameAway: 'EQUIPO VISITANTE', scoreHome: 0, scoreAway: 0, timerSeconds: 0, isRunning: false, sessionStart: 0, visible: true };
       if (timerInterval) clearInterval(timerInterval);
       updateUI();
       saveToSupabase();
-      updateStatus('LIMPIO', '#6b7280');
+      updateStatus('🔄 LIMPIO', '#6b7280');
     }
   }
 

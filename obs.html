@@ -195,8 +195,8 @@ body {
   margin: 0 6px;
 }
 
-/* VIDEO PATROCINADORES */
-.sponsor-video-container {
+/* PATROCINADORES EN IMÁGENES */
+.sponsor-image-container {
   position: absolute;
   top: 0;
   left: 0;
@@ -208,17 +208,19 @@ body {
   justify-content: center;
   align-items: flex-end;
   padding-bottom: 30px;
+  pointer-events: none;
 }
 
-.sponsor-video-container.active {
+.sponsor-image-container.active {
   display: flex;
 }
 
-.sponsor-video-container video {
-  width: 600px;
+.sponsor-image-container img {
+  width: 964px;
   height: auto;
   max-width: 90%;
   object-fit: contain;
+  opacity: 1;
 }
 </style>
 </head>
@@ -273,11 +275,9 @@ body {
 
   </div>
 
-  <!-- VIDEO PATROCINADORES -->
-  <div class="sponsor-video-container" id="sponsorVideoContainer">
-    <video id="sponsorVideo" muted playsinline>
-      <source src="patrocinadores.mp4" type="video/mp4">
-    </video>
+  <!-- PATROCINADORES EN IMÁGENES -->
+  <div class="sponsor-image-container" id="sponsorImageContainer">
+    <img id="sponsorImage" src="Importadora.jpg" alt="Patrocinador">
   </div>
 
 </div>
@@ -310,50 +310,66 @@ let extraInterval = null;
 
 const MAIN_TIME_LIMIT = 45 * 60;
 const SPONSOR_INTERVAL_MS = 10 * 60 * 1000;
+const SPONSOR_IMAGE_DURATION_MS = 10 * 1000;
 
-const sponsorVideo =
-  document.getElementById('sponsorVideo');
+const SPONSOR_IMAGES = [
+  'Importadora.jpg',
+  'MUNI.jpg',
+  'TAQUEREA.jpg'
+];
+
+const sponsorImage =
+  document.getElementById('sponsorImage');
 
 const sponsorContainer =
-  document.getElementById('sponsorVideoContainer');
+  document.getElementById('sponsorImageContainer');
 
 let sponsorInterval = null;
+let sponsorSequenceRunning = false;
+let sponsorTimeouts = [];
 
 
 /* ==========================
    PATROCINADORES
 ========================== */
 
-function showSponsorVideo() {
-
-  sponsorContainer.classList.add('active');
-
-  sponsorVideo.currentTime = 0;
-
-  sponsorVideo
-    .play()
-    .catch(e =>
-      console.log('⚠️ Error video:', e)
-    );
+function clearSponsorTimeouts() {
+  sponsorTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+  sponsorTimeouts = [];
 }
 
-sponsorVideo.addEventListener(
-  'ended',
-  () => {
+function showSponsorSequence() {
 
+  if (sponsorSequenceRunning) return;
+
+  sponsorSequenceRunning = true;
+  clearSponsorTimeouts();
+  sponsorContainer.classList.add('active');
+
+  SPONSOR_IMAGES.forEach((imageSrc, index) => {
+    const timeoutId = setTimeout(() => {
+      sponsorImage.src = imageSrc;
+    }, index * SPONSOR_IMAGE_DURATION_MS);
+
+    sponsorTimeouts.push(timeoutId);
+  });
+
+  const hideTimeoutId = setTimeout(() => {
     sponsorContainer.classList.remove('active');
+    sponsorSequenceRunning = false;
+    clearSponsorTimeouts();
+  }, SPONSOR_IMAGES.length * SPONSOR_IMAGE_DURATION_MS);
 
-    sponsorVideo.pause();
-  }
-);
+  sponsorTimeouts.push(hideTimeoutId);
+}
 
 function startSponsorCycle() {
 
-  showSponsorVideo();
+  showSponsorSequence();
 
   sponsorInterval = setInterval(
     () => {
-      showSponsorVideo();
+      showSponsorSequence();
     },
     SPONSOR_INTERVAL_MS
   );
