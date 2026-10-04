@@ -37,12 +37,60 @@
   .section-title { font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #94a3b8; margin-bottom: 12px; }
   .input { width: 100%; background: #0f172a; border: 2px solid #334155; color: white; padding: 12px 16px; border-radius: 10px; font-size: 15px; font-family: inherit; font-weight: 600; margin-bottom: 8px; -webkit-user-select: text; user-select: text; }
   .input:focus { outline: none; border-color: #ff3b3b; }
-  .score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .score-label { flex: 1; font-weight: 700; font-size: 14px; }
-  .score-btn { width: 44px; height: 44px; border: none; border-radius: 10px; font-size: 22px; font-weight: 900; cursor: pointer; color: white; flex-shrink: 0; }
+  .team-config-section { padding-bottom: 12px; }
+  .team-config-fields { display: none; margin-top: 10px; }
+  .team-config-fields.open { display: block; }
+  .btn-team-toggle { background: #2563eb; width: 100%; }
+  .btn-config { background: #10b981; width: 100%; margin-top: 4px; }
+
+  .score-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    text-align: center;
+  }
+  .score-row:last-child { margin-bottom: 0; }
+  .score-label {
+    width: 100%;
+    font-weight: 900;
+    font-size: 18px;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+  .score-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+  }
+  .score-btn {
+    width: 58px;
+    height: 58px;
+    border: none;
+    border-radius: 14px;
+    font-size: 30px;
+    font-weight: 900;
+    cursor: pointer;
+    color: white;
+    flex-shrink: 0;
+  }
   .score-btn.minus { background: #ef4444; }
   .score-btn.plus { background: #10b981; }
-  .score-value { width: 55px; text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 28px; background: #0f172a; border-radius: 10px; padding: 6px 0; flex-shrink: 0; }
+  .score-value {
+    width: 82px;
+    text-align: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 46px;
+    line-height: 1;
+    background: #0f172a;
+    border-radius: 14px;
+    padding: 8px 0;
+    flex-shrink: 0;
+  }
   .btn-row { display: flex; gap: 8px; }
   .btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-family: inherit; font-weight: 800; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; color: white; }
   .btn-start { background: #10b981; }
@@ -51,9 +99,8 @@
   .btn-toggle { background: #10b981; width: 100%; margin-top: 8px; }
   .btn-clear { background: #dc2626; width: 100%; margin-top: 8px; }
   .btn-obs { background: #3b82f6; width: 100%; margin-top: 8px; }
-  .btn-config { background: #2563eb; width: 100%; margin-top: 4px; }
   a.btn { display: block; text-decoration: none; text-align: center; }
-  .timer-preview { text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: #ff3b3b; margin: 10px 0; letter-spacing: 4px; }
+  .timer-preview { text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 72px; line-height: 1; color: #ff3b3b; margin: 14px 0 18px; letter-spacing: 5px; }
   .info-box { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: 10px; padding: 12px; margin-top: 15px; }
   .info-box p { font-size: 12px; color: #94a3b8; line-height: 1.5; }
   .info-box code { background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; color: #60a5fa; font-size: 11px; }
@@ -66,9 +113,11 @@
     body { padding: 12px; }
     .container { padding: 18px; border-radius: 15px; }
     h1 { font-size: 20px; }
-    .timer-preview { font-size: 36px; }
-    .score-btn { width: 40px; height: 40px; font-size: 20px; }
-    .score-value { font-size: 24px; width: 50px; }
+    .timer-preview { font-size: 62px; }
+    .score-label { font-size: 17px; }
+    .score-btn { width: 54px; height: 54px; font-size: 28px; }
+    .score-value { font-size: 42px; width: 78px; }
+    .score-controls { gap: 10px; }
     .btn { font-size: 12px; padding: 12px; }
   }
 </style>
@@ -78,26 +127,32 @@
     <h1> PANEL DE CONTROL</h1>
     <div class="status" id="status">INICIANDO...</div>
 
-    <div class="section">
-      <div class="section-title">📝 Nombres de Equipos</div>
-      <input type="text" class="input" id="inputHome" value="EQUIPO LOCAL">
-      <input type="text" class="input" id="inputAway" value="EQUIPO VISITANTE">
-      <button class="btn btn-config" id="btnSaveTeams" onclick="saveTeamConfiguration()">💾 GUARDAR CONFIGURACIÓN</button>
+    <div class="section team-config-section">
+      <button class="btn btn-team-toggle" id="btnTeamToggle" onclick="toggleTeamConfig()">✏️ ASIGNAR NOMBRES DE EQUIPOS</button>
+      <div class="team-config-fields" id="teamConfigFields">
+        <input type="text" class="input" id="inputHome" value="EQUIPO LOCAL" placeholder="Equipo local">
+        <input type="text" class="input" id="inputAway" value="EQUIPO VISITANTE" placeholder="Equipo visitante">
+        <button class="btn btn-config" id="btnSaveTeams" onclick="saveTeamConfiguration()">💾 GUARDAR CONFIGURACIÓN</button>
+      </div>
     </div>
 
     <div class="section">
       <div class="section-title">⚽ Marcador</div>
       <div class="score-row">
         <div class="score-label" id="labelHome">EQUIPO LOCAL</div>
-        <button class="score-btn minus" onclick="changeScore('home', -1)">−</button>
-        <div class="score-value" id="displayScoreHome">0</div>
-        <button class="score-btn plus" onclick="changeScore('home', 1)">+</button>
+        <div class="score-controls">
+          <button class="score-btn minus" onclick="changeScore('home', -1)">−</button>
+          <div class="score-value" id="displayScoreHome">0</div>
+          <button class="score-btn plus" onclick="changeScore('home', 1)">+</button>
+        </div>
       </div>
       <div class="score-row">
         <div class="score-label" id="labelAway">EQUIPO VISITANTE</div>
-        <button class="score-btn minus" onclick="changeScore('away', -1)">−</button>
-        <div class="score-value" id="displayScoreAway">0</div>
-        <button class="score-btn plus" onclick="changeScore('away', 1)">+</button>
+        <div class="score-controls">
+          <button class="score-btn minus" onclick="changeScore('away', -1)">−</button>
+          <div class="score-value" id="displayScoreAway">0</div>
+          <button class="score-btn plus" onclick="changeScore('away', 1)">+</button>
+        </div>
       </div>
     </div>
 
@@ -237,6 +292,25 @@
     log(state.visible ? '👁 Marcador visible en overlay' : '🚫 Marcador oculto en overlay', 'info');
   }
 
+  function toggleTeamConfig(forceOpen = null) {
+    const fields = document.getElementById('teamConfigFields');
+    const button = document.getElementById('btnTeamToggle');
+
+    const shouldOpen =
+      forceOpen === null
+        ? !fields.classList.contains('open')
+        : forceOpen;
+
+    fields.classList.toggle('open', shouldOpen);
+    button.textContent = shouldOpen
+      ? '✖ CERRAR ASIGNACIÓN DE NOMBRES'
+      : '✏️ ASIGNAR NOMBRES DE EQUIPOS';
+
+    if (shouldOpen) {
+      document.getElementById('inputHome').focus();
+    }
+  }
+
   function saveTeamConfiguration() {
     const homeInput = document.getElementById('inputHome');
     const awayInput = document.getElementById('inputAway');
@@ -248,6 +322,7 @@
     homeInput.blur();
     awayInput.blur();
     updateUI();
+    toggleTeamConfig(false);
     saveToSupabase();
     log('✅ Configuración de equipos guardada', 'ok');
   }
