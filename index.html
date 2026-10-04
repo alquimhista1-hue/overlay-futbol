@@ -51,6 +51,7 @@
   .btn-toggle { background: #10b981; width: 100%; margin-top: 8px; }
   .btn-clear { background: #dc2626; width: 100%; margin-top: 8px; }
   .btn-obs { background: #3b82f6; width: 100%; margin-top: 8px; }
+  .btn-config { background: #2563eb; width: 100%; margin-top: 4px; }
   a.btn { display: block; text-decoration: none; text-align: center; }
   .timer-preview { text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: #ff3b3b; margin: 10px 0; letter-spacing: 4px; }
   .info-box { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: 10px; padding: 12px; margin-top: 15px; }
@@ -81,6 +82,7 @@
       <div class="section-title">📝 Nombres de Equipos</div>
       <input type="text" class="input" id="inputHome" value="EQUIPO LOCAL">
       <input type="text" class="input" id="inputAway" value="EQUIPO VISITANTE">
+      <button class="btn btn-config" id="btnSaveTeams" onclick="saveTeamConfiguration()">💾 GUARDAR CONFIGURACIÓN</button>
     </div>
 
     <div class="section">
@@ -145,6 +147,7 @@
     visible: true
   };
   let timerInterval = null;
+  let teamInputsDirty = false;
 
   function log(msg, type = 'info') {
     const box = document.getElementById('logBox');
@@ -160,8 +163,11 @@
   }
 
   function updateUI() {
-    document.getElementById('inputHome').value = state.nameHome;
-    document.getElementById('inputAway').value = state.nameAway;
+    // No sobrescribe los campos mientras el usuario está escribiendo en el teléfono.
+    if (!teamInputsDirty) {
+      document.getElementById('inputHome').value = state.nameHome;
+      document.getElementById('inputAway').value = state.nameAway;
+    }
     document.getElementById('labelHome').textContent = state.nameHome;
     document.getElementById('labelAway').textContent = state.nameAway;
     document.getElementById('displayScoreHome').textContent = state.scoreHome;
@@ -184,6 +190,21 @@
     updateUI();
     saveToSupabase();
     log(state.visible ? '👁 Marcador visible en overlay' : '🚫 Marcador oculto en overlay', 'info');
+  }
+
+  function saveTeamConfiguration() {
+    const homeInput = document.getElementById('inputHome');
+    const awayInput = document.getElementById('inputAway');
+
+    state.nameHome = (homeInput.value.trim() || 'EQUIPO LOCAL').toUpperCase();
+    state.nameAway = (awayInput.value.trim() || 'EQUIPO VISITANTE').toUpperCase();
+    teamInputsDirty = false;
+
+    homeInput.blur();
+    awayInput.blur();
+    updateUI();
+    saveToSupabase();
+    log('✅ Configuración de equipos guardada', 'ok');
   }
 
   function updateStatus(text, color) {
@@ -316,13 +337,28 @@
     )
     .subscribe();
 
-  document.getElementById('inputHome').addEventListener('input', (e) => { state.nameHome = e.target.value.toUpperCase(); updateUI(); saveToSupabase(); });
-  document.getElementById('inputAway').addEventListener('input', (e) => { state.nameAway = e.target.value.toUpperCase(); updateUI(); saveToSupabase(); });
+  const inputHome = document.getElementById('inputHome');
+  const inputAway = document.getElementById('inputAway');
+
+  // Escribir ya no guarda en Supabase letra por letra. Evita parpadeos y saltos del cursor en móvil.
+  [inputHome, inputAway].forEach((input) => {
+    input.addEventListener('input', () => {
+      teamInputsDirty = true;
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveTeamConfiguration();
+      }
+    });
+  });
   
   function clearAll() {
     if(confirm('¿Borrar todo?')) {
       state = { nameHome: 'EQUIPO LOCAL', nameAway: 'EQUIPO VISITANTE', scoreHome: 0, scoreAway: 0, timerSeconds: 0, isRunning: false, sessionStart: 0, visible: true };
       if (timerInterval) clearInterval(timerInterval);
+      teamInputsDirty = false;
       updateUI();
       saveToSupabase();
       updateStatus('🔄 LIMPIO', '#6b7280');
