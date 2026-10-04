@@ -149,6 +149,51 @@
   let timerInterval = null;
   let teamInputsDirty = false;
 
+  const LOCAL_CACHE_KEY = 'cdn_overlay_state_v2';
+
+  function saveLocalCache() {
+    try {
+      localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.warn('No se pudo guardar caché local:', e);
+    }
+  }
+
+  function loadLocalCache() {
+    try {
+      const cached = localStorage.getItem(LOCAL_CACHE_KEY);
+      return cached ? JSON.parse(cached) : null;
+    } catch (e) {
+      console.warn('No se pudo leer caché local:', e);
+      return null;
+    }
+  }
+
+  function getElapsedSeconds() {
+    if (state.isRunning && Number(state.sessionStart) > 0) {
+      return Math.max(0, Math.floor((Date.now() - Number(state.sessionStart)) / 1000));
+    }
+    return Math.max(0, Number(state.timerSeconds) || 0);
+  }
+
+  function renderTimer() {
+    document.getElementById('timerPreview').textContent = formatTime(getElapsedSeconds());
+  }
+
+  function startLocalTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    renderTimer();
+    timerInterval = setInterval(renderTimer, 1000);
+  }
+
+  function stopLocalTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    renderTimer();
+  }
+
   function log(msg, type = 'info') {
     const box = document.getElementById('logBox');
     const time = new Date().toLocaleTimeString();
@@ -172,7 +217,7 @@
     document.getElementById('labelAway').textContent = state.nameAway;
     document.getElementById('displayScoreHome').textContent = state.scoreHome;
     document.getElementById('displayScoreAway').textContent = state.scoreAway;
-    document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
+    renderTimer();
     
     // Actualiza el botón de mostrar/ocultar
     const btnVis = document.getElementById('btnVisibility');
@@ -214,6 +259,9 @@
   }
 
   async function saveToSupabase() {
+    // Guardado local inmediato para que el cronómetro siga siendo recuperable
+    // aunque la conexión falle temporalmente.
+    saveLocalCache();
     log('Guardando...', 'info');
     try {
       const { error } = await sbClient.from('overlay_state').upsert({
@@ -234,32 +282,38 @@
 
   function startTimer() {
     if (state.isRunning) return;
+
+    // Conserva el tiempo acumulado y fija un origen absoluto.
+    state.sessionStart = Date.now() - (Number(state.timerSeconds) || 0) * 1000;
     state.isRunning = true;
-    state.sessionStart = Date.now() - (state.timerSeconds * 1000);
-    
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-      state.timerSeconds = Math.floor((Date.now() - state.sessionStart) / 1000);
-      document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
-    }, 1000);
-    
+
+    startLocalTimer();
     saveToSupabase();
     updateStatus('▶ CORRIENDO', '#10b981');
   }
 
   function pauseTimer() {
+    if (!state.isRunning) return;
+
+    // Congela exactamente el tiempo alcanzado antes de pausar.
+    state.timerSeconds = getElapsedSeconds();
     state.isRunning = false;
-    if (timerInterval) clearInterval(timerInterval);
+    state.sessionStart = 0;
+
+    stopLocalTimer();
+    updateUI();
     saveToSupabase();
     updateStatus('⏸ PAUSADO', '#f59e0b');
   }
 
   function resetTimer() {
     state.isRunning = false;
-    if (timerInterval) clearInterval(timerInterval);
+    stopLocalTimer();
+
     const mins = parseInt(document.getElementById('inputTimer').value) || 0;
     state.timerSeconds = mins * 60;
     state.sessionStart = 0;
+
     updateUI();
     saveToSupabase();
     updateStatus('🔄 RESET', '#6b7280');
@@ -277,62 +331,88 @@
 
   async function init() {
     log('Conectando...', 'info');
+
     try {
-      const { data, error } = await sbClient.from('overlay_state').select('*').eq('id', 1).single();
-      if (error) { log('❌ Error: ' + error.message, 'err'); updateStatus('⚠️ ERROR', '#ef4444'); return; }
-      
-      state = { 
-        nameHome: data.name_home || 'EQUIPO LOCAL', 
-        nameAway: data.name_away || 'EQUIPO VISITANTE', 
-        scoreHome: data.score_home || 0, 
-        scoreAway: data.score_away || 0, 
-        timerSeconds: data.timer_seconds || 0, 
-        isRunning: data.is_running || false, 
-        sessionStart: data.session_start || 0,
+      const { data, error } = await sbClient
+        .from('overlay_state')
+        .select('*')
+        .eq('id', 1)
+        .single();
+
+      if (error) throw error;
+
+      state = {
+        nameHome: data.name_home ?? 'EQUIPO LOCAL',
+        nameAway: data.name_away ?? 'EQUIPO VISITANTE',
+        scoreHome: data.score_home ?? 0,
+        scoreAway: data.score_away ?? 0,
+        timerSeconds: data.timer_seconds ?? 0,
+        isRunning: data.is_running ?? false,
+        sessionStart: Number(data.session_start) || 0,
         visible: data.visible !== false
       };
+
+      saveLocalCache();
       updateUI();
-      
-      if (state.isRunning) {
-        state.sessionStart = Date.now() - (state.timerSeconds * 1000);
-        if (timerInterval) clearInterval(timerInterval);
-        timerInterval = setInterval(() => {
-          state.timerSeconds = Math.floor((Date.now() - state.sessionStart) / 1000);
-          document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
-        }, 1000);
+
+      if (state.isRunning && state.sessionStart > 0) {
+        // No se recalcula sessionStart: se respeta el origen guardado.
+        startLocalTimer();
         updateStatus('▶ CORRIENDO', '#10b981');
       } else {
+        stopLocalTimer();
         updateStatus('✅ CONECTADO', '#10b981');
       }
+
       log('✅ Conectado', 'ok');
-    } catch (e) { log('⚠️ Excepción: ' + e.message, 'err'); updateStatus('⚠️ ERROR', '#ef4444'); }
+
+    } catch (e) {
+      const cached = loadLocalCache();
+
+      if (cached) {
+        state = { ...state, ...cached, sessionStart: Number(cached.sessionStart) || 0 };
+        updateUI();
+
+        if (state.isRunning && state.sessionStart > 0) startLocalTimer();
+        else stopLocalTimer();
+
+        updateStatus('📴 SIN CONEXIÓN · USANDO CACHÉ', '#f59e0b');
+        log('⚠️ Sin conexión. Cronómetro recuperado desde este dispositivo.', 'info');
+      } else {
+        updateStatus('⚠️ ERROR DE CONEXIÓN', '#ef4444');
+        log('❌ Error: ' + (e.message || e), 'err');
+      }
+    }
   }
 
   sbClient.channel('overlay_changes')
-    .on('postgres_changes', 
+    .on(
+      'postgres_changes',
       { event: '*', schema: 'public', table: 'overlay_state', filter: 'id=eq.1' },
       (payload) => {
         const d = payload.new;
-        if (d.name_home !== state.nameHome || d.score_home !== state.scoreHome || d.timer_seconds !== state.timerSeconds || d.visible !== state.visible) {
-          state.nameHome = d.name_home;
-          state.nameAway = d.name_away;
-          state.scoreHome = d.score_home;
-          state.scoreAway = d.score_away;
-          state.timerSeconds = d.timer_seconds;
-          state.isRunning = d.is_running;
-          state.sessionStart = d.session_start;
-          state.visible = d.visible !== false;
-          
-          if (state.isRunning && !timerInterval) {
-            state.sessionStart = Date.now() - (state.timerSeconds * 1000);
-            timerInterval = setInterval(() => {
-              state.timerSeconds = Math.floor((Date.now() - state.sessionStart) / 1000);
-              document.getElementById('timerPreview').textContent = formatTime(state.timerSeconds);
-            }, 1000);
-            updateStatus('▶ CORRIENDO', '#10b981');
-          }
-          updateUI();
+        if (!d) return;
+
+        state.nameHome = d.name_home ?? state.nameHome;
+        state.nameAway = d.name_away ?? state.nameAway;
+        state.scoreHome = d.score_home ?? 0;
+        state.scoreAway = d.score_away ?? 0;
+        state.timerSeconds = d.timer_seconds ?? 0;
+        state.isRunning = d.is_running ?? false;
+        state.sessionStart = Number(d.session_start) || 0;
+        state.visible = d.visible !== false;
+
+        saveLocalCache();
+
+        if (state.isRunning && state.sessionStart > 0) {
+          startLocalTimer();
+          updateStatus('▶ CORRIENDO', '#10b981');
+        } else {
+          stopLocalTimer();
+          updateStatus('⏸ PAUSADO', '#f59e0b');
         }
+
+        updateUI();
       }
     )
     .subscribe();
@@ -357,13 +437,24 @@
   function clearAll() {
     if(confirm('¿Borrar todo?')) {
       state = { nameHome: 'EQUIPO LOCAL', nameAway: 'EQUIPO VISITANTE', scoreHome: 0, scoreAway: 0, timerSeconds: 0, isRunning: false, sessionStart: 0, visible: true };
-      if (timerInterval) clearInterval(timerInterval);
+      stopLocalTimer();
       teamInputsDirty = false;
       updateUI();
       saveToSupabase();
       updateStatus('🔄 LIMPIO', '#6b7280');
     }
   }
+
+  window.addEventListener('offline', () => {
+    updateStatus('📴 SIN CONEXIÓN · CRONÓMETRO LOCAL', '#f59e0b');
+    log('⚠️ Internet desconectado. El cronómetro continúa localmente.', 'info');
+  });
+
+  window.addEventListener('online', () => {
+    updateStatus(state.isRunning ? '▶ CORRIENDO' : '✅ CONECTADO', '#10b981');
+    log('✅ Internet restablecido. Sincronizando...', 'ok');
+    saveToSupabase();
+  });
 
   init();
 </script>

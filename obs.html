@@ -304,9 +304,25 @@ let state = {
   visible: true
 };
 
-let extraActive = false;
-let extraTimerSeconds = 0;
-let extraInterval = null;
+const LOCAL_CACHE_KEY = 'cdn_overlay_state_v2';
+
+function saveLocalCache() {
+  try {
+    localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.warn('No se pudo guardar caché local:', e);
+  }
+}
+
+function loadLocalCache() {
+  try {
+    const cached = localStorage.getItem(LOCAL_CACHE_KEY);
+    return cached ? JSON.parse(cached) : null;
+  } catch (e) {
+    console.warn('No se pudo leer caché local:', e);
+    return null;
+  }
+}
 
 const MAIN_TIME_LIMIT = 45 * 60;
 const SPONSOR_INTERVAL_MS = 10 * 60 * 1000;
@@ -416,11 +432,7 @@ function updateUI() {
     'scoreAway'
   ).textContent = state.scoreAway;
 
-  document.getElementById(
-    'timerDisplay'
-  ).textContent = formatTime(
-    state.timerSeconds
-  );
+  renderTimer();
 
   const scorebug =
     document.getElementById('scorebug');
@@ -454,132 +466,46 @@ function updateUI() {
 
 
 /* ==========================
-   TIEMPO EXTRA
+   CRONÓMETRO PERSISTENTE
 ========================== */
 
-function startExtraTimer() {
-
-  if (extraActive) return;
-
-  extraActive = true;
-
-  extraTimerSeconds = 0;
-
-  document.getElementById(
-    'extraTimerDisplay'
-  ).textContent =
-    formatTime(extraTimerSeconds);
-
-  const extraBar =
-    document.getElementById(
-      'extraTimerBar'
-    );
-
-  extraBar.classList.add(
-    'active'
-  );
-
-  extraInterval = setInterval(
-    () => {
-
-      extraTimerSeconds++;
-
-      document.getElementById(
-        'extraTimerDisplay'
-      ).textContent =
-        formatTime(
-          extraTimerSeconds
-        );
-
-    },
-    1000
-  );
-}
-
-
-function resetExtraTimer() {
-
-  if (extraInterval) {
-
-    clearInterval(
-      extraInterval
-    );
-
-    extraInterval = null;
+function getElapsedSeconds() {
+  if (state.isRunning && Number(state.sessionStart) > 0) {
+    return Math.max(0, Math.floor((Date.now() - Number(state.sessionStart)) / 1000));
   }
-
-  extraActive = false;
-
-  extraTimerSeconds = 0;
-
-  const extraBar =
-    document.getElementById(
-      'extraTimerBar'
-    );
-
-  extraBar.classList.remove(
-    'active'
-  );
-
-  document.getElementById(
-    'extraTimerDisplay'
-  ).textContent = '00:00';
+  return Math.max(0, Number(state.timerSeconds) || 0);
 }
 
+function renderTimer() {
+  const elapsed = getElapsedSeconds();
+  const mainSeconds = Math.min(elapsed, MAIN_TIME_LIMIT);
+  const extraSeconds = Math.max(0, elapsed - MAIN_TIME_LIMIT);
 
-/* ==========================
-   CRONÓMETRO PRINCIPAL
-========================== */
+  document.getElementById('timerDisplay').textContent = formatTime(mainSeconds);
 
-function startTimerLocal() {
+  const extraBar = document.getElementById('extraTimerBar');
+  document.getElementById('extraTimerDisplay').textContent = formatTime(extraSeconds);
 
-  state.sessionStart =
-    Date.now() -
-    (
-      state.timerSeconds *
-      1000
-    );
-
-  const interval =
-    setInterval(
-      () => {
-
-        state.timerSeconds =
-          Math.floor(
-            (
-              Date.now() -
-              state.sessionStart
-            ) /
-            1000
-          );
-
-        if (
-          state.timerSeconds >=
-          MAIN_TIME_LIMIT
-        ) {
-
-          state.timerSeconds =
-            MAIN_TIME_LIMIT;
-
-          startExtraTimer();
-        }
-
-        document.getElementById(
-          'timerDisplay'
-        ).textContent =
-          formatTime(
-            state.timerSeconds
-          );
-
-      },
-      1000
-    );
-
-  return interval;
+  if (elapsed >= MAIN_TIME_LIMIT) extraBar.classList.add('active');
+  else extraBar.classList.remove('active');
 }
-
 
 let mainInterval = null;
+
+function startTimerLocal() {
+  if (mainInterval) clearInterval(mainInterval);
+  // Solo calcula desde el origen guardado; nunca crea un origen nuevo al recargar.
+  renderTimer();
+  mainInterval = setInterval(renderTimer, 1000);
+}
+
+function stopTimerLocal() {
+  if (mainInterval) {
+    clearInterval(mainInterval);
+    mainInterval = null;
+  }
+  renderTimer();
+}
 
 
 /* ==========================
@@ -590,133 +516,21 @@ function applyData(
   d,
   fromPolling = false
 ) {
+  if (!d) return;
 
-  state.nameHome =
-    d.name_home;
+  state.nameHome = d.name_home ?? state.nameHome;
+  state.nameAway = d.name_away ?? state.nameAway;
+  state.scoreHome = d.score_home ?? 0;
+  state.scoreAway = d.score_away ?? 0;
+  state.timerSeconds = d.timer_seconds ?? 0;
+  state.isRunning = d.is_running ?? false;
+  state.sessionStart = Number(d.session_start) || 0;
+  state.visible = d.visible !== false;
 
-  state.nameAway =
-    d.name_away;
+  saveLocalCache();
 
-  state.scoreHome =
-    d.score_home;
-
-  state.scoreAway =
-    d.score_away;
-
-  state.visible =
-    d.visible !== false;
-
-
-  if (fromPolling) {
-
-    if (
-      !d.is_running &&
-      d.timer_seconds !==
-      state.timerSeconds
-    ) {
-
-      console.log(
-        '🔄 Polling: Detectado Reset o cambio manual'
-      );
-
-      state.timerSeconds =
-        d.timer_seconds;
-
-      state.isRunning =
-        false;
-
-      state.sessionStart =
-        d.session_start;
-
-      resetExtraTimer();
-
-      if (mainInterval) {
-
-        clearInterval(
-          mainInterval
-        );
-
-        mainInterval =
-          null;
-      }
-    }
-
-  } else {
-
-    const wasRunning =
-      state.isRunning;
-
-    state.timerSeconds =
-      d.timer_seconds;
-
-    state.isRunning =
-      d.is_running;
-
-    state.sessionStart =
-      d.session_start;
-
-
-    if (
-      wasRunning &&
-      !state.isRunning
-    ) {
-
-      console.log(
-        '⏸️ Cronómetro pausado - Deteniendo tiempo extra'
-      );
-
-      resetExtraTimer();
-    }
-
-
-    if (
-      state.timerSeconds <
-      MAIN_TIME_LIMIT
-    ) {
-
-      resetExtraTimer();
-    }
-
-
-    if (state.isRunning) {
-
-      if (mainInterval) {
-
-        clearInterval(
-          mainInterval
-        );
-      }
-
-      mainInterval =
-        startTimerLocal();
-
-
-      if (
-        state.timerSeconds >=
-        MAIN_TIME_LIMIT &&
-        !extraActive
-      ) {
-
-        console.log(
-          '▶️ Reanudando tiempo extra'
-        );
-
-        startExtraTimer();
-      }
-
-    } else {
-
-      if (mainInterval) {
-
-        clearInterval(
-          mainInterval
-        );
-
-        mainInterval =
-          null;
-      }
-    }
-  }
+  if (state.isRunning && state.sessionStart > 0) startTimerLocal();
+  else stopTimerLocal();
 
   updateUI();
 }
@@ -727,37 +541,29 @@ function applyData(
 ========================== */
 
 async function loadFromSupabase() {
-
   try {
+    const { data, error } = await sbClient
+      .from('overlay_state')
+      .select('*')
+      .eq('id', 1)
+      .single();
 
-    const {
-      data,
-      error
-    } =
-      await sbClient
-        .from('overlay_state')
-        .select('*')
-        .eq('id', 1)
-        .single();
-
-    if (error) {
-
-      console.error(
-        'Error:',
-        error.message
-      );
-
-      return;
-    }
-
+    if (error) throw error;
     applyData(data);
 
   } catch (e) {
+    console.warn('⚠️ No se pudo cargar Supabase:', e);
 
-    console.error(
-      '❌ Excepción:',
-      e
-    );
+    const cached = loadLocalCache();
+    if (cached) {
+      state = { ...state, ...cached, sessionStart: Number(cached.sessionStart) || 0 };
+
+      if (state.isRunning && state.sessionStart > 0) startTimerLocal();
+      else stopTimerLocal();
+
+      updateUI();
+      console.log('📴 Overlay recuperado desde caché local');
+    }
   }
 }
 
@@ -811,78 +617,38 @@ sbClient
 
 setInterval(
   async () => {
-
     try {
+      const { data, error } = await sbClient
+        .from('overlay_state')
+        .select('*')
+        .eq('id', 1)
+        .single();
 
-      const {
-        data,
-        error
-      } =
-        await sbClient
-          .from('overlay_state')
-          .select('*')
-          .eq('id', 1)
-          .single();
+      if (error || !data) return;
 
-      if (error) return;
+      const needsSync =
+        data.name_home !== state.nameHome ||
+        data.name_away !== state.nameAway ||
+        data.score_home !== state.scoreHome ||
+        data.score_away !== state.scoreAway ||
+        (data.timer_seconds ?? 0) !== state.timerSeconds ||
+        (data.is_running ?? false) !== state.isRunning ||
+        (Number(data.session_start) || 0) !== state.sessionStart ||
+        (data.visible !== false) !== state.visible;
 
-      let needsSync =
-        false;
-
-
-      if (
-        data.name_home !==
-          state.nameHome ||
-
-        data.name_away !==
-          state.nameAway ||
-
-        data.score_home !==
-          state.scoreHome ||
-
-        data.score_away !==
-          state.scoreAway ||
-
-        data.visible !==
-          state.visible
-      ) {
-
-        needsSync =
-          true;
-      }
-
-
-      if (
-        !data.is_running &&
-        data.timer_seconds !==
-          state.timerSeconds
-      ) {
-
-        needsSync =
-          true;
-      }
-
-
-      if (needsSync) {
-
-        applyData(
-          data,
-          true
-        );
-      }
+      if (needsSync) applyData(data, true);
 
     } catch (e) {
-
-      console.warn(
-        '⚠️ Excepción en polling:',
-        e
-      );
+      console.warn('⚠️ Excepción en polling:', e);
     }
-
   },
   5000
 );
 
+
+window.addEventListener('online', () => {
+  loadFromSupabase();
+});
 
 /* ==========================
    INICIAR PATROCINADORES
