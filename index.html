@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Panel de Control</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.min.css">
@@ -121,16 +121,15 @@
     .btn { font-size: 12px; padding: 12px; }
   }
 </style>
-<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#16213e"><link rel="apple-touch-icon" href="assets/icons/icon-192.png"><link rel="stylesheet" href="assets/css/panel.css"></head>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#051b48"><link rel="apple-touch-icon" href="assets/icons/icon-192.png"><link rel="stylesheet" href="assets/css/panel.css"></head>
 <body>
   <div class="container">
-    <h1> PANEL DE CONTROL</h1>
+    <header class="app-header"><div><p class="eyebrow">CONTROL DE TRANSMISIÓN</p><h1>Panel Overlay</h1></div><span class="live-dot" aria-hidden="true"></span></header>
     <div class="status" id="status">INICIANDO...</div>
 
-<nav aria-label="Secciones del panel" class="tabs">
-<button class="active" data-tab="partido">Partido</button><button data-tab="equipos">Equipos</button><button data-tab="anunciantes">Anunciantes</button><button data-tab="obs">OBS</button></nav>
+<nav aria-label="Menú principal" class="tabs"><button type="button" class="active" data-tab="partido" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M12 5v14M3 12h18"/><circle cx="12" cy="12" r="3"/></svg><span>Partido</span></button><button type="button" class="" data-tab="equipos" aria-current="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v2"/></svg><span>Equipos</span></button><button type="button" class="" data-tab="anunciantes" aria-current="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 10 14-5v14L4 14zM4 10H2v4h2M7 15l2 6h4l-2-5M21 9v6"/></svg><span>Anunciantes</span></button><button type="button" class="" data-tab="obs" aria-current="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="3"/><path d="M8 21h8M12 17v4m-2-13 5 3-5 3z"/></svg><span>OBS</span></button></nav>
 <main><section id="partido" class="tab-panel">    <div class="section">
-      <div class="section-title">⚽ Marcador</div>
+      <div class="section-title">Marcador</div>
       <div class="score-row">
         <div class="score-label" id="labelHome">EQUIPO LOCAL</div>
         <div class="score-controls">
@@ -150,14 +149,14 @@
     </div>
 
     <div class="section">
-      <div class="section-title">⏱️ Cronómetro</div>
+      <div class="section-title">Cronómetro</div>
       <div class="timer-preview" id="timerPreview">00:00</div>
       <div class="btn-row">
         <button class="btn btn-start" onclick="startTimer()">▶ Iniciar</button>
         <button class="btn btn-pause" onclick="pauseTimer()">❚ Pausar</button>
-        <button class="btn btn-reset" onclick="resetTimer()">↺ Reset</button>
+        <button class="btn btn-reset" onclick="resetTimer()">↺ Reiniciar</button>
       </div>
-      <label for="inputTimer">Minutos desde los que reiniciar</label><input type="number" class="input" id="inputTimer" value="0" min="0" style="margin-top:12px;">
+      <label for="inputTimer">Minuto inicial</label><input type="number" class="input" id="inputTimer" value="0" min="0" style="margin-top:12px;">
     </div>
 
     <!-- 👁 NUEVO BOTÓN: MOSTRAR / OCULTAR MARCADOR EN EL OVERLAY -->
@@ -169,24 +168,21 @@
 
 </section>
 <section id="equipos" class="tab-panel" hidden>    <div class="section team-config-section">
-<h2>Configuración de equipos</h2><p class="hint">Define los nombres que aparecerán en la transmisión.</p>
+<h2>Configuración de equipos</h2>
       <div class="team-config-fields open" id="teamConfigFields">
         <input type="text" class="input" id="inputHome" value="EQUIPO LOCAL" placeholder="Equipo local">
         <input type="text" class="input" id="inputAway" value="EQUIPO VISITANTE" placeholder="Equipo visitante">
-        <button class="btn btn-config" id="btnSaveTeams" onclick="saveTeamConfiguration()">💾 GUARDAR CONFIGURACIÓN</button>
+        <button class="btn btn-config" id="btnSaveTeams" onclick="saveTeamConfiguration()">Guardar equipos</button>
       </div>
     </div>
 
 </section>
 <section id="anunciantes" class="tab-panel" hidden>
-<h2>Configurar anunciantes</h2><p class="hint">Los anuncios aparecen automáticamente cada 10 minutos, durante 10 segundos cada uno. El logo y la ubicación de los anuncios permanecen fijos.</p>
+<h2>Anunciantes</h2><p class="compact-note">Cada 10 min · 10 s por anuncio</p>
 <p id="adStatus" role="status" aria-live="polite"></p><button id="adRefresh" class="btn btn-reset">Actualizar lista</button>
 <div id="adList" class="ad-grid"></div>
-<h3>Administrar anuncios</h3><p class="hint">Inicia sesión con tu cuenta de administrador para subir, activar, desactivar o eliminar anuncios.</p>
-<form id="adLogin"><label>Correo<input class="input" id="adEmail" type="email" autocomplete="username" required></label><label>Contraseña<input class="input" id="adPassword" type="password" autocomplete="current-password" required></label><button class="btn btn-obs" type="submit">Iniciar sesión</button></form>
-<button class="btn btn-reset" id="adLogout" hidden>Cerrar sesión</button>
-<form id="adUpload" hidden><h3>Nuevo anunciante</h3><label>Nombre del anunciante<input class="input" id="adName" maxlength="80" required></label><label>Imagen<input class="input" id="adFile" type="file" accept="image/png,image/jpeg,image/webp" required></label><p class="hint">Recomendado: 964 × 300 píxeles. PNG, JPG o WebP, máximo 5 MB. La imagen se ajusta sin recortarse al espacio fijo del anuncio.</p><img id="adFilePreview" class="ad-preview" alt="Vista previa del nuevo anuncio" hidden><button class="btn btn-config" type="submit">Subir y guardar anunciante</button></form></section>
-<section id="obs" class="tab-panel" hidden><h2>Transmisión e instalación</h2><p class="hint">En OBS agrega una fuente de navegador de 1280 × 720 y pega este enlace.</p><label for="obsUrl">Enlace del overlay</label><input class="input" id="obsUrl" readonly><button class="btn btn-obs" id="copyObs">Copiar enlace para OBS</button><a id="openObs" href="obs.html" target="_blank" rel="noopener" class="btn btn-obs">Abrir overlay</a><button class="btn btn-config" id="installApp" hidden>Instalar aplicación</button><p class="hint" id="installHelp">La instalación requiere HTTPS o localhost. En iPhone usa Safari → Compartir → Agregar a inicio.</p><h3>Actividad y conexión</h3><div class="log-box" id="logBox" aria-live="polite"></div></section></main><p id="notice" role="status" aria-live="polite"></p>
+<form id="adUpload"><h3>Nuevo anunciante</h3><label>Nombre del anunciante<input class="input" id="adName" maxlength="80" required></label><p class="compact-note">PNG, JPG o WebP · hasta 5 MB · recomendado 964 × 300</p><label>Imagen<input class="input" id="adFile" type="file" accept="image/png,image/jpeg,image/webp" required></label><img id="adFilePreview" class="ad-preview" alt="Vista previa del nuevo anuncio" hidden><button class="btn btn-config" type="submit">Subir y guardar anunciante</button></form></section>
+<section id="obs" class="tab-panel" hidden><h2>Conectar con OBS</h2><p class="compact-note">Fuente de navegador · 1280 × 720</p><label for="obsUrl">Enlace del overlay</label><input class="input" id="obsUrl" readonly><button class="btn btn-obs" id="copyObs">Copiar enlace para OBS</button><button class="btn btn-config" id="installApp" hidden>Instalar aplicación</button><details class="activity"><summary>Actividad</summary><div class="log-box" id="logBox"></div></details></section></main><p id="notice" role="status" aria-live="polite"></p>
   </div>
 
 <script>
