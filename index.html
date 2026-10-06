@@ -121,7 +121,7 @@
     .btn { font-size: 12px; padding: 12px; }
   }
 </style>
-<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#051b48"><link rel="apple-touch-icon" href="assets/icons/icon-192.png"><link rel="stylesheet" href="assets/css/panel.css?v=6"></head>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#051b48"><link rel="apple-touch-icon" href="assets/icons/icon-192.png"><link rel="stylesheet" href="assets/css/panel.css?v=8"></head>
 <body class="match-view">
   <div class="container">
     <header class="app-header"><h1>Partido</h1><div class="status" id="status" role="status">Iniciando…</div></header>
@@ -176,7 +176,7 @@
 <section id="anunciantes" class="tab-panel" hidden>
 <h2>Anunciantes</h2><p class="compact-note">Cada 10 min · 10 s por anuncio</p>
 <p id="adStatus" role="status" aria-live="polite"></p><button id="adRefresh" class="btn btn-reset">Actualizar lista</button>
-<div id="adList" class="ad-grid"></div>
+<div id="adList" class="ad-grid"><article class="ad-card"><img src="assets/images/sponsors/MUNI.jpg" alt="MUNI" decoding="async"><h3>MUNI</h3><p>Anuncio precargado</p><button class="btn btn-obs" disabled>Editar</button><button class="btn btn-reset" disabled>Desactivar</button><button class="btn btn-clear" disabled>Eliminar</button></article><article class="ad-card"><img src="assets/images/sponsors/Importadora.jpg" alt="Importadora" decoding="async"><h3>Importadora</h3><p>Anuncio precargado</p><button class="btn btn-obs" disabled>Editar</button><button class="btn btn-reset" disabled>Desactivar</button><button class="btn btn-clear" disabled>Eliminar</button></article><article class="ad-card"><img src="assets/images/sponsors/TAQUEREA.jpg" alt="TAQUEREA" decoding="async"><h3>TAQUEREA</h3><p>Anuncio precargado</p><button class="btn btn-obs" disabled>Editar</button><button class="btn btn-reset" disabled>Desactivar</button><button class="btn btn-clear" disabled>Eliminar</button></article></div>
 <form id="adUpload"><h3 id="adFormTitle">Nuevo anunciante</h3><label>Nombre del anunciante<input class="input" id="adName" maxlength="80" required></label><p class="compact-note">PNG, JPG o WebP · hasta 5 MB · recomendado 964 × 300</p><label>Imagen<input class="input" id="adFile" type="file" accept="image/png,image/jpeg,image/webp" required></label><img id="adFilePreview" class="ad-preview" alt="Vista previa del nuevo anuncio" hidden><button class="btn btn-config" id="adSubmit" type="submit">Subir y guardar anunciante</button><button class="btn btn-reset" id="adCancel" type="button" hidden>Cancelar edición</button></form></section>
 <section id="obs" class="tab-panel" hidden><h2>Conectar con OBS</h2><p class="compact-note">Fuente de navegador · 1280 × 720</p><label for="obsUrl">Enlace del overlay</label><input class="input" id="obsUrl" readonly><button class="btn btn-obs" id="copyObs">Copiar enlace para OBS</button><button class="btn btn-config" id="installApp" hidden>Instalar aplicación</button><details class="activity"><summary>Actividad</summary><div class="log-box" id="logBox"></div></details></section></main><p id="notice" role="status" aria-live="polite"></p>
   </div>
@@ -272,13 +272,14 @@
     
     // Actualiza el botón de mostrar/ocultar
     const btnVis = document.getElementById('btnVisibility');
-    if (state.visible) {
-      btnVis.textContent = 'Marcador visible';
-      btnVis.style.background = '#10b981';
-    } else {
-      btnVis.textContent = 'Marcador oculto';
-      btnVis.style.background = '#6b7280';
-    }
+    const eye = state.visible
+      ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>'
+      : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 18M9 5a12 12 0 0 1 13 7 17 17 0 0 1-4 5M6 6a17 17 0 0 0-4 6s4 7 10 7a12 12 0 0 0 5-1M10 10a3 3 0 0 0 4 4"/></svg>';
+    btnVis.innerHTML = eye + '<span>' + (state.visible ? 'Visible' : 'Oculto') + '</span>';
+    btnVis.classList.toggle('is-visible', state.visible);
+    btnVis.classList.toggle('is-hidden', !state.visible);
+    btnVis.setAttribute('aria-pressed', String(state.visible));
+    btnVis.setAttribute('aria-label', state.visible ? 'Marcador visible. Ocultar marcador' : 'Marcador oculto. Mostrar marcador');
   }
 
   function toggleVisibility() {
@@ -321,6 +322,7 @@
     document.getElementById('notice').textContent = 'Nombres guardados';
     saveToSupabase();
     log('✅ Configuración de equipos guardada', 'ok');
+    window.AppFeedback.success(document.getElementById('btnSaveTeams'));
   }
 
   function updateStatus(text, color) {
@@ -504,14 +506,15 @@
     });
   });
   
-  function clearAll() {
-    if(confirm('¿Borrar todo?')) {
+  async function clearAll() {
+    if(await window.AppFeedback.confirmClear()) {
       state = { nameHome: 'EQUIPO LOCAL', nameAway: 'EQUIPO VISITANTE', scoreHome: 0, scoreAway: 0, timerSeconds: 0, isRunning: false, sessionStart: 0, visible: true };
       stopLocalTimer();
       teamInputsDirty = false;
       updateUI();
       saveToSupabase();
       updateStatus('🔄 LIMPIO', '#6b7280');
+      window.AppFeedback.success(document.querySelector('[onclick="clearAll()"]'), 'clear');
     }
   }
 
@@ -528,5 +531,5 @@
 
   init();
 </script>
-<script src="assets/js/panel.js?v=6"></script><script src="assets/js/sponsors.js?v=6"></script><script src="assets/js/sponsor-panel.js?v=6"></script><script src="assets/js/pwa.js?v=6"></script></body>
+<dialog id="clearDialog" aria-labelledby="clearDialogTitle" aria-describedby="clearDialogText"><div class="confirm-icon" aria-hidden="true">↺</div><h2 id="clearDialogTitle">¿Limpiar el partido?</h2><p id="clearDialogText">Los equipos volverán a sus nombres iniciales, el marcador y cronómetro a cero. Los anunciantes se conservan.</p><div class="dialog-actions"><button type="button" id="cancelClear" class="btn btn-reset">Cancelar</button><button type="button" id="confirmClear" class="btn btn-clear">Sí, limpiar todo</button></div></dialog><script src="assets/js/feedback.js?v=8"></script><script src="assets/js/panel.js?v=8"></script><script src="assets/js/sponsors.js?v=8"></script><script src="assets/js/sponsor-panel.js?v=8"></script><script src="assets/js/pwa.js?v=8"></script></body>
 </html>
