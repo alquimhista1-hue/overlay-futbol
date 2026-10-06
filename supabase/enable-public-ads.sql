@@ -1,12 +1,3 @@
--- Initial setup for a panel with public advertiser management.
-create table if not exists public.overlay_sponsors(
- id text primary key, name text not null check(length(name) between 1 and 80),
- image_path text not null, bundled boolean not null default false,
- active boolean not null default true, sort_order integer not null default 0
-);
-insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
-values('overlay-sponsors','overlay-sponsors',true,5242880,array['image/png','image/jpeg','image/webp'])
-on conflict(id) do update set public=true,file_size_limit=5242880,allowed_mime_types=array['image/png','image/jpeg','image/webp'];
 -- Public advertiser management, explicitly requested for this panel.
 -- Anyone who can access the project API can manage these advertisements.
 begin;
