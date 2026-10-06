@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Panel de Control</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.min.css">
@@ -121,22 +121,15 @@
     .btn { font-size: 12px; padding: 12px; }
   }
 </style>
-</head>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#16213e"><link rel="apple-touch-icon" href="assets/icons/icon-192.png"><link rel="stylesheet" href="assets/css/panel.css"></head>
 <body>
   <div class="container">
     <h1> PANEL DE CONTROL</h1>
     <div class="status" id="status">INICIANDO...</div>
 
-    <div class="section team-config-section">
-      <button class="btn btn-team-toggle" id="btnTeamToggle" onclick="toggleTeamConfig()">✏️ ASIGNAR NOMBRES DE EQUIPOS</button>
-      <div class="team-config-fields" id="teamConfigFields">
-        <input type="text" class="input" id="inputHome" value="EQUIPO LOCAL" placeholder="Equipo local">
-        <input type="text" class="input" id="inputAway" value="EQUIPO VISITANTE" placeholder="Equipo visitante">
-        <button class="btn btn-config" id="btnSaveTeams" onclick="saveTeamConfiguration()">💾 GUARDAR CONFIGURACIÓN</button>
-      </div>
-    </div>
-
-    <div class="section">
+<nav aria-label="Secciones del panel" class="tabs">
+<button class="active" data-tab="partido">Partido</button><button data-tab="equipos">Equipos</button><button data-tab="anunciantes">Anunciantes</button><button data-tab="obs">OBS</button></nav>
+<main><section id="partido" class="tab-panel">    <div class="section">
       <div class="section-title">⚽ Marcador</div>
       <div class="score-row">
         <div class="score-label" id="labelHome">EQUIPO LOCAL</div>
@@ -164,7 +157,7 @@
         <button class="btn btn-pause" onclick="pauseTimer()">❚ Pausar</button>
         <button class="btn btn-reset" onclick="resetTimer()">↺ Reset</button>
       </div>
-      <input type="number" class="input" id="inputTimer" value="0" min="0" style="margin-top:12px;">
+      <label for="inputTimer">Minutos desde los que reiniciar</label><input type="number" class="input" id="inputTimer" value="0" min="0" style="margin-top:12px;">
     </div>
 
     <!-- 👁 NUEVO BOTÓN: MOSTRAR / OCULTAR MARCADOR EN EL OVERLAY -->
@@ -172,24 +165,35 @@
 
     <button class="btn btn-clear" onclick="clearAll()"> LIMPIAR TODO</button>
     
-    <a href="obs.html" target="_blank" class="btn btn-obs">📺 ABRIR OVERLAY PARA OBS</a>
 
-    <div class="log-box" id="logBox"></div>
 
-    <div class="info-box">
-      <p><strong>📋 Instrucciones:</strong></p>
-      <p>1. Panel: <code>index.html</code><br>
-         2. Overlay OBS: <code>obs.html</code><br>
-         3. URL OBS: <code>https://tu-sitio.netlify.app/obs.html</code><br>
-         4. Dimensiones: <code>1080 x 608</code></p>
+</section>
+<section id="equipos" class="tab-panel" hidden>    <div class="section team-config-section">
+<h2>Configuración de equipos</h2><p class="hint">Define los nombres que aparecerán en la transmisión.</p>
+      <div class="team-config-fields open" id="teamConfigFields">
+        <input type="text" class="input" id="inputHome" value="EQUIPO LOCAL" placeholder="Equipo local">
+        <input type="text" class="input" id="inputAway" value="EQUIPO VISITANTE" placeholder="Equipo visitante">
+        <button class="btn btn-config" id="btnSaveTeams" onclick="saveTeamConfiguration()">💾 GUARDAR CONFIGURACIÓN</button>
+      </div>
     </div>
+
+</section>
+<section id="anunciantes" class="tab-panel" hidden>
+<h2>Configurar anunciantes</h2><p class="hint">Los anuncios aparecen automáticamente cada 10 minutos, durante 10 segundos cada uno. El logo y la ubicación de los anuncios permanecen fijos.</p>
+<p id="adStatus" role="status" aria-live="polite"></p><button id="adRefresh" class="btn btn-reset">Actualizar lista</button>
+<div id="adList" class="ad-grid"></div>
+<h3>Administrar anuncios</h3><p class="hint">Inicia sesión con tu cuenta de administrador para subir, activar, desactivar o eliminar anuncios.</p>
+<form id="adLogin"><label>Correo<input class="input" id="adEmail" type="email" autocomplete="username" required></label><label>Contraseña<input class="input" id="adPassword" type="password" autocomplete="current-password" required></label><button class="btn btn-obs" type="submit">Iniciar sesión</button></form>
+<button class="btn btn-reset" id="adLogout" hidden>Cerrar sesión</button>
+<form id="adUpload" hidden><h3>Nuevo anunciante</h3><label>Nombre del anunciante<input class="input" id="adName" maxlength="80" required></label><label>Imagen<input class="input" id="adFile" type="file" accept="image/png,image/jpeg,image/webp" required></label><p class="hint">Recomendado: 964 × 300 píxeles. PNG, JPG o WebP, máximo 5 MB. La imagen se ajusta sin recortarse al espacio fijo del anuncio.</p><img id="adFilePreview" class="ad-preview" alt="Vista previa del nuevo anuncio" hidden><button class="btn btn-config" type="submit">Subir y guardar anunciante</button></form></section>
+<section id="obs" class="tab-panel" hidden><h2>Transmisión e instalación</h2><p class="hint">En OBS agrega una fuente de navegador de 1280 × 720 y pega este enlace.</p><label for="obsUrl">Enlace del overlay</label><input class="input" id="obsUrl" readonly><button class="btn btn-obs" id="copyObs">Copiar enlace para OBS</button><a id="openObs" href="obs.html" target="_blank" rel="noopener" class="btn btn-obs">Abrir overlay</a><button class="btn btn-config" id="installApp" hidden>Instalar aplicación</button><p class="hint" id="installHelp">La instalación requiere HTTPS o localhost. En iPhone usa Safari → Compartir → Agregar a inicio.</p><h3>Actividad y conexión</h3><div class="log-box" id="logBox" aria-live="polite"></div></section></main><p id="notice" role="status" aria-live="polite"></p>
   </div>
 
 <script>
   const SUPABASE_URL = 'https://xwhtvfcsbvwyymenqmva.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3aHR2ZmNzYnZ3eXltZW5xbXZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczNjc1MjUsImV4cCI6MjEwMjk0MzUyNX0.NDqptVkHHmTasYeO6tN91GIh5_cNGAaYyBIfRps_fR4';
   
-  const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const sbClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let state = { 
     nameHome: 'EQUIPO LOCAL', 
@@ -252,7 +256,7 @@
   function log(msg, type = 'info') {
     const box = document.getElementById('logBox');
     const time = new Date().toLocaleTimeString();
-    box.innerHTML += `<div class="${type}">[${time}] ${msg}</div>`;
+    const entry = document.createElement('div'); entry.className = type; entry.textContent = `[${time}] ${msg}`; box.append(entry);
     box.scrollTop = box.scrollHeight;
   }
 
@@ -322,7 +326,7 @@
     homeInput.blur();
     awayInput.blur();
     updateUI();
-    toggleTeamConfig(false);
+    document.getElementById('notice').textContent = 'Nombres guardados';
     saveToSupabase();
     log('✅ Configuración de equipos guardada', 'ok');
   }
@@ -460,7 +464,7 @@
     }
   }
 
-  sbClient.channel('overlay_changes')
+  sbClient?.channel('overlay_changes')
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'overlay_state', filter: 'id=eq.1' },
@@ -533,5 +537,5 @@
 
   init();
 </script>
-</body>
+<script src="assets/js/panel.js"></script><script src="assets/js/sponsors.js"></script><script src="assets/js/sponsor-panel.js"></script><script src="assets/js/pwa.js"></script></body>
 </html>

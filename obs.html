@@ -217,7 +217,7 @@ body {
 
 .sponsor-image-container img {
   width: 482px;
-  height: auto;
+  height: 150px;
   max-width: 45%;
   object-fit: contain;
   opacity: 1;
@@ -230,7 +230,7 @@ body {
 <div class="obs-container" id="obsContainer">
 
   <img
-    src="logo.png"
+    src="assets/images/logos/logo.png"
     alt=""
     class="bg-logo"
     draggable="false"
@@ -277,7 +277,7 @@ body {
 
   <!-- PATROCINADORES EN IMÁGENES -->
   <div class="sponsor-image-container" id="sponsorImageContainer">
-    <img id="sponsorImage" src="MUNI.jpg" alt="Patrocinador">
+    <img id="sponsorImage" src="assets/images/sponsors/MUNI.jpg" alt="Patrocinador">
   </div>
 
 </div>
@@ -288,7 +288,7 @@ const SUPABASE_URL = 'https://xwhtvfcsbvwyymenqmva.supabase.co';
 const SUPABASE_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3aHR2ZmNzYnZ3eXltZW5xbXZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczNjc1MjUsImV4cCI6MjEwMjk0MzUyNX0.NDqptVkHHmTasYeO6tN91GIh5_cNGAaYyBIfRps_fR4';
 
-const sbClient = window.supabase.createClient(
+const sbClient = window.supabase?.createClient(
   SUPABASE_URL,
   SUPABASE_KEY
 );
@@ -329,9 +329,9 @@ const SPONSOR_INTERVAL_MS = 10 * 60 * 1000;
 const SPONSOR_IMAGE_DURATION_MS = 10 * 1000;
 
 const SPONSOR_IMAGES = [
-  'MUNI.jpg',
-  'Importadora.jpg',
-  'TAQUEREA.jpg'
+  'assets/images/sponsors/MUNI.jpg',
+  'assets/images/sponsors/Importadora.jpg',
+  'assets/images/sponsors/TAQUEREA.jpg'
 ];
 
 const sponsorImage =
@@ -574,8 +574,7 @@ loadFromSupabase();
    SUPABASE REALTIME
 ========================== */
 
-sbClient
-  .channel('overlay_changes')
+sbClient?.channel('overlay_changes')
   .on(
     'postgres_changes',
 
@@ -654,7 +653,7 @@ window.addEventListener('online', () => {
    INICIAR PATROCINADORES
 ========================== */
 
-startSponsorCycle();
+// Sponsor cycle is managed by sponsor-overlay.js.
 
 
 /* ==========================
@@ -716,5 +715,5 @@ window.addEventListener(
 scaleToFit();
 </script>
 
-</body>
+<script src="assets/js/layout.js"></script><script src="assets/js/sponsors.js"></script><script src="assets/js/sponsor-overlay.js"></script><script src="assets/js/pwa.js"></script></body>
 </html>

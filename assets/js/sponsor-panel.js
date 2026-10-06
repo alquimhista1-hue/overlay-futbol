@@ -1,0 +1,15 @@
+const adList=document.getElementById('adList'),adStatus=document.getElementById('adStatus');
+let adBusy=false;
+function adMessage(text){adStatus.textContent=text;}
+async function adAction(fn){if(adBusy)return;adBusy=true;renderAds();try{await fn();adMessage('Cambios guardados en Supabase.')}catch(e){adMessage(e.message||'No se pudo guardar.')}finally{adBusy=false;renderAds();}}
+function renderAds(){adList.replaceChildren();for(const item of SponsorStore.items){const card=document.createElement('article');card.className='ad-card';const image=document.createElement('img');image.src=SponsorStore.url(item);image.alt=item.name;const title=document.createElement('h3');title.textContent=item.name;const status=document.createElement('p');status.textContent=item.active?'Activo · 10 segundos por ciclo':'Desactivado';const toggle=document.createElement('button');toggle.className='btn btn-reset';toggle.textContent=item.active?'Desactivar':'Activar';toggle.disabled=adBusy||!SponsorStore.connected;toggle.onclick=()=>adAction(()=>SponsorStore.toggle(item));const remove=document.createElement('button');remove.className='btn btn-clear';remove.textContent='Eliminar';remove.disabled=toggle.disabled;remove.onclick=()=>{if(confirm('¿Eliminar el anuncio de '+item.name+'?'))adAction(()=>SponsorStore.remove(item));};card.append(image,title,status,toggle,remove);adList.append(card)}}
+SponsorStore.subscribe(renderAds);renderAds();
+async function refreshAds(){try{const ok=await SponsorStore.load();adMessage(ok?'Anunciantes sincronizados.':'Mostrando los tres anuncios originales. Configura Supabase para gestionarlos.')}catch{adMessage('Sin conexión con Supabase.')}renderAds()}
+document.getElementById('adRefresh').onclick=refreshAds;
+document.getElementById('adUpload').onsubmit=e=>{e.preventDefault();const name=document.getElementById('adName').value.trim(),file=document.getElementById('adFile').files[0];if(!name)return;adAction(async()=>{await SponsorStore.upload(name,file);e.target.reset();document.getElementById('adFilePreview').hidden=true})};
+let previewBlob;document.getElementById('adFile').onchange=e=>{if(previewBlob)URL.revokeObjectURL(previewBlob);const image=document.getElementById('adFilePreview'),file=e.target.files[0];image.hidden=!file;if(file){previewBlob=URL.createObjectURL(file);image.src=previewBlob}};
+document.getElementById('adLogin').onsubmit=async e=>{e.preventDefault();if(!sbClient){adMessage('No hay conexión con Supabase.');return;}const {error}=await sbClient.auth.signInWithPassword({email:document.getElementById('adEmail').value,password:document.getElementById('adPassword').value});document.getElementById('adPassword').value='';adMessage(error?error.message:'Sesión iniciada.');};
+document.getElementById('adLogout').onclick=async()=>{if(sbClient)await sbClient.auth.signOut()};
+function authUI(session){document.getElementById('adLogin').hidden=!!session;document.getElementById('adLogout').hidden=!session;document.getElementById('adUpload').hidden=!session;}
+if(sbClient){sbClient.auth.getSession().then(({data})=>authUI(data.session));sbClient.auth.onAuthStateChange((event,session)=>authUI(session));}
+refreshAds();
