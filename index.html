@@ -121,7 +121,7 @@
     .btn { font-size: 12px; padding: 12px; }
   }
 </style>
-<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#051b48"><link rel="apple-touch-icon" href="assets/icons/icon-192.png"><link rel="stylesheet" href="assets/css/panel.css?v=12"></head>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#051b48"><link rel="apple-touch-icon" href="assets/icons/icon-192.png"><link rel="stylesheet" href="assets/css/panel.css?v=13"></head>
 <body class="match-view">
   <div class="container">
     <header class="app-header"><h1>Partido</h1><div class="status" id="status" role="status">Iniciando…</div></header>
@@ -174,10 +174,13 @@
 
 </section>
 <section id="anunciantes" class="tab-panel" hidden>
-<h2>Anunciantes</h2><p class="compact-note">Cada 10 min · 10 s por anuncio</p>
-<p id="adStatus" role="status" aria-live="polite"></p><button id="adRefresh" class="btn btn-reset">Actualizar lista</button>
-<div id="adList" class="partner-list"><p class="partner-empty">Todavía no hay anunciantes. Sube la primera imagen.</p></div>
-<form id="adUpload"><h3 id="adFormTitle">Nuevo anunciante</h3><label>Nombre del anunciante<input class="input" id="adName" maxlength="80" required></label><p class="compact-note">PNG, JPG o WebP · hasta 5 MB · recomendado 964 × 300</p><label>Imagen<input class="input" id="adFile" type="file" accept="image/png,image/jpeg,image/webp" required></label><img id="adFilePreview" class="partner-preview" alt="Vista previa del nuevo anuncio" hidden><button class="btn btn-config" id="adSubmit" type="submit">Subir y guardar anunciante</button><button class="btn btn-reset" id="adCancel" type="button" hidden>Cancelar edición</button></form></section>
+<form id="adUpload" class="partner-form">
+<div class="partner-name-row"><h3 id="adFormTitle">Nuevo anunciante</h3><label class="sr-only" for="adName">Nombre del anunciante</label><input class="input" id="adName" placeholder="Nombre" maxlength="80" required></div>
+<div class="partner-upload-row"><label class="sr-only" for="adFile">Imagen del anunciante</label><input class="input" id="adFile" type="file" accept="image/png,image/jpeg,image/webp" required><button class="btn btn-config" id="adSubmit" type="submit">Subir y guardar</button></div>
+<p class="partner-file-help">PNG, JPG o WebP · máx. 5 MB · 964 × 300 recomendado</p><img id="adFilePreview" class="partner-preview" alt="Vista previa del anunciante" hidden><button class="btn btn-reset" id="adCancel" type="button" hidden>Cancelar edición</button></form>
+<p id="adStatus" role="status" aria-live="polite"></p>
+<div class="partner-list-header"><p>Cada 10 min · 10 s por anuncio</p><button id="adRefresh" class="btn btn-reset">Actualizar</button></div>
+<div id="adList" class="partner-list"><p class="partner-empty">No hay anunciantes cargados.</p></div></section>
 <section id="obs" class="tab-panel" hidden><h2>Conectar con OBS</h2><p class="compact-note">Fuente de navegador · 1280 × 720</p><label for="obsUrl">Enlace del overlay</label><input class="input" id="obsUrl" readonly><button class="btn btn-obs" id="copyObs">Copiar enlace para OBS</button><button class="btn btn-config" id="installApp" hidden>Instalar aplicación</button><details class="activity"><summary>Actividad</summary><div class="log-box" id="logBox"></div></details></section></main><p id="notice" role="status" aria-live="polite"></p>
   </div>
 
@@ -531,5 +534,5 @@
 
   init();
 </script>
-<dialog id="clearDialog" aria-labelledby="clearDialogTitle" aria-describedby="clearDialogText"><div class="confirm-icon" aria-hidden="true">↺</div><h2 id="clearDialogTitle">¿Limpiar el partido?</h2><p id="clearDialogText">Los equipos volverán a sus nombres iniciales, el marcador y cronómetro a cero. Los anunciantes se conservan.</p><div class="dialog-actions"><button type="button" id="cancelClear" class="btn btn-reset">Cancelar</button><button type="button" id="confirmClear" class="btn btn-clear">Sí, limpiar todo</button></div></dialog><script src="assets/js/feedback.js?v=12"></script><script src="assets/js/panel.js?v=12"></script><script src="assets/js/sponsors.js?v=12"></script><script src="assets/js/sponsor-panel.js?v=12"></script><script src="assets/js/pwa.js?v=12"></script></body>
+<dialog id="clearDialog" aria-labelledby="clearDialogTitle" aria-describedby="clearDialogText"><div class="confirm-icon" aria-hidden="true">↺</div><h2 id="clearDialogTitle">¿Limpiar el partido?</h2><p id="clearDialogText">Los equipos volverán a sus nombres iniciales, el marcador y cronómetro a cero. Los anunciantes se conservan.</p><div class="dialog-actions"><button type="button" id="cancelClear" class="btn btn-reset">Cancelar</button><button type="button" id="confirmClear" class="btn btn-clear">Sí, limpiar todo</button></div></dialog><script src="assets/js/feedback.js?v=13"></script><script src="assets/js/panel.js?v=13"></script><script src="assets/js/sponsors.js?v=13"></script><script src="assets/js/sponsor-panel.js?v=13"></script><script src="assets/js/pwa.js?v=13"></script></body>
 </html>
