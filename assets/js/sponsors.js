@@ -1,20 +1,18 @@
 // Public display, authenticated management. No administrator secrets in the app.
 const SponsorStore = (() => {
   const bucket = 'overlay-sponsors';
-  const defaults = [
-    {id:'muni',name:'MUNI',image_path:'assets/images/sponsors/MUNI.jpg',bundled:true,active:true,sort_order:1},
-    {id:'importadora',name:'Importadora',image_path:'assets/images/sponsors/Importadora.jpg',bundled:true,active:true,sort_order:2},
-    {id:'taquerea',name:'TAQUEREA',image_path:'assets/images/sponsors/TAQUEREA.jpg',bundled:true,active:true,sort_order:3}
-  ];
+  const defaults = [];
+  // Retire only the original bundled ads; manually uploaded replacements stay visible.
+  const currentAds = list => list.filter(item=>!(item.bundled && ['muni','importadora','taquerea'].includes(item.id)));
   let items = defaults, connected = false;
-  try { const cached=JSON.parse(localStorage.getItem('overlay_sponsors_cache')); if(Array.isArray(cached)) items=cached; } catch {}
+  try { const cached=JSON.parse(localStorage.getItem('overlay_sponsors_cache')); if(Array.isArray(cached)) items=currentAds(cached); } catch {}
   const listeners = new Set();
   function url(item) { if(item.bundled){const name=String(item.image_path).split('/').pop();return new URL('assets/images/sponsors/'+name,location.href).href;}return new URL('/storage/v1/object/public/'+bucket+'/'+item.image_path,SUPABASE_URL).href; }
   async function load() {
     if (!sbClient) return false;
     const {data,error} = await sbClient.from('overlay_sponsors').select('*').order('sort_order').order('id');
     if (error) { connected=false; return false; }
-    items=data; connected=true; try{localStorage.setItem('overlay_sponsors_cache',JSON.stringify(items))}catch{} listeners.forEach(fn=>fn(items)); return true;
+    items=currentAds(data); connected=true; try{localStorage.setItem('overlay_sponsors_cache',JSON.stringify(items))}catch{} listeners.forEach(fn=>fn(items)); return true;
   }
   async function upload(name,file) {
     if (!connected) throw Error('Configura primero Supabase siguiendo LEEME.');

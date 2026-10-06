@@ -1,5 +1,7 @@
 (() => {
  let context;
+ const notice=document.getElementById('notice');let noticeTimeout;
+ if(notice)new MutationObserver(()=>{clearTimeout(noticeTimeout);if(notice.textContent.trim())noticeTimeout=setTimeout(()=>{notice.textContent=''},1000)}).observe(notice,{childList:true,characterData:true,subtree:true});
  function prepare(){try{context ||= new (window.AudioContext||window.webkitAudioContext)();if(context.state==='suspended')context.resume().catch(()=>{});}catch{}}
  const melodies={plus:[660,880],minus:[440,330],start:[392,523,659,784],pause:[523,392],reset:[587,440,294],success:[523,659,784,1047],copy:[659,880,1047],toggle:[600],tap:[480],clear:[440,330,220]};
  function sound(kind='tap',strong=false){prepare();if(!context||context.state!=='running')return;const notes=melodies[kind]||melodies.tap,step=strong?.11:.065;const start=context.currentTime;notes.forEach((freq,i)=>{const oscillator=context.createOscillator(),gain=context.createGain(),at=start+i*step;oscillator.type='sine';oscillator.frequency.value=freq;gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(strong?.24:.10,at+.012);gain.gain.exponentialRampToValueAtTime(.001,at+step+.09);oscillator.connect(gain);gain.connect(context.destination);oscillator.start(at);oscillator.stop(at+step+.10)});}

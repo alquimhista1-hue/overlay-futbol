@@ -25,15 +25,6 @@ drop policy if exists "ad_storage_manage" on storage.objects;
 create policy "ad_storage_manage" on storage.objects for all to authenticated
  using(bucket_id='overlay-sponsors' and exists(select 1 from public.overlay_sponsor_admins where user_id=auth.uid()))
  with check(bucket_id='overlay-sponsors' and exists(select 1 from public.overlay_sponsor_admins where user_id=auth.uid()));
--- Seed only on first setup; an empty list thereafter stays empty.
-create table if not exists public.overlay_ad_migrations(version text primary key);
-alter table public.overlay_ad_migrations enable row level security;
-do $$ begin
- if not exists(select 1 from public.overlay_ad_migrations where version='seed-v1') then
- insert into public.overlay_sponsors(id,name,image_path,bundled,sort_order) values
- ('muni','MUNI','assets/images/sponsors/MUNI.jpg',true,1),('importadora','Importadora','assets/images/sponsors/Importadora.jpg',true,2),('taquerea','TAQUEREA','assets/images/sponsors/TAQUEREA.jpg',true,3) on conflict(id) do nothing;
- insert into public.overlay_ad_migrations values('seed-v1');
- end if;
-end $$;
+-- No advertisers are preloaded. Upload images from the panel.
 -- After creating your operator in Authentication > Users, authorize its UUID:
 -- insert into public.overlay_sponsor_admins(user_id) values('USER_UUID_HERE') on conflict do nothing;
