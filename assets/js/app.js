@@ -8,7 +8,14 @@
  function setMode(mode){authMode=mode;$('nameLabel').hidden=mode!=='signup';$('displayName').required=mode==='signup';$('authSubmit').textContent=mode==='signup'?'Crear cuenta':'Entrar';$('switchAuth').textContent=mode==='login'?'Crear cuenta':'Volver a entrar';$('password').autocomplete=mode==='login'?'current-password':'new-password';}
  $('switchAuth').onclick=()=>{message('authMessage','');setMode(authMode==='login'?'signup':'login')};
  $('authForm').onsubmit=async e=>{e.preventDefault();$('authSubmit').disabled=true;message('authMessage','');try{const rawLogin=$('username').value.trim(),identity=authMode==='login'&&rawLogin.includes('@')?{email:rawLogin.toLowerCase()}:await StudioIdentity.email(rawLogin),password=$('password').value;let result;
- if(authMode==='signup'){const name=$('displayName').value.trim();if(name.length<2)throw Error('Escribe tu nombre.');result=await client.auth.signUp({email:identity.email,password,options:{data:{display_name:name,login_name:identity.label}}});if(!result.error&&!result.data.session)throw Error('Falta desactivar Confirm email en Supabase para permitir cuentas sin correo.');}
+ if(authMode==='signup'){
+ const name=$('displayName').value.trim();if(name.length<2)throw Error('Escribe tu nombre.');
+ let response;try{response=await fetch(cfg.url+'/functions/v1/studio-register',{method:'POST',headers:{apikey:cfg.anonKey,'Content-Type':'application/json'},body:JSON.stringify({name,username:rawLogin,password})});}catch{throw Error('No se pudo conectar con el registro. Falta publicar la función studio-register o revisar internet.');}
+ let body;try{body=await response.json()}catch{throw Error('La función de registro no devolvió una respuesta válida.');}
+ if(!response.ok)throw Error(body.error||body.message||'Falta publicar la función studio-register en Supabase.');
+ result=await client.auth.signInWithPassword({email:identity.email,password});
+ if(result.error)throw Error('Cuenta creada. Pulsa Entrar con tu usuario y contraseña.');
+ }
  else result=await client.auth.signInWithPassword({email:identity.email,password});
  if(result.error)throw result.error;
  }catch(error){message('authMessage',authError(error));}finally{$('authSubmit').disabled=false;$('password').value='';}};
