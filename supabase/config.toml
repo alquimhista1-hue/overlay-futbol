@@ -1,0 +1,2 @@
+[functions.studio-register]
+verify_jwt = false

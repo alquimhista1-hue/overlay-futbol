@@ -1,31 +1,21 @@
-# Activación de CDN Studio
+# Configuración de CDN Studio
 
-La carpeta completa es un proyecto independiente. Usa index.html como entrada y publica toda la carpeta en GitHub/Vercel con HTTPS. No subas las carpetas ANTIGUO.
+## Base de datos y archivos
 
-## Supabase
+Ejecuta supabase/01-studio.sql en el proyecto Supabase utilizado por la aplicación. Si ya lo ejecutaste, no hace falta repetirlo por el cambio de acceso. Las tablas studio_* y los buckets studio-files y studio-private separan los datos por usuario.
 
-1. Abre el proyecto Supabase existente. En SQL Editor ejecuta supabase/01-studio.sql. Crea tablas studio_* y dos buckets, sin tocar los datos del panel anterior.
-2. En Authentication → URL Configuration establece Site URL en el dominio donde publicarás CDN Studio. Añade la URL completa de index.html a Redirect URLs. Añade localhost solo si vas a probar en tu computadora.
-3. Activa Email en Authentication → Providers. Configura un servicio SMTP para los correos de confirmación y recuperación antes de invitar usuarios reales. Si dejas confirmación de correo activada, el usuario debe confirmar antes de entrar.
-4. Para Google: crea un cliente OAuth de tipo aplicación web en Google Cloud. Configura la pantalla de consentimiento, los dominios y la URL callback que indica Supabase. Copia Client ID y Client Secret a Authentication → Providers → Google. El secreto se guarda en Supabase, nunca en GitHub. Si Google está en modo de prueba, añade los usuarios de prueba; para acceso general completa su configuración de publicación.
-5. assets/js/config.js contiene la URL y clave pública del proyecto anterior. Es válido que sean públicas; las políticas del SQL son las que separan los datos. Nunca añadas claves service_role a esta carpeta.
+## Registro y acceso
 
-## Verificación obligatoria antes de abrir registros
+Consulta ACCESO-SIMPLE.md. El registro actual pide nombre, usuario o teléfono y contraseña. No se utiliza Google ni un correo real para cuentas nuevas. Publica la función studio-register según ACCESO-SIMPLE.md; confirma internamente las cuentas sin enviar correos. No es necesario desactivar globalmente la confirmación de correo.
 
-- Crea dos cuentas de prueba distintas. Guarda un diseño, una cotización y un anuncio en cada una. Confirma desde una ventana privada que ninguna ve los datos de la otra.
-- Repite con teléfono y computadora usando la misma cuenta: debe aparecer el mismo historial.
-- Prueba confirmación de correo, recuperación de contraseña y Google con las URLs definitivas.
-- En Transmisión → OBS copia el enlace y úsalo en una fuente de navegador de 1280 × 720. Ese enlace permite ver el overlay sin iniciar sesión y no permite modificarlo. Regenerarlo invalida el anterior.
-- Verifica las descargas PNG y PDF con una cotización de varias páginas y el PNG de diseño con una fotografía.
+## Publicación
 
-## Qué se guarda
+Sube el contenido completo de CDN Studio a la raíz de GitHub y publícalo en Vercel como sitio estático. No necesita compilación. No subas carpetas ANTIGUO. assets/js/config.js contiene únicamente la URL y clave pública de Supabase; nunca añadas una clave administrativa al navegador.
 
-Perfiles, metadatos de trabajos y control de transmisión: tablas studio_*. Diseños y cotizaciones completos (incluidas sus imágenes): archivos JSON del bucket privado studio-private, organizados por UUID del propietario. Logos del perfil también son privados. Imágenes de anunciantes: bucket público studio-files, con escritura restringida a la carpeta del propietario. El overlay consulta únicamente los datos autorizados por su token.
+## Pruebas antes de uso general
 
-El editor de diseños conserva la plantilla CDN recibida. Cambiar el logo del perfil se aplica al cotizador; cambiar la marca dibujada dentro de la plantilla requiere editar esa plantilla.
+Registra dos cuentas diferentes. Cada una debe ver únicamente sus diseños, cotizaciones, anunciantes y transmisión. Abre la misma cuenta en teléfono y computadora para comprobar el historial compartido. Comprueba guardar/reabrir trabajos y descargar PNG/PDF. En Transmisión copia el enlace OBS y úsalo como fuente de navegador de 1280 × 720. Regenerarlo invalida el anterior.
 
-## Datos anteriores
+Los datos de las aplicaciones originales no se importan automáticamente. Conserva las carpetas anteriores hasta decidir qué información migrar. La plantilla de diseños conserva la marca CDN recibida; cambiarla requiere editar su imagen de plantilla.
 
-No se importan automáticamente datos de las aplicaciones antiguas ni se cambian sus permisos públicos. Conserva sus carpetas hasta comprobar esta versión. Los datos locales del cotizador anterior están en el navegador, no dentro de sus archivos: expórtalos antes de borrar sus datos del navegador. No elimines las tablas antiguas hasta decidir qué historial necesitas migrar y a qué cuenta pertenece.
-
-La implementación local no configura automáticamente Supabase, Google Cloud, SMTP ni Vercel. Las pruebas de cuentas y servicios externos solo se completan después de esa configuración.
+La aplicación necesita internet para iniciar sesión y guardar trabajos en la cuenta. La configuración y las pruebas de cuentas reales requieren tu proyecto Supabase; no se activan por copiar archivos a GitHub.

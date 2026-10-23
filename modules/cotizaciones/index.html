@@ -252,7 +252,7 @@ body{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left)
 @media(max-width:520px){.pwa-install-banner{grid-template-columns:42px minmax(0,1fr) auto}.pwa-install-icon{width:42px;height:42px}.pwa-install-btn{grid-column:2/3;justify-self:start;padding:9px 14px}.pwa-install-close{grid-column:3/4;grid-row:1/2;align-self:start}.pwa-install-copy{grid-column:2/3}}
 @media(display-mode:standalone){.pwa-install-banner{display:none!important}}
 </style>
-<link href="./icons/apple-touch-icon.png" rel="apple-touch-icon"/><meta content="#111b35" name="theme-color"/><meta content="yes" name="mobile-web-app-capable"/><meta content="yes" name="apple-mobile-web-app-capable"/><meta content="default" name="apple-mobile-web-app-status-bar-style"/><meta content="Cotizador CDN" name="apple-mobile-web-app-title"/><script src="../../assets/js/config.js"></script><script src="../../assets/js/module-bridge.js"></script><link rel="stylesheet" href="../../assets/css/module.css"><style>.pwa-install-banner, .pwa-ios-help{display:none!important}header .brand h1{font-size:18px}.tabs{position:sticky;top:0;z-index:30;background:#f5f7fa;padding:8px 0}body{background:#f5f7fa!important}</style><style>.btn.orange{background:#051b48;color:white;border-color:#051b48}.tabbtn.active{background:#051b48;color:#fff}.brand h1{color:#132743}</style></head>
+<link href="./icons/apple-touch-icon.png" rel="apple-touch-icon"/><meta content="#111b35" name="theme-color"/><meta content="yes" name="mobile-web-app-capable"/><meta content="yes" name="apple-mobile-web-app-capable"/><meta content="default" name="apple-mobile-web-app-status-bar-style"/><meta content="Cotizador CDN" name="apple-mobile-web-app-title"/><script src="../../assets/js/config.js"></script><script src="../../assets/js/module-bridge.js"></script><link rel="stylesheet" href="../../assets/css/module.css"><style>.pwa-install-banner, .pwa-ios-help{display:none!important}header .brand h1{font-size:18px}.tabs{position:sticky;top:0;z-index:30;background:#f5f7fa;padding:8px 0}body{background:#f5f7fa!important}</style><style>.btn.orange{background:#051b48;color:white;border-color:#051b48}.tabbtn.active{background:#051b48;color:#fff}.brand h1{color:#132743}</style><style>header .brand{display:none}.tabs{display:flex!important;gap:5px}.tabbtn{flex:1;font-size:11px;padding:10px 4px!important;min-height:46px}.editor-grid{grid-template-columns:1fr!important}.fixed-settings summary{display:none}.fixed-settings-panel{border:0;padding:0;margin:0}.fixed-note{display:none}#settings .editor-grid{margin-top:14px}.preview-area{max-height:none!important;overflow:visible!important}</style><link rel="stylesheet" href="../../assets/css/flow.css?v=4"></head>
 <body>
 <div class="app">
 <header class="topbar">
@@ -262,15 +262,15 @@ body{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left)
 </div>
 <nav aria-label="Pestañas" class="tabs">
 <button class="tabbtn active" data-tab="editor" type="button">Actualizar datos</button>
-<button class="tabbtn" data-tab="preview" type="button">Previsualización</button>
+<button class="tabbtn" data-tab="preview" type="button">Previsualización</button><button class="tabbtn" data-tab="settings" type="button">Configuración de datos</button>
 </nav>
 </header>
 <main>
 <section class="panel active" id="editor">
 <div class="status" id="editorStatus"></div>
 <div class="save-strip" id="saveStrip">
-<div class="save-state"><strong><span class="save-dot"></span><span id="saveStateText">Datos cargados</span></strong><small id="saveStateDetail">Los cambios se guardan al pulsar Guardar cambios.</small></div>
-<button class="btn orange" id="saveChanges" type="button">Guardar cambios</button>
+<div class="save-state"><strong><span class="save-dot"></span><span id="saveStateText">Datos cargados</span></strong><small id="saveStateDetail">Guarda la cotización con el nombre del cliente.</small></div>
+<button class="btn orange" id="saveChanges" type="button">Guardar cotización</button>
 </div>
 <div class="editor-grid">
 <div class="card compact-main-card">
@@ -280,16 +280,7 @@ body{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left)
 <input id="clientName" type="text"/>
 </div>
 </div>
-<div class="card compact-main-card">
-<h2>Datos de alcance</h2>
-<div class="stats-grid">
-<div class="field"><label for="followers">Seguidores</label><input id="followers" type="text"/></div>
-<div class="field"><label for="reach">Alcance total</label><input id="reach" type="text"/></div>
-<div class="field"><label for="interactions">Interacciones</label><input id="interactions" type="text"/></div>
-<div class="field"><label for="videoViews">Reproducciones de video</label><input id="videoViews" type="text"/></div>
-<div class="field"><label for="postViews">Alcance de publicaciones</label><input id="postViews" type="text"/></div>
-</div>
-</div>
+
 <div class="card services-main-card" style="grid-column:1/-1">
 <div class="section-head-row">
 <div>
@@ -300,18 +291,7 @@ body{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left)
 </div>
 <div id="servicesEditor"></div>
 </div>
-<div class="card" style="grid-column:1/-1">
-<h2>Logo</h2>
-<div class="page-images-grid one-upload">
-<div class="uploadbox">
-<img alt="Logo" id="thumbLogo"/>
-<div>
-<label for="logoInput">Logo de la cotización</label>
-<input accept="image/*" id="logoInput" type="file"/>
-</div>
-</div>
-</div>
-</div>
+
 <div class="card" style="grid-column:1/-1">
 <h2>Páginas e imágenes</h2>
 <div class="page-control">
@@ -335,7 +315,39 @@ body{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left)
 <div class="page-count" id="pageCount"></div>
 <p class="hint">Máximo 5 páginas en total.</p>
 </div>
-<details class="fixed-settings" style="grid-column:1/-1">
+
+<div class="card subtle-options" style="grid-column:1/-1">
+<div class="section-head-row options-row">
+<div>
+<h2>Opciones</h2>
+<p class="section-subtext">Úsalo solamente si quieres volver a comenzar.</p>
+</div>
+<button class="btn danger" id="resetAll" type="button">Nueva cotización</button>
+</div>
+</div>
+</div>
+</section>
+<section class="panel" id="settings"><div class="status" id="settingsStatus" role="status"></div><button class="btn orange" id="saveDefaults" type="button">Guardar configuración</button><div class="editor-grid"><div class="card compact-main-card">
+<h2>Datos de alcance</h2>
+<div class="stats-grid">
+<div class="field"><label for="followers">Seguidores</label><input id="followers" type="text"/></div>
+<div class="field"><label for="reach">Alcance total</label><input id="reach" type="text"/></div>
+<div class="field"><label for="interactions">Interacciones</label><input id="interactions" type="text"/></div>
+<div class="field"><label for="videoViews">Reproducciones de video</label><input id="videoViews" type="text"/></div>
+<div class="field"><label for="postViews">Alcance de publicaciones</label><input id="postViews" type="text"/></div>
+</div>
+</div><div class="card" style="grid-column:1/-1">
+<h2>Logo</h2>
+<div class="page-images-grid one-upload">
+<div class="uploadbox">
+<img alt="Logo" id="thumbLogo"/>
+<div>
+<label for="logoInput">Logo de la cotización</label>
+<input accept="image/*" id="logoInput" type="file"/>
+</div>
+</div>
+</div>
+</div><details open class="fixed-settings" style="grid-column:1/-1">
 <summary>Editar datos fijos</summary>
 <div class="fixed-settings-panel">
 <div class="fixed-note">
@@ -362,18 +374,7 @@ body{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left)
 <button class="btn secondary mini-action" id="restoreBrand" type="button">Restaurar logo y firma</button>
 </div>
 </div>
-</details>
-<div class="card subtle-options" style="grid-column:1/-1">
-<div class="section-head-row options-row">
-<div>
-<h2>Opciones</h2>
-<p class="section-subtext">Úsalo solamente si quieres volver a comenzar.</p>
-</div>
-<button class="btn danger" id="resetAll" type="button">Restablecer cotización</button>
-</div>
-</div>
-</div>
-</section>
+</details></div></section>
 <section class="panel" id="preview">
 <div class="status" id="previewStatus"></div>
 <div class="preview-toolbar">
@@ -428,14 +429,15 @@ const DB_KEY='cotizador-principal-v4';
 const MAX_TOTAL_PAGES=5;
 const $=id=>document.getElementById(id);
 const deepClone=o=>JSON.parse(JSON.stringify(o));
+let quoteDefaults=null;
 let state=makeDefaultState();
 let dirty=false;
 
-function makeDefaultState(){return {form:deepClone(DEFAULT_FORM),services:deepClone(DEFAULT_SERVICES),brand:{logo:ORIGINALS.logo,sign:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGBgAAAABQABpfZFQAAAAABJRU5ErkJggg=='},vehicle:{enabled:true,image1:ORIGINALS.vehicle1,image2:ORIGINALS.vehicle2},customPages:[],savedAt:null}}
+function makeDefaultState(){const value={form:deepClone(DEFAULT_FORM),services:deepClone(DEFAULT_SERVICES),brand:{logo:ORIGINALS.logo,sign:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGBgAAAABQABpfZFQAAAAABJRU5ErkJggg=='},vehicle:{enabled:true,image1:ORIGINALS.vehicle1,image2:ORIGINALS.vehicle2},customPages:[],savedAt:null};if(quoteDefaults){Object.assign(value.form,quoteDefaults.form||{});value.form.clientName='';if(quoteDefaults.brand)value.brand=deepClone(quoteDefaults.brand);}return value;}
 function escapeHtml(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 function formatPrice(n){if(n===''||n===null||typeof n==='undefined')return '';return 'Q'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function showStatus(id,msg,type='info',ms=3000){const el=$(id);if(!el)return;el.textContent=msg;el.className='status show '+type;if(ms)setTimeout(()=>el.className='status',ms)}
-function markDirty(){dirty=true;$('saveStrip').classList.add('dirty');$('saveStateText').textContent='Cambios sin guardar';$('saveStateDetail').textContent='Pulsa Guardar cambios para conservarlos al cerrar la aplicación.'}
+function markDirty(){dirty=true;$('saveStrip').classList.add('dirty');$('saveStateText').textContent='Cambios sin guardar';$('saveStateDetail').textContent='Pulsa Guardar cotización para conservarlos al cerrar la aplicación.'}
 function markSaved(date=new Date()){dirty=false;$('saveStrip').classList.remove('dirty');$('saveStateText').textContent='Cambios guardados';$('saveStateDetail').textContent='Guardado en tu cuenta · '+date.toLocaleString('es-GT',{dateStyle:'short',timeStyle:'short'})}
 function bindFormToInputs(){Object.entries(state.form).forEach(([id,val])=>{if($(id))$(id).value=val??''})}
 const bindMap={recipientPrefix:'vRecipientPrefix',clientName:'vClientName',presentText:'vPresentText',salutation:'vSalutation',introText:'vIntroText',servicesLead:'vServicesLead',followers:'vFollowers',reach:'vReach',interactions:'vInteractions',videoViews:'vVideoViews',postViews:'vPostViews',closingText:'vClosingText',signerName:'vSignerName',signerPhone:'vSignerPhone'};
@@ -489,8 +491,9 @@ function openDB(){return new Promise((res,rej)=>{if(!('indexedDB'in window))retu
 async function dbPut(value){await StudioBridge.save(value.form.clientName||'Nueva cotización',value);}
 async function dbGet(){return StudioBridge.load();}
 async function dbDelete(){StudioBridge.documentId=null;history.replaceState(null,'',location.pathname);}
-async function saveState(){state.savedAt=new Date().toISOString();try{await dbPut(state);markSaved(new Date(state.savedAt));showStatus('editorStatus','Cotización guardada en tu cuenta.','ok')}catch(err){showStatus('editorStatus','No se pudo guardar en tu cuenta: '+err.message,'err',7000)}}
-async function loadState(){let saved=null;try{saved=await dbGet()}catch(e){try{saved=JSON.parse(localStorage.getItem('studio:'+STUDIO_OWNER+':quote-fallback')||'null')}catch(_){}}if(saved&&saved.form&&Array.isArray(saved.services)){const d=makeDefaultState();state={...d,...saved,form:{...DEFAULT_FORM,...saved.form},brand:{...d.brand,...(saved.brand||{})},vehicle:{...d.vehicle,...(saved.vehicle||{})},customPages:Array.isArray(saved.customPages)?saved.customPages:[]};if(state.savedAt)markSaved(new Date(state.savedAt))}else{state=makeDefaultState();$('saveStateText').textContent='Valores predeterminados';$('saveStateDetail').textContent='Pulsa Guardar cambios cuando quieras conservar una cotización.'}}
+async function startNextQuote(){StudioBridge.documentId=null;history.replaceState(null,'',location.pathname);state=makeDefaultState();if(!quoteDefaults?.brand&&StudioBridge.profile.logo_url)state.brand.logo=StudioBridge.profile.logo_url;bindFormToInputs();renderServicesEditor();renderServicesPreview();applyBrand();renderPageManager();renderPhotoPages();updateAllFields();dirty=false;$('saveStrip').classList.remove('dirty');$('saveStateText').textContent='Nueva cotización';$('saveStateDetail').textContent='Los datos de configuración se conservan.';setTab('editor');}
+async function saveState(){if(!state.form.clientName.trim()){showStatus('editorStatus','Escribe el cliente o empresa antes de guardar.','err');return;}const button=$('saveChanges');button.disabled=true;try{state.savedAt=new Date().toISOString();await dbPut(state);await startNextQuote();showStatus('editorStatus','Cotización guardada. Ábrela por su nombre para generar el PDF.','ok',5000)}catch(err){showStatus('editorStatus','No se pudo guardar: '+err.message,'err',7000)}finally{button.disabled=false}}
+async function loadState(){let saved=null;try{saved=await dbGet()}catch(e){try{saved=JSON.parse(localStorage.getItem('studio:'+STUDIO_OWNER+':quote-fallback')||'null')}catch(_){}}if(saved&&saved.form&&Array.isArray(saved.services)){const d=makeDefaultState();state={...d,...saved,form:{...DEFAULT_FORM,...saved.form},brand:{...d.brand,...(saved.brand||{})},vehicle:{...d.vehicle,...(saved.vehicle||{})},customPages:Array.isArray(saved.customPages)?saved.customPages:[]};if(state.savedAt)markSaved(new Date(state.savedAt))}else{state=makeDefaultState();$('saveStateText').textContent='Valores predeterminados';$('saveStateDetail').textContent='Pulsa Guardar cotización cuando quieras conservar una cotización.'}}
 
 function safeName(){const raw=state.form.clientName.trim()||'cliente';return raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()||'cliente'}
 
@@ -848,7 +851,9 @@ $('vehicleEnabled').addEventListener('change',e=>{if(e.target.checked && 2+state
 $('addPage').addEventListener('click',()=>{if(activeConfiguredPages()>=MAX_TOTAL_PAGES)return;state.customPages.push({id:'p'+Date.now()+Math.random().toString(36).slice(2,6),images:[null,null]});renderPageManager();markDirty()});
 $('restoreVehicle').addEventListener('click',()=>{state.vehicle.image1=ORIGINALS.vehicle1;state.vehicle.image2=ORIGINALS.vehicle2;renderPageManager();renderPhotoPages();markDirty();showStatus('editorStatus','Fotos del vehículo restauradas.','ok')});
 $('restoreBrand').addEventListener('click',()=>{state.brand.logo=ORIGINALS.logo;state.brand.sign=ORIGINALS.sign;applyBrand();markDirty();showStatus('editorStatus','Logo y firma restaurados.','ok')});
-$('resetAll').addEventListener('click',async()=>{if(!confirm('¿Restablecer todos los datos, servicios, imágenes y páginas a los valores predeterminados?'))return;state=makeDefaultState();try{await dbDelete()}catch(e){try{localStorage.removeItem('studio:'+STUDIO_OWNER+':quote-fallback')}catch(_){}}bindFormToInputs();renderServicesEditor();renderServicesPreview();applyBrand();renderPageManager();renderPhotoPages();updateAllFields();dirty=false;$('saveStrip').classList.remove('dirty');$('saveStateText').textContent='Valores predeterminados';$('saveStateDetail').textContent='La cotización volvió a los datos originales.';showStatus('editorStatus','Cotización restablecida.','ok')});
+$('resetAll').addEventListener('click',async()=>{if(dirty&&!confirm('¿Empezar otra cotización y descartar los cambios sin guardar?'))return;await startNextQuote();});
+$('saveDefaults').addEventListener('click',async()=>{const button=$('saveDefaults');button.disabled=true;try{const {clientName,...form}=state.form;const value={form,brand:deepClone(state.brand)};await StudioBridge.studio.saveQuoteDefaults(value);quoteDefaults=value;showStatus('settingsStatus','Configuración guardada para las próximas cotizaciones.','ok',4000)}catch(error){showStatus('settingsStatus','No se pudo guardar: '+error.message,'err',6000)}finally{button.disabled=false}});
+
 setupUpload('logoInput',data=>{state.brand.logo=data;applyBrand()});
 setupUpload('signInput',data=>{state.brand.sign=data;applyBrand()});
 setupUpload('vehicle1Input',data=>{state.vehicle.image1=data;renderPageManager();renderPhotoPages()});
@@ -858,7 +863,7 @@ window.addEventListener('resize',scalePreview,{passive:true});
 $('downloadPng').addEventListener('click',e=>withBusy(e.currentTarget,'Generando imagen…',async()=>{const pages=await exportPages();const gap=Math.round(36*(pages[0].width/816));const out=document.createElement('canvas');out.width=pages[0].width;out.height=pages.reduce((n,p)=>n+p.height,0)+gap*(pages.length-1);const ctx=out.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,out.width,out.height);let y=0;for(const p of pages){ctx.drawImage(p,0,y);y+=p.height+gap}const blob=await canvasToBlob(out,'image/png');downloadBlob(blob,`cotizacion-${safeName()}-HD.png`);showStatus('previewStatus',`Imagen HD descargada (${pages.length} página${pages.length===1?'':'s'}).`,'ok')}));
 $('downloadPdf').addEventListener('click',e=>withBusy(e.currentTarget,'Generando PDF…',async()=>{const pages=await exportPages();const pdf=await makePdfFromCanvases(pages);downloadBlob(pdf,`cotizacion-${safeName()}.pdf`);showStatus('previewStatus',`PDF descargado (${pages.length} página${pages.length===1?'':'s'}).`,'ok')}));
 
-(async function init(){await loadState();if(!StudioBridge.documentId&&StudioBridge.profile.logo_url)state.brand.logo=StudioBridge.profile.logo_url;bindFormToInputs();renderServicesEditor();renderServicesPreview();applyBrand();renderPageManager();renderPhotoPages();updateAllFields();requestAnimationFrame(scalePreview)})();
+(async function init(){try{quoteDefaults=await StudioBridge.studio.readQuoteDefaults()}catch(error){showStatus('editorStatus','No se pudo leer la configuración: '+error.message,'err',5000)}await loadState();if(!StudioBridge.documentId&&!quoteDefaults?.brand&&StudioBridge.profile.logo_url)state.brand.logo=StudioBridge.profile.logo_url;bindFormToInputs();renderServicesEditor();renderServicesPreview();applyBrand();renderPageManager();renderPhotoPages();updateAllFields();requestAnimationFrame(scalePreview);if(new URLSearchParams(location.search).get('view')==='preview')setTab('preview')})();
 })();</script>
 
 </body>

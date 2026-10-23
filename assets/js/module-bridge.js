@@ -4,3 +4,12 @@
  window.STUDIO_OWNER=studio.userId;
  window.StudioBridge={studio,get profile(){return studio.profile},documentId:new URLSearchParams(location.search).get('doc'),kind:location.pathname.includes('/cotizaciones/')?'quotation':'design',async load(){if(!this.documentId)return null;return studio.readDocument(this.documentId)},async save(title,payload){this.documentId=await studio.saveDocument(this.documentId,this.kind,title,payload);history.replaceState(null,'','?doc='+encodeURIComponent(this.documentId));return this.documentId;}};
 })();
+
+(() => {
+ if(window.parent===window)return;let lastHeight=0,pending=false;
+ function measure(){pending=false;const height=Math.ceil(document.body.getBoundingClientRect().height);if(height>=50&&height!==lastHeight){lastHeight=height;parent.postMessage({type:'studio:resize',height},location.origin)}}
+ function schedule(){if(!pending){pending=true;requestAnimationFrame(measure)}}
+ function start(){new ResizeObserver(schedule).observe(document.body);new MutationObserver(schedule).observe(document.body,{subtree:true,childList:true,attributes:true});window.addEventListener('load',schedule);document.fonts?.ready.then(schedule);schedule()}
+ window.addEventListener('message',event=>{if(event.source===parent&&event.origin===location.origin&&event.data?.type==='studio:measure'){lastHeight=0;schedule()}});
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
