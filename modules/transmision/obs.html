@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overlay OBS</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/bebas-neue@5.0.0/index.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/anton@5.0.0/index.min.css">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  font-family: 'Inter', sans-serif;
+  background: transparent;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.obs-container {
+  width: 1280px;
+  height: 720px;
+  position: relative;
+  transform-origin: top left;
+  background: transparent;
+}
+
+/* LOGO */
+.bg-logo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 1;
+  pointer-events: none;
+  user-select: none;
+  opacity: 1;
+  image-rendering: auto;
+}
+
+/* MARCADOR + CRONÓMETROS */
+.score-area {
+  position: absolute;
+  top: 50px;
+  left: 50px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* MARCADOR */
+.scorebug {
+  position: relative;
+  background: #000000;
+  padding: 0 0 0 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+.scorebug.hidden {
+  opacity: 0;
+  transform: translateX(-50px);
+  pointer-events: none;
+}
+
+.team-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.team-name {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0 8px;
+  min-width: 140px;
+  text-align: center;
+}
+
+.score-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  color: #ffffff;
+  line-height: 1;
+  min-width: 35px;
+  text-align: center;
+  padding: 0 8px;
+  font-weight: 900;
+}
+
+.separator {
+  width: 2px;
+  height: 28px;
+  background: #ffffff;
+  margin: 0 6px;
+  opacity: 0.6;
+}
+
+/* CONTENEDOR CRONÓMETROS */
+.timer-container {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: auto;
+  min-width: 180px;
+  margin-top: 0;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+.timer-container.hidden {
+  opacity: 0;
+  transform: translateY(-20px);
+  pointer-events: none;
+}
+
+/* CRONÓMETRO PRINCIPAL */
+.main-timer {
+  font-family: 'Anton', sans-serif;
+  font-size: 46px;
+  color: #ffffff;
+  background: #000000;
+  padding: 2px 10px;
+  line-height: 1;
+  letter-spacing: 1px;
+  text-align: center;
+  font-weight: 900;
+  min-width: 180px;
+}
+
+/* TIEMPO EXTRA - DEBAJO DEL CRONÓMETRO */
+.extra-timer-bar {
+  background: #FFD700;
+  padding: 3px 8px;
+  font-family: 'Anton', sans-serif;
+  font-size: 18px;
+  color: #000000;
+  letter-spacing: 1px;
+  text-align: center;
+  font-weight: 900;
+  line-height: 1;
+  min-width: 180px;
+
+  display: none;
+  opacity: 0;
+  transform: translateY(-5px);
+}
+
+.extra-timer-bar.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+  animation: showExtraTimer 0.25s ease-out;
+}
+
+@keyframes showExtraTimer {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.extra-timer-bar .extra-label {
+  margin-right: 6px;
+}
+
+.extra-timer-bar .extra-separator {
+  margin: 0 6px;
+}
+
+/* PATROCINADORES EN IMÁGENES */
+.sponsor-image-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  display: none;
+  background: transparent;
+  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: 30px;
+  pointer-events: none;
+}
+
+.sponsor-image-container.active {
+  display: flex;
+}
+
+.sponsor-image-container img {
+  width: 482px;
+  height: 150px;
+  max-width: 45%;
+  object-fit: contain;
+  opacity: 1;
+}
+</style>
+<script src="../../assets/js/config.js"></script></head>
+
+<body>
+
+<div class="obs-container" id="obsContainer">
+
+  <img
+    src="assets/images/logos/logo.png"
+    alt=""
+    class="bg-logo"
+    draggable="false"
+    decoding="async"
+  >
+
+  <div class="score-area">
+
+    <!-- MARCADOR -->
+    <div class="scorebug" id="scorebug">
+
+      <div class="team-section">
+        <div class="team-name" id="nameHome">LOC</div>
+        <div class="score-num" id="scoreHome">0</div>
+      </div>
+
+      <div class="separator"></div>
+
+      <div class="team-section">
+        <div class="score-num" id="scoreAway">0</div>
+        <div class="team-name" id="nameAway">VIS</div>
+      </div>
+
+    </div>
+
+    <!-- CRONÓMETROS -->
+    <div class="timer-container" id="timerContainer">
+
+      <!-- CRONÓMETRO PRINCIPAL -->
+      <div class="main-timer" id="timerDisplay">
+        00:00
+      </div>
+
+      <!-- TIEMPO EXTRA DEBAJO -->
+      <div class="extra-timer-bar" id="extraTimerBar">
+        <span class="extra-label">EXTRA</span>
+        <span class="extra-separator">|</span>
+        <span id="extraTimerDisplay">00:00</span>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- PATROCINADORES EN IMÁGENES -->
+  <div class="sponsor-image-container" id="sponsorImageContainer">
+    <img id="sponsorImage" src="assets/images/sponsors/MUNI.jpg" alt="Patrocinador">
+  </div>
+
+</div>
+
+<script>
+const SUPABASE_URL = window.STUDIO_CONFIG.url;
+
+const SUPABASE_KEY = window.STUDIO_CONFIG.anonKey;
+
+const sbClient = window.supabase?.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+let state = {
+  nameHome: 'LOC',
+  nameAway: 'VIS',
+  scoreHome: 0,
+  scoreAway: 0,
+  timerSeconds: 0,
+  isRunning: false,
+  sessionStart: 0,
+  visible: true
+};
+
+const STUDIO_TOKEN = new URLSearchParams(location.search).get('token');
+document.getElementById('obsContainer').style.visibility='hidden';
+const LOCAL_CACHE_KEY = 'studio:obs:'+STUDIO_TOKEN;
+
+function saveLocalCache() {
+  try {
+    localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.warn('No se pudo guardar caché local:', e);
+  }
+}
+
+function loadLocalCache() {
+  try {
+    const cached = localStorage.getItem(LOCAL_CACHE_KEY);
+    return cached ? JSON.parse(cached) : null;
+  } catch (e) {
+    console.warn('No se pudo leer caché local:', e);
+    return null;
+  }
+}
+
+const MAIN_TIME_LIMIT = 45 * 60;
+const SPONSOR_INTERVAL_MS = 10 * 60 * 1000;
+const SPONSOR_IMAGE_DURATION_MS = 10 * 1000;
+
+const SPONSOR_IMAGES = [
+  'assets/images/sponsors/MUNI.jpg',
+  'assets/images/sponsors/Importadora.jpg',
+  'assets/images/sponsors/TAQUEREA.jpg'
+];
+
+const sponsorImage =
+  document.getElementById('sponsorImage');
+
+const sponsorContainer =
+  document.getElementById('sponsorImageContainer');
+
+let sponsorInterval = null;
+let sponsorSequenceRunning = false;
+let sponsorTimeouts = [];
+
+
+/* ==========================
+   PATROCINADORES
+========================== */
+
+function clearSponsorTimeouts() {
+  sponsorTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+  sponsorTimeouts = [];
+}
+
+function showSponsorSequence() {
+
+  if (sponsorSequenceRunning) return;
+
+  sponsorSequenceRunning = true;
+  clearSponsorTimeouts();
+  sponsorContainer.classList.add('active');
+
+  SPONSOR_IMAGES.forEach((imageSrc, index) => {
+    const timeoutId = setTimeout(() => {
+      sponsorImage.src = imageSrc;
+    }, index * SPONSOR_IMAGE_DURATION_MS);
+
+    sponsorTimeouts.push(timeoutId);
+  });
+
+  const hideTimeoutId = setTimeout(() => {
+    sponsorContainer.classList.remove('active');
+    sponsorSequenceRunning = false;
+    clearSponsorTimeouts();
+  }, SPONSOR_IMAGES.length * SPONSOR_IMAGE_DURATION_MS);
+
+  sponsorTimeouts.push(hideTimeoutId);
+}
+
+function startSponsorCycle() {
+
+  showSponsorSequence();
+
+  sponsorInterval = setInterval(
+    () => {
+      showSponsorSequence();
+    },
+    SPONSOR_INTERVAL_MS
+  );
+}
+
+
+/* ==========================
+   FORMATO DE TIEMPO
+========================== */
+
+function formatTime(s) {
+
+  const m = Math.floor(s / 60);
+
+  const sec = s % 60;
+
+  return (
+    String(m).padStart(2, '0') +
+    ':' +
+    String(sec).padStart(2, '0')
+  );
+}
+
+
+/* ==========================
+   ACTUALIZAR INTERFAZ
+========================== */
+
+function updateUI() {
+
+  document.getElementById(
+    'nameHome'
+  ).textContent = state.nameHome;
+
+  document.getElementById(
+    'nameAway'
+  ).textContent = state.nameAway;
+
+  document.getElementById(
+    'scoreHome'
+  ).textContent = state.scoreHome;
+
+  document.getElementById(
+    'scoreAway'
+  ).textContent = state.scoreAway;
+
+  renderTimer();
+
+  const scorebug =
+    document.getElementById('scorebug');
+
+  const timerContainer =
+    document.getElementById(
+      'timerContainer'
+    );
+
+  if (state.visible) {
+
+    scorebug.classList.remove(
+      'hidden'
+    );
+
+    timerContainer.classList.remove(
+      'hidden'
+    );
+
+  } else {
+
+    scorebug.classList.add(
+      'hidden'
+    );
+
+    timerContainer.classList.add(
+      'hidden'
+    );
+  }
+}
+
+
+/* ==========================
+   CRONÓMETRO PERSISTENTE
+========================== */
+
+function getElapsedSeconds() {
+  if (state.isRunning && Number(state.sessionStart) > 0) {
+    return Math.max(0, Math.floor((Date.now() - Number(state.sessionStart)) / 1000));
+  }
+  return Math.max(0, Number(state.timerSeconds) || 0);
+}
+
+function renderTimer() {
+  const elapsed = getElapsedSeconds();
+  const mainSeconds = Math.min(elapsed, MAIN_TIME_LIMIT);
+  const extraSeconds = Math.max(0, elapsed - MAIN_TIME_LIMIT);
+
+  document.getElementById('timerDisplay').textContent = formatTime(mainSeconds);
+
+  const extraBar = document.getElementById('extraTimerBar');
+  document.getElementById('extraTimerDisplay').textContent = formatTime(extraSeconds);
+
+  if (elapsed >= MAIN_TIME_LIMIT) extraBar.classList.add('active');
+  else extraBar.classList.remove('active');
+}
+
+let mainInterval = null;
+
+function startTimerLocal() {
+  if (mainInterval) clearInterval(mainInterval);
+  // Solo calcula desde el origen guardado; nunca crea un origen nuevo al recargar.
+  renderTimer();
+  mainInterval = setInterval(renderTimer, 1000);
+}
+
+function stopTimerLocal() {
+  if (mainInterval) {
+    clearInterval(mainInterval);
+    mainInterval = null;
+  }
+  renderTimer();
+}
+
+
+/* ==========================
+   ACTUALIZACIÓN CENTRAL
+========================== */
+
+function applyData(
+  d,
+  fromPolling = false
+) {
+  if (!d) return;
+
+  state.nameHome = d.name_home ?? state.nameHome;
+  state.nameAway = d.name_away ?? state.nameAway;
+  state.scoreHome = d.score_home ?? 0;
+  state.scoreAway = d.score_away ?? 0;
+  state.timerSeconds = d.timer_seconds ?? 0;
+  state.isRunning = d.is_running ?? false;
+  state.sessionStart = Number(d.session_start) || 0;
+  state.visible = d.visible !== false;
+
+  saveLocalCache();
+
+  if (state.isRunning && state.sessionStart > 0) startTimerLocal();
+  else stopTimerLocal();
+
+  updateUI();
+}
+
+
+/* ==========================
+   CARGA INICIAL
+========================== */
+
+async function loadFromSupabase() {
+  try {
+    const { data, error } = await sbClient.rpc('studio_read_overlay', {share_token:STUDIO_TOKEN});
+
+    if (error) throw error;
+    document.getElementById('obsContainer').style.visibility=data?'visible':'hidden';
+    if(!data){localStorage.removeItem(LOCAL_CACHE_KEY);return;}
+    applyData(data);
+
+  } catch (e) {
+    console.warn('⚠️ No se pudo cargar Supabase:', e);
+
+    const cached = loadLocalCache();
+    if (cached) {
+      state = { ...state, ...cached, sessionStart: Number(cached.sessionStart) || 0 };
+
+      if (state.isRunning && state.sessionStart > 0) startTimerLocal();
+      else stopTimerLocal();
+
+      updateUI();
+      console.log('📴 Overlay recuperado desde caché local');
+    }
+  }
+}
+
+loadFromSupabase();
+
+
+/* ==========================
+   SUPABASE REALTIME
+========================== */
+
+/* ==========================
+   POLLING DE RESPALDO
+========================== */
+
+setInterval(
+  async () => {
+    try {
+      const { data, error } = await sbClient.rpc('studio_read_overlay', {share_token:STUDIO_TOKEN});
+
+      if(error)return;
+      document.getElementById('obsContainer').style.visibility=data?'visible':'hidden';
+      if(!data){localStorage.removeItem(LOCAL_CACHE_KEY);return;}
+
+      const needsSync =
+        data.name_home !== state.nameHome ||
+        data.name_away !== state.nameAway ||
+        data.score_home !== state.scoreHome ||
+        data.score_away !== state.scoreAway ||
+        (data.timer_seconds ?? 0) !== state.timerSeconds ||
+        (data.is_running ?? false) !== state.isRunning ||
+        (Number(data.session_start) || 0) !== state.sessionStart ||
+        (data.visible !== false) !== state.visible;
+
+      if (needsSync) applyData(data, true);
+
+    } catch (e) {
+      console.warn('⚠️ Excepción en polling:', e);
+    }
+  },
+  1000
+);
+
+
+window.addEventListener('online', () => {
+  loadFromSupabase();
+});
+
+/* ==========================
+   INICIAR PATROCINADORES
+========================== */
+
+// Sponsor cycle is managed by sponsor-overlay.js.
+
+
+/* ==========================
+   ESCALADO RESPONSIVE
+========================== */
+
+function scaleToFit() {
+
+  const container =
+    document.getElementById(
+      'obsContainer'
+    );
+
+  const scaleX =
+    window.innerWidth /
+    1280;
+
+  const scaleY =
+    window.innerHeight /
+    720;
+
+  const scale =
+    Math.min(
+      scaleX,
+      scaleY
+    );
+
+  const offsetX =
+    (
+      window.innerWidth -
+      1280 * scale
+    ) /
+    2;
+
+  const offsetY =
+    (
+      window.innerHeight -
+      720 * scale
+    ) /
+    2;
+
+  container.style.transform =
+    `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+
+  container.style.transformOrigin =
+    'top left';
+}
+
+window.addEventListener(
+  'resize',
+  scaleToFit
+);
+
+window.addEventListener(
+  'load',
+  scaleToFit
+);
+
+scaleToFit();
+</script>
+
+<script src="assets/js/layout.js"></script><script src="assets/js/sponsors.js?v=11"></script><script src="assets/js/sponsor-overlay.js?v=11"></script></body>
+</html>

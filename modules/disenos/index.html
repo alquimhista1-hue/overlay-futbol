@@ -1,0 +1,1126 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>CDN Escuintla</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111318;
+      --panel: #1b1f2a;
+      --panel-2: #232838;
+      --text: #f6f7fb;
+      --muted: #aeb6c7;
+      --line: #343b4f;
+      --blue: #1773ff;
+      --blue-2: #0f5ed8;
+      --danger: #ff5c7a;
+      --shadow: 0 20px 55px rgba(0, 0, 0, .28);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      touch-action: manipulation;
+      overscroll-behavior: none;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      touch-action: manipulation;
+      overscroll-behavior: none;
+      background:
+        linear-gradient(135deg, rgba(23, 115, 255, .13), transparent 32rem),
+        linear-gradient(315deg, rgba(232, 143, 17, .12), transparent 28rem),
+        var(--bg);
+      color: var(--text);
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1500px, 100%);
+      margin: 0 auto;
+      padding: 28px;
+      display: grid;
+      grid-template-columns: minmax(320px, 430px) minmax(420px, 1fr);
+      gap: 28px;
+      align-items: start;
+    }
+
+    .panel {
+      background: color-mix(in srgb, var(--panel) 92%, black);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .form-panel {
+      position: sticky;
+      top: 24px;
+      padding: 22px;
+    }
+
+    .panel-title {
+      margin: 0 0 18px;
+      font-size: 20px;
+      line-height: 1.2;
+      font-weight: 800;
+    }
+
+    .field-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--text);
+      background: var(--panel-2);
+      outline: none;
+      padding: 11px 12px;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 86px;
+      line-height: 1.35;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(23, 115, 255, .18);
+      background: #252b3c;
+    }
+
+    select {
+      cursor: pointer;
+    }
+
+    input[type="file"] {
+      padding: 9px;
+      color: var(--muted);
+    }
+
+    input[type="file"]::file-selector-button {
+      border: 0;
+      border-radius: 6px;
+      background: #30384c;
+      color: var(--text);
+      padding: 8px 10px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+
+    .actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .download {
+      border: 0;
+      border-radius: 7px;
+      min-height: 48px;
+      color: white;
+      background: linear-gradient(180deg, var(--blue), var(--blue-2));
+      font-weight: 850;
+      cursor: pointer;
+      box-shadow: 0 13px 28px rgba(23, 115, 255, .22);
+    }
+
+    .download:active {
+      transform: translateY(1px);
+    }
+
+    .status {
+      min-height: 20px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .preview-panel {
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+      justify-items: center;
+    }
+
+    .preview-head {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: end;
+    }
+
+    .preview-title {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.2;
+      font-weight: 850;
+    }
+
+    .size-badge {
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      background: rgba(255, 255, 255, .04);
+    }
+
+    .canvas-wrap {
+      width: min(100%, 720px);
+      aspect-ratio: 1 / 1;
+      display: grid;
+      place-items: center;
+      touch-action: none;
+      user-select: none;
+      background:
+        linear-gradient(45deg, rgba(255, 255, 255, .045) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255, 255, 255, .045) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, .045) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, .045) 75%);
+      background-size: 24px 24px;
+      background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 20px 70px rgba(0, 0, 0, .36);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      touch-action: none;
+      user-select: none;
+      cursor: grab;
+    }
+
+    canvas.dragging {
+      cursor: grabbing;
+    }
+
+    @media (max-width: 980px) {
+      .app {
+        grid-template-columns: 1fr;
+        padding: 18px;
+      }
+
+      .form-panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .app {
+        padding: 12px;
+        gap: 14px;
+      }
+
+      .form-panel,
+      .preview-panel {
+        padding: 16px;
+      }
+
+      .preview-head {
+        align-items: start;
+        flex-direction: column;
+      }
+    }
+  </style>
+<script src="../../assets/js/config.js"></script><script src="../../assets/js/module-bridge.js"></script><link rel="stylesheet" href="../../assets/css/module.css"><style>body{padding:12px!important;background:#f5f7fa!important}.app{display:flex!important;flex-direction:column!important;max-width:100%!important;gap:14px!important}.form-panel{order:0}.preview-panel{order:1}.panel{padding:14px!important}.canvas-wrap{max-width:100%}.actions{gap:8px}button.download{font-size:12px;padding:12px}.panel-title{font-size:20px}</style><style>:root{color-scheme:light;--bg:#f5f7fa;--panel:#fff;--panel-2:#f7f9fc;--text:#132743;--muted:#6d7b8f;--line:#dfe6ef;--blue:#126bbc;--blue-2:#051b48;--shadow:0 4px 16px #10234108}.app{padding:0!important}.form-panel{position:static}.panel{border-radius:16px;background:#fff}.download{background:#051b48!important;border-radius:12px}input:focus,textarea:focus,select:focus{background:#fff}input[type=file]::file-selector-button{background:#e8eff7;color:#132743}.preview-title{color:#132743}</style></head>
+<body>
+  <main class="app">
+    <section class="panel preview-panel" aria-label="Vista previa">
+      <div class="preview-head">
+        <h2 class="preview-title">Vista previa</h2>
+        <span class="size-badge">1080 x 1080 px</span>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="preview" width="1080" height="1080" aria-label="Diseño de noticia generado"></canvas>
+      </div>
+    </section>
+
+    <section class="panel form-panel" aria-label="Formulario de noticia">
+      <h1 class="panel-title">Diseño de noticia</h1>
+
+      <form class="field-grid" id="newsForm">
+        <label>
+          Titular
+          <textarea id="headline" name="headline" maxlength="145"></textarea>
+        </label>
+
+        <label>
+          Categoría
+          <select id="category" name="category">
+            <option value="DEPORTES">DEPORTES</option>
+            <option value="ESCUINTLA" selected>ESCUINTLA</option>
+            <option value="NACIONALES">NACIONALES</option>
+            <option value="INTERNACIONALES">INTERNACIONALES</option>
+            <option value="TECNOLOGÍA">TECNOLOGÍA</option>
+            <option value="FARÁNDULA">FARÁNDULA</option>
+          </select>
+        </label>
+
+        <label>
+          Foto de fondo
+          <input id="photoInput" name="photoInput" type="file" accept="image/*">
+        </label>
+
+      </form>
+
+      <div class="actions">
+        <button class="download" id="saveDesign" type="button">Guardar en mi cuenta</button><button class="download" id="downloadBtn" type="button">Descargar imagen PNG</button>
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const canvas = document.getElementById('preview');
+    const ctx = canvas.getContext('2d');
+    const statusEl = document.getElementById('status');
+
+    const fields = {
+      headline: document.getElementById('headline'),
+      category: document.getElementById('category'),
+      photoInput: document.getElementById('photoInput')
+    };
+
+    const DEFAULT_CATEGORY_LABEL = 'ESCUINTLA';
+    const MAX_HEADLINE_CHARS = 145;
+    const ENABLE_SHADES = false;
+
+    const state = {
+      photo: null,
+      fondo: null,
+      photoReady: false,
+      fondoReady: false,
+      photoSource: '',
+      fondoSource: '',
+      photoTransform: {
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+        minScale: 1,
+        maxScale: 5
+      }
+    };
+
+    const activePointers = new Map();
+    let panStart = null;
+    let pinchStart = null;
+
+    function blockPageZoom() {
+      const prevent = event => {
+        event.preventDefault();
+      };
+
+      /*
+        Bloquea el zoom nativo de la página en iPhone/iPad.
+        El zoom interno de la foto sigue funcionando porque lo controla
+        el canvas con pointer events y touch-action: none.
+      */
+      document.addEventListener('gesturestart', prevent, { passive: false });
+      document.addEventListener('gesturechange', prevent, { passive: false });
+      document.addEventListener('gestureend', prevent, { passive: false });
+
+      /* Bloquea zoom con Ctrl + rueda en navegadores de escritorio. */
+      document.addEventListener('wheel', event => {
+        if (event.ctrlKey) {
+          event.preventDefault();
+        }
+      }, { passive: false });
+
+      /* Evita doble toque para hacer zoom en móviles. */
+      let lastTouchEnd = 0;
+      document.addEventListener('touchend', event => {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) {
+          event.preventDefault();
+        }
+        lastTouchEnd = now;
+      }, { passive: false });
+    }
+
+    function setStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.classList.toggle('error', isError);
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+
+        /*
+          No usamos crossOrigin porque las imágenes base están en la misma carpeta
+          del HTML y también deben cargar al abrir el archivo directamente.
+        */
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = src;
+      });
+    }
+
+    async function loadDefaultImages() {
+      try {
+        state.fondo = await loadImage('fondo.png');
+        state.fondoReady = true;
+        state.fondoSource = 'default';
+      } catch (error) {
+        state.fondoReady = false;
+        state.fondoSource = '';
+      }
+
+      render();
+
+      if (!state.fondoReady) {
+        setStatus('No se encontró fondo.png. Coloca fondo.png en la misma carpeta que este HTML.', true);
+        return;
+      }
+
+      setStatus('Selecciona una foto de fondo. Luego puedes arrastrarla con el dedo y hacer zoom con dos dedos.');
+    }
+
+    function fileToImage(file, targetKey, readyKey, sourceKey) {
+      if (!file) {
+        state[targetKey] = null;
+        state[readyKey] = false;
+        state[sourceKey] = '';
+        render();
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = async event => {
+        try {
+          state[targetKey] = await loadImage(event.target.result);
+          state[readyKey] = true;
+          state[sourceKey] = 'form';
+
+          if (targetKey === 'photo') {
+            resetPhotoTransform();
+            setStatus('Foto cargada. Arrástrala con el dedo para moverla o usa dos dedos para hacer zoom.');
+          } else {
+            setStatus('');
+          }
+
+          render();
+        } catch (error) {
+          state[targetKey] = null;
+          state[readyKey] = false;
+          state[sourceKey] = '';
+          setStatus('No se pudo cargar la imagen seleccionada. Usa JPG, PNG o WEBP.', true);
+          console.error(error);
+        }
+      };
+
+      reader.onerror = error => {
+        state[targetKey] = null;
+        state[readyKey] = false;
+        state[sourceKey] = '';
+        setStatus('No se pudo leer el archivo seleccionado.', true);
+        console.error(error);
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    function coverImage(image, x, y, width, height) {
+      if (!image) return;
+      const imageRatio = image.width / image.height;
+      const boxRatio = width / height;
+      let sx = 0;
+      let sy = 0;
+      let sw = image.width;
+      let sh = image.height;
+
+      if (imageRatio > boxRatio) {
+        sw = image.height * boxRatio;
+        sx = (image.width - sw) / 2;
+      } else {
+        sh = image.width / boxRatio;
+        sy = (image.height - sh) / 2;
+      }
+
+      ctx.drawImage(image, sx, sy, sw, sh, x, y, width, height);
+    }
+
+
+    function getPhotoBaseScale(image) {
+      if (!image) return 1;
+      return Math.max(canvas.width / image.width, canvas.height / image.height);
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function clampPhotoTransform() {
+      if (!state.photoReady || !state.photo) return;
+
+      const transform = state.photoTransform;
+      const baseScale = getPhotoBaseScale(state.photo);
+      const drawWidth = state.photo.width * baseScale * transform.scale;
+      const drawHeight = state.photo.height * baseScale * transform.scale;
+      const maxOffsetX = Math.max(0, (drawWidth - canvas.width) / 2);
+      const maxOffsetY = Math.max(0, (drawHeight - canvas.height) / 2);
+
+      transform.scale = clamp(transform.scale, transform.minScale, transform.maxScale);
+      transform.offsetX = clamp(transform.offsetX, -maxOffsetX, maxOffsetX);
+      transform.offsetY = clamp(transform.offsetY, -maxOffsetY, maxOffsetY);
+    }
+
+    function resetPhotoTransform() {
+      state.photoTransform.scale = 1;
+      state.photoTransform.offsetX = 0;
+      state.photoTransform.offsetY = 0;
+      clampPhotoTransform();
+    }
+
+    function drawMovablePhoto(image) {
+      if (!image) return;
+
+      clampPhotoTransform();
+
+      const transform = state.photoTransform;
+      const baseScale = getPhotoBaseScale(image);
+      const drawWidth = image.width * baseScale * transform.scale;
+      const drawHeight = image.height * baseScale * transform.scale;
+      const drawX = (canvas.width - drawWidth) / 2 + transform.offsetX;
+      const drawY = (canvas.height - drawHeight) / 2 + transform.offsetY;
+
+      ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+    }
+
+    function getCanvasPoint(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (event.clientX - rect.left) * (canvas.width / rect.width),
+        y: (event.clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
+
+    function getPointerDistance(first, second) {
+      return Math.hypot(second.x - first.x, second.y - first.y);
+    }
+
+    function getPointerCenter(first, second) {
+      return {
+        x: (first.x + second.x) / 2,
+        y: (first.y + second.y) / 2
+      };
+    }
+
+    function getPhotoDrawBox(scale, offsetX, offsetY) {
+      const baseScale = getPhotoBaseScale(state.photo);
+      const width = state.photo.width * baseScale * scale;
+      const height = state.photo.height * baseScale * scale;
+
+      return {
+        x: (canvas.width - width) / 2 + offsetX,
+        y: (canvas.height - height) / 2 + offsetY,
+        width,
+        height
+      };
+    }
+
+    function beginPan(pointer) {
+      panStart = {
+        pointerId: pointer.pointerId,
+        x: pointer.x,
+        y: pointer.y,
+        offsetX: state.photoTransform.offsetX,
+        offsetY: state.photoTransform.offsetY
+      };
+      pinchStart = null;
+    }
+
+    function beginPinch() {
+      const pointers = Array.from(activePointers.values());
+      if (pointers.length < 2 || !state.photoReady) return;
+
+      const first = pointers[0];
+      const second = pointers[1];
+      const center = getPointerCenter(first, second);
+      const distance = getPointerDistance(first, second);
+      const startBox = getPhotoDrawBox(
+        state.photoTransform.scale,
+        state.photoTransform.offsetX,
+        state.photoTransform.offsetY
+      );
+
+      pinchStart = {
+        distance,
+        center,
+        scale: state.photoTransform.scale,
+        offsetX: state.photoTransform.offsetX,
+        offsetY: state.photoTransform.offsetY,
+        imagePointX: (center.x - startBox.x) / startBox.width,
+        imagePointY: (center.y - startBox.y) / startBox.height
+      };
+      panStart = null;
+    }
+
+    function updatePan(pointer) {
+      if (!panStart || panStart.pointerId !== pointer.pointerId) return;
+
+      state.photoTransform.offsetX = panStart.offsetX + (pointer.x - panStart.x);
+      state.photoTransform.offsetY = panStart.offsetY + (pointer.y - panStart.y);
+      clampPhotoTransform();
+      render();
+    }
+
+    function updatePinch() {
+      const pointers = Array.from(activePointers.values());
+      if (!pinchStart || pointers.length < 2 || pinchStart.distance <= 0) return;
+
+      const first = pointers[0];
+      const second = pointers[1];
+      const center = getPointerCenter(first, second);
+      const distance = getPointerDistance(first, second);
+      const transform = state.photoTransform;
+      const newScale = clamp(
+        pinchStart.scale * (distance / pinchStart.distance),
+        transform.minScale,
+        transform.maxScale
+      );
+      const baseScale = getPhotoBaseScale(state.photo);
+      const newWidth = state.photo.width * baseScale * newScale;
+      const newHeight = state.photo.height * baseScale * newScale;
+
+      transform.scale = newScale;
+      transform.offsetX = center.x - pinchStart.imagePointX * newWidth - (canvas.width - newWidth) / 2;
+      transform.offsetY = center.y - pinchStart.imagePointY * newHeight - (canvas.height - newHeight) / 2;
+
+      clampPhotoTransform();
+      render();
+    }
+
+    function handlePointerDown(event) {
+      if (!state.photoReady) return;
+
+      event.preventDefault();
+      canvas.classList.add('dragging');
+      canvas.setPointerCapture(event.pointerId);
+      activePointers.set(event.pointerId, {
+        pointerId: event.pointerId,
+        ...getCanvasPoint(event)
+      });
+
+      if (activePointers.size === 1) {
+        beginPan(activePointers.get(event.pointerId));
+      } else {
+        beginPinch();
+      }
+    }
+
+    function handlePointerMove(event) {
+      if (!activePointers.has(event.pointerId) || !state.photoReady) return;
+
+      event.preventDefault();
+      activePointers.set(event.pointerId, {
+        pointerId: event.pointerId,
+        ...getCanvasPoint(event)
+      });
+
+      if (activePointers.size >= 2) {
+        updatePinch();
+      } else {
+        updatePan(activePointers.get(event.pointerId));
+      }
+    }
+
+    function handlePointerUp(event) {
+      if (activePointers.has(event.pointerId)) {
+        activePointers.delete(event.pointerId);
+      }
+
+      try {
+        canvas.releasePointerCapture(event.pointerId);
+      } catch (error) {
+        // El navegador puede liberar el pointer automáticamente.
+      }
+
+      if (activePointers.size === 1) {
+        beginPan(Array.from(activePointers.values())[0]);
+      } else if (activePointers.size >= 2) {
+        beginPinch();
+      } else {
+        panStart = null;
+        pinchStart = null;
+        canvas.classList.remove('dragging');
+      }
+    }
+
+    function resetCanvasEffects() {
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.filter = 'none';
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+    }
+
+    function drawFullCanvasImage(image) {
+      if (!image) return;
+      ctx.drawImage(image, 0, 0, 1080, 1080);
+    }
+
+    function drawFondoLayer(image) {
+      if (!image) return;
+      drawFullCanvasImage(image);
+    }
+
+    function drawFallbackBackground() {
+      const gradient = ctx.createLinearGradient(0, 0, 1080, 1080);
+      gradient.addColorStop(0, '#24456c');
+      gradient.addColorStop(.52, '#27333d');
+      gradient.addColorStop(1, '#111318');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 1080, 1080);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, .08)';
+      for (let i = 0; i < 9; i += 1) {
+        ctx.beginPath();
+        ctx.arc(120 + i * 122, 210 + Math.sin(i) * 55, 90 + i * 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function roundRect(x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    function normalizeText(value, fallback) {
+      return String(value || '').replace(/\s+/g, ' ').trim() || fallback;
+    }
+
+    function getAutomaticDate() {
+      const formatter = new Intl.DateTimeFormat('es-GT', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'America/Guatemala'
+      });
+
+      return formatter.format(new Date());
+    }
+
+    function getFixedSource() {
+      return 'CDN Deportes';
+    }
+
+    function getDownloadSequence() {
+      const storageKey = 'editor_noticias_download_counter';
+      let value = 0;
+
+      try {
+        value = Number(localStorage.getItem(storageKey) || '0');
+      } catch (error) {
+        value = 0;
+      }
+
+      value += 1;
+
+      if (value > 1000) {
+        value = 1;
+      }
+
+      try {
+        localStorage.setItem(storageKey, String(value));
+      } catch (error) {
+        // Si localStorage no está disponible, igual devolvemos el número actual.
+      }
+
+      return String(value).padStart(3, '0');
+    }
+
+    function buildDownloadFileName() {
+      const datePart = new Intl.DateTimeFormat('sv-SE', {
+        timeZone: 'America/Guatemala',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(new Date());
+
+      const sequence = getDownloadSequence();
+      return `noticia-${datePart}-${sequence}.png`;
+    }
+
+    function wrapText(text, maxWidth, font) {
+      ctx.font = font;
+      const words = text.split(' ');
+      const lines = [];
+      let line = '';
+
+      words.forEach(word => {
+        const testLine = line ? `${line} ${word}` : word;
+        if (ctx.measureText(testLine).width <= maxWidth) {
+          line = testLine;
+          return;
+        }
+
+        if (line) lines.push(line);
+
+        if (ctx.measureText(word).width <= maxWidth) {
+          line = word;
+          return;
+        }
+
+        let partial = '';
+        [...word].forEach(char => {
+          const next = partial + char;
+          if (ctx.measureText(next).width > maxWidth && partial) {
+            lines.push(partial);
+            partial = char;
+          } else {
+            partial = next;
+          }
+        });
+        line = partial;
+      });
+
+      if (line) lines.push(line);
+      return lines;
+    }
+
+    function fitWrappedText(text, maxWidth, maxLines, startSize, minSize, weight) {
+      for (let size = startSize; size >= minSize; size -= 2) {
+        const font = `${weight} ${size}px Montserrat, Arial, sans-serif`;
+        const lines = wrapText(text, maxWidth, font);
+        if (lines.length <= maxLines) {
+          return { font, size, lines };
+        }
+      }
+
+      const font = `${weight} ${minSize}px Montserrat, Arial, sans-serif`;
+      const lines = wrapText(text, maxWidth, font).slice(0, maxLines);
+      if (lines.length === maxLines) {
+        let last = lines[maxLines - 1];
+        while (last.length > 1 && ctx.measureText(`${last}...`).width > maxWidth) {
+          last = last.slice(0, -1);
+        }
+        lines[maxLines - 1] = `${last.trim()}...`;
+      }
+      return { font, size: minSize, lines };
+    }
+
+    function fitWrappedTextInBox(text, maxWidth, maxLines, startSize, minSize, weight, maxHeight) {
+      for (let size = startSize; size >= minSize; size -= 2) {
+        const font = `${weight} ${size}px Montserrat, Arial, sans-serif`;
+        const lines = wrapText(text, maxWidth, font);
+        const lineHeight = Math.round(size * 1.04);
+        const blockHeight = size + Math.max(0, lines.length - 1) * lineHeight;
+
+        if (lines.length <= maxLines && blockHeight <= maxHeight) {
+          return { font, size, lines, lineHeight, blockHeight };
+        }
+      }
+
+      const font = `${weight} ${minSize}px Montserrat, Arial, sans-serif`;
+      const lineHeight = Math.round(minSize * 1.04);
+      let lines = wrapText(text, maxWidth, font).slice(0, maxLines);
+
+      if (lines.length === maxLines) {
+        let last = lines[maxLines - 1];
+        while (last.length > 1 && ctx.measureText(`${last}...`).width > maxWidth) {
+          last = last.slice(0, -1);
+        }
+        lines[maxLines - 1] = `${last.trim()}...`;
+      }
+
+      return {
+        font,
+        size: minSize,
+        lines,
+        lineHeight,
+        blockHeight: minSize + Math.max(0, lines.length - 1) * lineHeight
+      };
+    }
+
+    function limitTextToChars(value, maxChars) {
+      const cleaned = String(value || '').replace(/\s+/g, ' ').trimStart();
+
+      if (cleaned.length <= maxChars) {
+        return {
+          text: cleaned,
+          wasLimited: false
+        };
+      }
+
+      return {
+        text: cleaned.slice(0, maxChars).trimEnd(),
+        wasLimited: true
+      };
+    }
+
+    function enforceHeadlineCharLimit() {
+      const limited = limitTextToChars(fields.headline.value, MAX_HEADLINE_CHARS);
+
+      if (!limited.wasLimited) return;
+
+      fields.headline.value = limited.text;
+      setStatus(`El titular tiene un máximo de ${MAX_HEADLINE_CHARS} caracteres.`);
+    }
+
+    function getHeadlineForRender() {
+      const limited = limitTextToChars(fields.headline.value, MAX_HEADLINE_CHARS);
+      return normalizeText(limited.text, 'Titular de la noticia');
+    }
+
+    function getCategoryForRender() {
+      return normalizeText(fields.category.value, DEFAULT_CATEGORY_LABEL);
+    }
+
+    function getAdaptiveHeadlineStartSize(text) {
+      const characterCount = Math.max(1, text.length);
+
+      /*
+        Tamaño automático del titular:
+        menos caracteres = fuente más grande;
+        más caracteres = fuente más pequeña, respetando el área disponible.
+        El ajuste final lo hace fitWrappedTextInBox() para no salirse del área.
+      */
+      const size = Math.round(146 - characterCount * .46);
+      return Math.max(72, Math.min(138, size));
+    }
+
+    function drawLines(lines, x, y, lineHeight) {
+      lines.forEach((line, index) => {
+        ctx.fillText(line, x, y + index * lineHeight);
+      });
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, 1080, 1080);
+      resetCanvasEffects();
+
+      if (state.photoReady) {
+        drawMovablePhoto(state.photo);
+      } else {
+        drawFallbackBackground();
+      }
+
+      /*
+        fondo.png queda como capa fija encima de la foto cargada.
+        La imagen seleccionada desde el formulario siempre queda por detrás.
+      */
+      if (state.fondoReady) {
+        drawFondoLayer(state.fondo);
+      }
+
+      /*
+        Degradados desactivados por ahora.
+        Para volver a usarlos, cambia ENABLE_SHADES a true.
+      */
+      if (ENABLE_SHADES) {
+        const topShade = ctx.createLinearGradient(0, 0, 0, 360);
+        topShade.addColorStop(0, 'rgba(5, 13, 30, .58)');
+        topShade.addColorStop(1, 'rgba(5, 13, 30, 0)');
+        ctx.fillStyle = topShade;
+        ctx.fillRect(0, 0, 1080, 360);
+
+        const bottomShade = ctx.createLinearGradient(0, 300, 0, 1080);
+        bottomShade.addColorStop(0, 'rgba(5, 13, 30, 0)');
+        bottomShade.addColorStop(.34, 'rgba(5, 13, 30, .50)');
+        bottomShade.addColorStop(.70, 'rgba(5, 13, 30, .88)');
+        bottomShade.addColorStop(1, 'rgba(5, 13, 30, .98)');
+        ctx.fillStyle = bottomShade;
+        ctx.fillRect(0, 300, 1080, 780);
+      }
+
+      const category = getCategoryForRender();
+      const headline = getHeadlineForRender();
+      const centerX = canvas.width / 2;
+      const maxWidth = 944;
+
+      /*
+        Zona de texto:
+        - La categoría queda fija al 55% de altura del canvas.
+        - La etiqueta de categoría queda centrada horizontalmente.
+        - El titular queda centrado horizontalmente debajo de la categoría.
+        - El titular comienza casi pegado después de la categoría, con una separación mínima.
+        - El texto se ajusta hasta el límite inferior seguro, antes del área donde iba la fecha.
+        - El titular tiene límite de caracteres y no permite seguir escribiendo después del máximo.
+        - Pocos caracteres usan una fuente más grande y se centran verticalmente en el área disponible.
+        - Más caracteres reducen el tamaño automáticamente y el bloque ocupa más espacio sin salirse del área.
+      */
+      const categoryHeight = 54;
+      const categoryY = Math.round(1080 * .55);
+      const categoryTitleGap = 5;
+      const titleTopLimit = categoryY + categoryHeight + categoryTitleGap;
+      const titleBottomY = 950;
+      const titleMaxHeight = titleBottomY - titleTopLimit;
+      const titleStartSize = getAdaptiveHeadlineStartSize(headline);
+      const titleBlock = fitWrappedTextInBox(headline, maxWidth, 6, titleStartSize, 34, 900, titleMaxHeight);
+      const titleCenterOffset = Math.max(0, (titleMaxHeight - titleBlock.blockHeight) / 2);
+      const titleY = titleTopLimit + titleCenterOffset + titleBlock.size;
+
+      ctx.font = '900 28px Inter, Arial, sans-serif';
+      const categoryWidth = Math.min(ctx.measureText(category).width + 48, maxWidth);
+      const categoryX = Math.round(centerX - categoryWidth / 2);
+      ctx.fillStyle = '#e08e19';
+      roundRect(categoryX, categoryY, categoryWidth, categoryHeight, 8);
+      ctx.fill();
+      ctx.fillStyle = '#0a0c32';
+      ctx.textAlign = 'center';
+      ctx.fillText(category, centerX, categoryY + 36);
+
+      ctx.font = titleBlock.font;
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(0, 0, 0, .55)';
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 3;
+      ctx.textAlign = 'center';
+      drawLines(titleBlock.lines, centerX, titleY, titleBlock.lineHeight);
+
+      ctx.shadowColor = 'transparent';
+      ctx.textAlign = 'left';
+    }
+
+    Object.values(fields).forEach(field => {
+      if (field.type !== 'file') {
+        field.addEventListener('input', () => {
+          if (field === fields.headline) {
+            enforceHeadlineCharLimit();
+          }
+
+          render();
+        });
+        field.addEventListener('change', render);
+      }
+    });
+
+    fields.headline.addEventListener('beforeinput', event => {
+      const target = event.target;
+      const selectionLength = Math.max(0, target.selectionEnd - target.selectionStart);
+      const incomingText = event.data || '';
+      const nextLength = target.value.length - selectionLength + incomingText.length;
+
+      if (incomingText && nextLength > MAX_HEADLINE_CHARS) {
+        event.preventDefault();
+        setStatus(`El titular tiene un máximo de ${MAX_HEADLINE_CHARS} caracteres.`);
+      }
+    });
+
+    fields.photoInput.addEventListener('change', event => {
+      fileToImage(event.target.files[0], 'photo', 'photoReady', 'photoSource');
+    });
+
+    canvas.addEventListener('pointerdown', handlePointerDown);
+    canvas.addEventListener('pointermove', handlePointerMove);
+    canvas.addEventListener('pointerup', handlePointerUp);
+    canvas.addEventListener('pointercancel', handlePointerUp);
+    canvas.addEventListener('pointerleave', event => {
+      if (event.pointerType === 'mouse') {
+        handlePointerUp(event);
+      }
+    });
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      if (!state.photoReady || state.photoSource !== 'form') {
+        setStatus('Selecciona una foto de fondo desde el formulario antes de descargar.', true);
+        return;
+      }
+
+      if (!state.fondoReady) {
+        setStatus('No se encontró fondo.png. Coloca fondo.png en la misma carpeta que este HTML.', true);
+        return;
+      }
+
+      try {
+        render();
+
+        canvas.toBlob(blob => {
+          if (!blob) {
+            setStatus('No se pudo exportar el PNG. Verifica que la foto esté seleccionada y que fondo.png esté en la misma carpeta.', true);
+            return;
+          }
+
+          const link = document.createElement('a');
+          const fileName = buildDownloadFileName();
+          const url = URL.createObjectURL(blob);
+
+          link.download = fileName;
+          link.href = url;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          setStatus('PNG descargado correctamente.');
+        }, 'image/png');
+      } catch (error) {
+        console.error(error);
+        setStatus(`No se pudo exportar: ${error.message}. Verifica que la foto esté seleccionada y que fondo.png esté en la misma carpeta.`, true);
+      }
+    });
+
+    blockPageZoom();
+    async function restoreDesign(){
+      await loadDefaultImages();
+      try{const saved=await StudioBridge.load();if(!saved)return;fields.headline.value=saved.headline||'';fields.category.value=saved.category||'ESCUINTLA';if(saved.photo){state.photo=await loadImage(saved.photo);state.photoReady=true;state.photoSource='form';resetPhotoTransform();if(saved.transform)Object.assign(state.photoTransform,saved.transform);}render();setStatus('Diseño cargado desde tu cuenta.');}catch(error){setStatus('No se pudo cargar: '+error.message,true)}
+    }
+    document.getElementById('saveDesign').onclick=async event=>{const button=event.currentTarget;button.disabled=true;try{if(!state.photoReady)throw Error('Selecciona una foto antes de guardar.');await StudioBridge.save(fields.headline.value||'Nuevo diseño',{headline:fields.headline.value,category:fields.category.value,photo:state.photo.src,transform:state.photoTransform});setStatus('Diseño guardado en tu cuenta.');}catch(error){setStatus(error.message,true)}finally{button.disabled=false}};
+    restoreDesign();
+  </script>
+</body>
+</html>

@@ -1,19 +1,24 @@
-# Panel Overlay
+# CDN Studio
 
-Abre index.html desde un servidor web. Para instalar la PWA, publica el proyecto completo con HTTPS. La entrada de OBS sigue siendo obs.html.
+Una PWA con cuentas personales y herramientas de transmisión, diseños de noticias y cotizaciones.
 
-## Organización
+## Estructura
 
-- index.html: panel de control.
-- obs.html: overlay para OBS.
-- assets/css/: estilos.
-- assets/js/: lógica del panel y anunciantes.
-- assets/images/logos/: logos.
-- assets/images/sponsors/: los tres anuncios originales.
-- assets/icons/: iconos de instalación.
-- assets/audio/: reservado para sonidos futuros.
-- supabase/setup.sql: configuración de base de datos y Storage.
-- docs/LEEME.md: instrucciones de instalación y administración.
-- manifest.webmanifest y sw.js: archivos de PWA, conservados en la raíz por su alcance.
+```text
+index.html                  Inicio de sesión y aplicación
+assets/css/                 Estilos comunes
+assets/js/                  Configuración, cuentas y puente de módulos
+assets/icons/               Iconos de instalación
+modules/transmision/        Marcador, cronómetro, equipos, anunciantes y OBS
+modules/disenos/            Foto, titular y descarga PNG
+modules/cotizaciones/       Editor y exportación de imagen/PDF
+supabase/01-studio.sql      Tablas, almacenamiento y permisos por usuario
+docs/CONFIGURACION.md       Activación de Supabase, Google, correo y publicación
+manifest.webmanifest        Instalación de la PWA
+sw.js                       Archivos de aplicación sin conexión
+vercel.json                 Configuración de publicación
+```
 
-Las imágenes nuevas de anunciantes se guardan en Supabase Storage. Las referencias originales en la base de datos siguen funcionando después de esta reorganización. No hace falta ejecutar SQL otra vez ni cambiar el enlace de OBS.
+No necesita compilarse ni instalar dependencias para publicarse: sube el contenido completo a un repositorio GitHub y conéctalo a Vercel como proyecto estático. Lee docs/CONFIGURACION.md antes de usar cuentas reales. La aplicación necesita internet para iniciar sesión y guardar trabajos en la cuenta.
+
+Cada cuenta tiene sus propios trabajos, perfil y transmisión. Los enlaces OBS son públicos de solo lectura y pueden regenerarse. Las carpetas originales conservadas fuera de este proyecto son respaldo y no se suben al repositorio.
