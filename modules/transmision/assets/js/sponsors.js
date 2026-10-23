@@ -1,69 +1,19 @@
-// Public display, authenticated management. No administrator secrets in the app.
-const SponsorStore = (() => {
-  const bucket = 'studio-files';
-  const defaults = [];
-  // Retire only the original bundled ads; manually uploaded replacements stay visible.
-  const currentAds = list => list.filter(item=>!(item.bundled && ['muni','importadora','taquerea'].includes(item.id)));
-  let items = defaults, connected = false;
-  try { const cached=JSON.parse(localStorage.getItem('studio:'+ (window.STUDIO_OWNER||new URLSearchParams(location.search).get('token')) +':partners')); if(Array.isArray(cached)) items=currentAds(cached); } catch {}
-  const listeners = new Set();
-  function url(item) { if(item.bundled){const name=String(item.image_path).split('/').pop();return new URL('assets/images/sponsors/'+name,location.href).href;}return new URL('/storage/v1/object/public/'+bucket+'/'+item.image_path,SUPABASE_URL).href; }
-  let lastError='';
-  async function load() {
-    // Public reads never wait for SDK authentication or a stale device session.
-    const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),10000);
-    try {
-      const endpoint=new URL(window.STUDIO_OWNER?'/rest/v1/studio_sponsors':'/rest/v1/rpc/studio_read_sponsors',SUPABASE_URL);
-      endpoint.searchParams.set('select','*');endpoint.searchParams.set('order','sort_order.asc,id.asc');
-      const readOptions=window.STUDIO_OWNER?{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+window.parent.Studio.session.access_token}}:{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({share_token:new URLSearchParams(location.search).get('token')})};
-      if(!window.STUDIO_OWNER)endpoint.search='';
-      const response=await fetch(endpoint,{...readOptions,cache:'no-store',signal:controller.signal});
-      if(!response.ok)throw Error('No se pudo consultar la lista ('+response.status+').');
-      const data=await response.json();if(!Array.isArray(data))throw Error('Respuesta de anunciantes inválida.');
-      items=currentAds(data);connected=true;lastError='';
-      try{localStorage.setItem('studio:'+ (window.STUDIO_OWNER||new URLSearchParams(location.search).get('token')) +':partners',JSON.stringify(items))}catch{}
-      listeners.forEach(fn=>fn(items));return true;
-    }catch(e){connected=false;lastError=e.name==='AbortError'?'La conexión tardó demasiado. Pulsa Actualizar lista.':(e.message||'No se pudo conectar con anunciantes.');return false;}
-    finally{clearTimeout(timeout)}
-  }
-  function requireClient(){if(!sbClient)throw Error('No se cargó la conexión para guardar. Comprueba internet y vuelve a abrir el panel.');}
-  async function upload(name,file) {requireClient();
-    if (!connected) throw Error('Configura primero Supabase siguiendo LEEME.');
-    if (items.length>=60) throw Error('El ciclo admite hasta 60 anunciantes. Elimina uno antes de subir otro.');
-    if (!file || !['image/png','image/jpeg','image/webp'].includes(file.type)) throw Error('Selecciona una imagen PNG, JPG o WebP.');
-    if (file.size>5*1024*1024) throw Error('La imagen debe pesar como máximo 5 MB.');
-    const bitmap=await createImageBitmap(file); const valid=bitmap.width>=100 && bitmap.height>=50 && bitmap.width<=4096 && bitmap.height<=4096;bitmap.close();
-    if(!valid) throw Error('Usa una imagen entre 100 × 50 y 4096 × 4096 píxeles.');
-    const path=STUDIO_OWNER+'/'+crypto.randomUUID()+'.'+({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'}[file.type]);
-    const {error:uploadError}=await sbClient.storage.from(bucket).upload(path,file,{contentType:file.type,upsert:false});
-    if(uploadError) throw uploadError;
-    const {error}=await sbClient.from('studio_sponsors').insert({id:crypto.randomUUID(),name,image_path:path,bundled:false,active:true,sort_order:Math.max(0,...items.map(i=>i.sort_order))+1});
-    if(error){await sbClient.storage.from(bucket).remove([path]);throw error;}await load();
-  }
-  async function edit(item,name,file) {requireClient();
-    if(!connected) throw Error('Sin conexión con anunciantes.');
-    name=name.trim();if(!name||name.length>80)throw Error('Escribe un nombre de hasta 80 caracteres.');
-    let newPath=null;
-    if(file){
-      if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5*1024*1024)throw Error('Usa PNG, JPG o WebP de hasta 5 MB.');
-      const bitmap=await createImageBitmap(file);const valid=bitmap.width>=100&&bitmap.height>=50&&bitmap.width<=4096&&bitmap.height<=4096;bitmap.close();
-      if(!valid)throw Error('Usa una imagen entre 100 × 50 y 4096 × 4096 píxeles.');
-      newPath=STUDIO_OWNER+'/'+crypto.randomUUID()+'.'+({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'}[file.type]);
-      const {error}=await sbClient.storage.from(bucket).upload(newPath,file,{contentType:file.type,upsert:false});if(error)throw error;
-    }
-    const changes={name};if(newPath){changes.image_path=newPath;changes.bundled=false;}
-    const {error}=await sbClient.from('studio_sponsors').update(changes).eq('id',item.id).select().single();
-    if(error){if(newPath)await sbClient.storage.from(bucket).remove([newPath]);throw error;}
-    await load();
-    if(newPath&&!item.bundled){const {error:cleanupError}=await sbClient.storage.from(bucket).remove([item.image_path]);if(cleanupError)throw Error('Anuncio actualizado. No se pudo retirar la imagen anterior de Storage.');}
-  }
-  async function remove(item) {requireClient();
-    // Disable first so a partially failed deletion never leaves a broken active ad.
-    const {error:off}=await sbClient.from('studio_sponsors').update({active:false}).eq('id',item.id).select().single();if(off)throw off;
-    await load();
-    if(!item.bundled){const {error}=await sbClient.storage.from(bucket).remove([item.image_path]);if(error)throw error;}
-    const {error}=await sbClient.from('studio_sponsors').delete().eq('id',item.id).select().single();if(error)throw error;await load();
-  }
-  async function toggle(item){requireClient();const {error}=await sbClient.from('studio_sponsors').update({active:!item.active}).eq('id',item.id).select().single();if(error)throw error;await load();}
-  return {load,upload,edit,remove,toggle,url,get items(){return items},get connected(){return connected},get lastError(){return lastError},subscribe(fn){listeners.add(fn)}};
+const SponsorStore=(()=>{
+ const bucket='studio-files',owner=window.STUDIO_OWNER,cacheKey='studio:catalog-selection:'+(owner||new URLSearchParams(location.search).get('token'));
+ let items=[],catalog=[],connected=false,lastError='';const listeners=new Set();
+ try{const cache=JSON.parse(localStorage.getItem(cacheKey)||'null');if(cache){items=cache.items||[];catalog=cache.catalog||[]}}catch{}
+ function url(item){return item.bundled?new URL('assets/images/sponsors/'+String(item.image_path).split('/').pop(),location.href).href:new URL('/storage/v1/object/public/'+bucket+'/'+item.image_path,SUPABASE_URL).href;}
+ async function load(){const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),10000);try{
+  if(owner){const headers={apikey:SUPABASE_KEY,Authorization:'Bearer '+parent.Studio.session.access_token};const get=async path=>{const response=await fetch(new URL(path,SUPABASE_URL),{headers,cache:'no-store',signal:controller.signal});if(!response.ok)throw Error(response.status===404?'Falta ejecutar 02-shared-advertisers.sql en Supabase.':'No se pudo consultar anunciantes ('+response.status+').');return response.json()};const [all,chosen]=await Promise.all([get('/rest/v1/studio_sponsors?select=*&order=sort_order.asc,id.asc'),get('/rest/v1/studio_overlay_sponsors?select=*&order=sort_order.asc')]);if(!Array.isArray(all)||!Array.isArray(chosen))throw Error('Respuesta de anunciantes inválida.');const mine=chosen.filter(row=>row.owner_id===owner),selection=new Map(mine.map(row=>[row.sponsor_id,row]));catalog=all.map(item=>({...item,selected:selection.has(item.id),editable:item.owner_id===owner}));items=mine.map(row=>{const item=catalog.find(entry=>entry.id===row.sponsor_id);return item?{...item,active:row.enabled}:null}).filter(Boolean);
+  }else{const response=await fetch(new URL('/rest/v1/rpc/studio_read_sponsors',SUPABASE_URL),{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({share_token:new URLSearchParams(location.search).get('token')}),cache:'no-store',signal:controller.signal});if(!response.ok)throw Error('No se pudo consultar el overlay.');items=await response.json();catalog=[];}
+  connected=true;lastError='';try{localStorage.setItem(cacheKey,JSON.stringify({items,catalog}))}catch{}listeners.forEach(fn=>fn(items));return true;
+ }catch(error){connected=false;lastError=error.name==='AbortError'?'La conexión tardó demasiado. Actualiza la lista.':error.message;return false}finally{clearTimeout(timeout)}}
+ function requireClient(){if(!owner||!sbClient)throw Error('Inicia sesión para gestionar los anuncios.');}
+ async function add(item){requireClient();if(items.length>=60&&!items.some(entry=>entry.id===item.id))throw Error('Puedes seleccionar hasta 60 anuncios por overlay.');const {error}=await sbClient.from('studio_overlay_sponsors').upsert({owner_id:owner,sponsor_id:item.id,enabled:true,sort_order:items.length},{onConflict:'owner_id,sponsor_id'});if(error)throw error;await load();}
+ async function imagePath(file){if(!file||!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5*1024*1024)throw Error('Usa PNG, JPG o WebP de hasta 5 MB.');const bitmap=await createImageBitmap(file),valid=bitmap.width>=100&&bitmap.height>=50&&bitmap.width<=4096&&bitmap.height<=4096;bitmap.close();if(!valid)throw Error('Usa una imagen entre 100 × 50 y 4096 × 4096.');return owner+'/'+crypto.randomUUID()+'.'+({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'}[file.type]);}
+ async function upload(name,file){requireClient();if(!connected)throw Error('Actualiza la conexión con anunciantes.');if(items.length>=60)throw Error('Tu overlay admite hasta 60 anunciantes.');const path=await imagePath(file);const {error:uploadError}=await sbClient.storage.from(bucket).upload(path,file,{contentType:file.type});if(uploadError)throw uploadError;const item={id:crypto.randomUUID(),owner_id:owner,name,image_path:path,bundled:false,active:true,sort_order:catalog.length};const {error}=await sbClient.from('studio_sponsors').insert(item);if(error){await sbClient.storage.from(bucket).remove([path]);throw error;}try{await add(item)}catch(error){await load();throw Error('La imagen se guardó en el catálogo. Selecciónala desde Buscar anuncios. '+error.message)}}
+ async function edit(item,name,file){requireClient();if(!item.editable)throw Error('Solo quien subió la imagen puede editarla en el catálogo.');name=name.trim();if(!name||name.length>80)throw Error('Escribe un nombre de hasta 80 caracteres.');let path=null;if(file){path=await imagePath(file);const {error}=await sbClient.storage.from(bucket).upload(path,file,{contentType:file.type});if(error)throw error;}const changes={name};if(path){changes.image_path=path;changes.bundled=false}const {error}=await sbClient.from('studio_sponsors').update(changes).eq('id',item.id).eq('owner_id',owner).select().single();if(error){if(path)await sbClient.storage.from(bucket).remove([path]);throw error}await load();}
+ async function remove(item){requireClient();const {error}=await sbClient.from('studio_overlay_sponsors').delete().eq('owner_id',owner).eq('sponsor_id',item.id).select().single();if(error)throw error;await load();}
+ async function toggle(item){requireClient();const {error}=await sbClient.from('studio_overlay_sponsors').update({enabled:!item.active}).eq('owner_id',owner).eq('sponsor_id',item.id).select().single();if(error)throw error;await load();}
+ return{load,add,upload,edit,remove,toggle,url,get items(){return items},get catalog(){return catalog},get connected(){return connected},get lastError(){return lastError},subscribe(fn){listeners.add(fn)}};
 })();
