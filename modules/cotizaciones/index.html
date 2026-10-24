@@ -252,7 +252,10 @@ body{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left)
 @media(max-width:520px){.pwa-install-banner{grid-template-columns:42px minmax(0,1fr) auto}.pwa-install-icon{width:42px;height:42px}.pwa-install-btn{grid-column:2/3;justify-self:start;padding:9px 14px}.pwa-install-close{grid-column:3/4;grid-row:1/2;align-self:start}.pwa-install-copy{grid-column:2/3}}
 @media(display-mode:standalone){.pwa-install-banner{display:none!important}}
 .minimal-body{font-size:16px;line-height:1.44}.recipient-block{font-size:15px;margin-bottom:19px}.recipient-name{font-size:17px}.minimal-salutation{font-size:17px}.minimal-table{font-size:15px}.minimal-table thead th{font-size:16px}.minimal-closing{font-size:14px}.minimal-signature{font-size:14px}.minimal-signer{font-size:16px}.minimal-intro{margin-bottom:14px}.minimal-table td{line-height:1.45}
-.minimal-table{table-layout:fixed}.minimal-table th:first-child{width:68%}.minimal-table th:last-child{width:32%}.minimal-table .service-type{text-align:center!important;font-size:18px;font-weight:800;line-height:1.17;padding:11px 18px!important;background:#f0f3f8;overflow-wrap:anywhere;border-bottom:1px solid #e4e8ee}.minimal-table .service-description{text-align:center!important;font-size:16px;line-height:1.375;padding:11px 18px!important;overflow-wrap:anywhere}.minimal-table .service-price{text-align:center!important;vertical-align:middle!important}.minimal-table .service-top:not(:first-child) td{border-top:1px solid #e4e8ee}.minimal-table .service-band-0 td{background:#fff!important}.minimal-table .service-band-1 td{background:#edf2f8!important}</style>
+.minimal-table{table-layout:fixed}.minimal-table th:first-child{width:68%}.minimal-table th:last-child{width:32%}.minimal-table .service-type{text-align:center!important;font-size:18px;font-weight:800;line-height:1.166667;padding:4px 12px!important;background:#f0f3f8;overflow-wrap:anywhere;border-bottom:1px solid #e4e8ee}.minimal-table .service-description{text-align:center!important;font-size:16px;line-height:1.25;padding:4px 12px!important;overflow-wrap:anywhere}.minimal-table .service-price{text-align:center!important;vertical-align:middle!important}.minimal-table .service-top:not(:first-child) td{border-top:1px solid #e4e8ee}.minimal-table .service-band-0 td{background:#fff!important}.minimal-table .service-band-1 td{background:#dce7f5!important}
+/* Servicios compactos: conservar letra legible y reservar el área de firma. */
+.minimal-table thead th{padding:7px 12px;line-height:20px}.minimal-table .service-type{border-bottom:0!important}.minimal-table .service-description{border-bottom:0!important}.minimal-table .service-price{padding:4px 12px!important;font-size:18px}.minimal-table .service-top:not(:first-child) td{border-top:1px solid #c5d2e2}.minimal-lead{margin-bottom:8px}.minimal-closing{margin-top:12px}
+</style>
 <link href="./icons/apple-touch-icon.png" rel="apple-touch-icon"/><meta content="#111b35" name="theme-color"/><meta content="yes" name="mobile-web-app-capable"/><meta content="yes" name="apple-mobile-web-app-capable"/><meta content="default" name="apple-mobile-web-app-status-bar-style"/><meta content="Cotizador CDN" name="apple-mobile-web-app-title"/><script src="../../assets/js/config.js"></script><script src="../../assets/js/module-bridge.js?v=10"></script><link rel="stylesheet" href="../../assets/css/module.css"><style>.pwa-install-banner, .pwa-ios-help{display:none!important}header .brand h1{font-size:18px}.tabs{position:sticky;top:0;z-index:30;background:#f5f7fa;padding:8px 0}body{background:#f5f7fa!important}</style><style>.btn.orange{background:#051b48;color:white;border-color:#051b48}.tabbtn.active{background:#051b48;color:#fff}.brand h1{color:#132743}</style><style>header .brand{display:none}.tabs{display:flex!important;gap:5px}.tabbtn{flex:1;font-size:11px;padding:10px 4px!important;min-height:46px}.editor-grid{grid-template-columns:1fr!important}.fixed-settings summary{display:none}.fixed-settings-panel{border:0;padding:0;margin:0}.fixed-note{display:none}#settings .editor-grid{margin-top:14px}.preview-area{max-height:none!important;overflow:visible!important}</style><link rel="stylesheet" href="../../assets/css/flow.css?v=10"><link rel="stylesheet" href="../../assets/css/wizard.css?v=10"><script src="../../assets/js/interaction-guard.js?v=10"></script><script src="../../assets/js/icons.js?v=10" defer></script></head>
 <body class="quote-module">
 <div class="app">
@@ -681,10 +684,10 @@ async function renderQuoteCanvas(scale){
   y=drawWrappedText(ctx,state.form.servicesLead||'',72,y,672,23)+9;
 
   // Tabla
-  const tx=72,tw=672,descW=457,priceW=215,theadH=40;
-  const descTextW=descW-36;
+  const tx=72,tw=672,descW=457,priceW=215,theadH=34;
+  const descTextW=descW-24;
   function cellLines(text,size,weight){setFont(ctx,size,weight);const lines=[];for(const paragraph of String(text||'').split('\n')){let line='';for(const word of paragraph.split(/\s+/).filter(Boolean)){if(line&&ctx.measureText(line+' '+word).width>descTextW){lines.push(line);line='';}for(const char of (line?' ':'')+word){if(line&&ctx.measureText(line+char).width>descTextW){lines.push(line);line='';}line+=char;}}lines.push(line);}return lines.length?lines:[''];}
-  const rowInfo=state.services.map(s=>{const title=cellLines(s.highlight||'Servicio',18,800),description=cellLines(s.description,16,400);const titleH=title.length*23+22,descriptionH=description.length*22+22;return {s,title,description,titleH,h:titleH+descriptionH};});
+  const rowInfo=state.services.map(s=>{const title=cellLines(s.highlight||'Servicio',18,800),description=cellLines(s.description,16,400);const titleH=title.length*21+8,descriptionH=description.length*20+8;return {s,title,description,titleH,h:titleH+descriptionH};});
   const totalH=theadH+rowInfo.reduce((a,r)=>a+r.h,0);
   if(y+totalH+65>870)throw Error('El texto y los servicios no caben antes de la firma. Reduce el contenido o divide la cotización para evitar recortes.');
 
@@ -697,14 +700,14 @@ async function renderQuoteCanvas(scale){
   ctx.fillStyle='#ef9618';ctx.fillRect(tx+descW,y,4,theadH);
 
   ctx.fillStyle='#fff';setFont(ctx,17,800);
-  ctx.fillText('Espacio publicitario',tx+18,y+25);
+  ctx.fillText('Espacio publicitario',tx+12,y+23);
   ctx.textAlign='center';
-  ctx.fillText('Precio',tx+descW+priceW/2,y+25);
+  ctx.fillText('Precio',tx+descW+priceW/2,y+23);
   ctx.textAlign='left';
 
   let ry=y+theadH;
   rowInfo.forEach((r,i)=>{
-    const band=i%2?'#edf2f8':'#ffffff';ctx.fillStyle=band;ctx.fillRect(tx,ry,descW,r.h);
+    const band=i%2?'#dce7f5':'#ffffff';ctx.fillStyle=band;ctx.fillRect(tx,ry,descW,r.h);
     ctx.fillStyle=band;ctx.fillRect(tx+descW,ry,priceW,r.h);
     if(i>0){
       ctx.fillStyle='#e4e8ee';ctx.fillRect(tx,ry,tw,1);
@@ -712,8 +715,8 @@ async function renderQuoteCanvas(scale){
     ctx.fillStyle=band;ctx.fillRect(tx,ry,descW,r.titleH);
     ctx.fillStyle='#e4e8ee';ctx.fillRect(tx,ry+r.titleH,descW,1);
     ctx.fillStyle='#132743';setFont(ctx,18,800);ctx.textAlign='center';
-    r.title.forEach((line,j)=>ctx.fillText(line,tx+descW/2,ry+11+18+j*23));
-    setFont(ctx,16,400);r.description.forEach((line,j)=>ctx.fillText(line,tx+descW/2,ry+r.titleH+11+16+j*22));
+    r.title.forEach((line,j)=>ctx.fillText(line,tx+descW/2,ry+4+17+j*21));
+    setFont(ctx,16,400);r.description.forEach((line,j)=>ctx.fillText(line,tx+descW/2,ry+r.titleH+4+15+j*20));
     ctx.fillStyle='#111b35';setFont(ctx,19,800);ctx.textAlign='center';
     ctx.fillText(formatPrice(r.s.price),tx+descW+priceW/2,ry+r.h/2+7);
     ctx.textAlign='left';
@@ -725,7 +728,7 @@ async function renderQuoteCanvas(scale){
   ctx.strokeStyle='#e4e8ee';ctx.lineWidth=1;
   roundedRectPath(ctx,tx,y,tw,totalH,14);ctx.stroke();
 
-  y+=totalH+24;
+  y+=totalH+18;
   ctx.fillStyle='#3f4959';setFont(ctx,14,400);
   drawWrappedText(ctx,state.form.closingText||'',72,y,470,17);
 
