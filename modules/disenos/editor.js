@@ -4,7 +4,7 @@
   const canvas = $('preview'), ctx = canvas.getContext('2d');
   const slots = Array.from({length: 2}, () => ({image: null, x: 50, y: 50, zoom: 100, revision: 0}));
   const controls = [];
-  let selected = -1, frameReady = false;
+  let frameReady = false, footerTop = H;
   const frame = new Image();
   const status = message => { $('status').textContent = message; };
 
@@ -46,31 +46,30 @@
     const gray = ctx.createLinearGradient(0, PHOTO_H, 0, H); gray.addColorStop(0, '#e4e7eb'); gray.addColorStop(1, '#f9fafb'); ctx.fillStyle = gray; ctx.fillRect(0, PHOTO_H, W, H - PHOTO_H); ctx.fillStyle = '#122238'; ctx.fillRect(0, PHOTO_H, W, 8);
     const headline = $('headline').value.trim();
     if (headline) {
-      let size = 94, lines, leading;
-      do {
-        ctx.font = `700 ${size}px Arial, sans-serif`;
-        lines = wrap(headline, W - 140);
-        leading = Math.ceil(size * 1.09);
-        if (lines.length * leading <= 420) break;
-        size--;
-      } while (size > 0);
-      ctx.textBaseline = 'middle';
-      const start = PHOTO_H + 8 + (H - PHOTO_H - 8 - lines.length * leading) / 2 + leading / 2;
-      lines.forEach((line, i) => ctx.fillText(line, 70, start + i * leading));
+      const top = PHOTO_H + 28;
+      const bottom = Math.max(top + 1, footerTop - 24);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      for (let size = 94; size >= 1; size--) {
+        ctx.font = `900 ${size}px "Arial Black", system-ui, sans-serif`;
+        const lines = wrap(headline, W - 140);
+        const metrics = lines.map(line => ctx.measureText(line));
+        const above = Math.max(...metrics.map(m => m.actualBoundingBoxAscent));
+        const below = Math.max(...metrics.map(m => m.actualBoundingBoxDescent));
+        const step = Math.max(Math.ceil(size * 1.10), above + below + 4);
+        const height = above + below + (lines.length - 1) * step;
+        if (height > bottom - top) continue;
+        const first = top + (bottom - top - height) / 2 + above;
+        lines.forEach((line, i) => ctx.fillText(line, W / 2, first + i * step));
+        break;
+      }
     }
     if (frameReady) ctx.drawImage(frame, 0, 0, W, H);
     slots.forEach((slot, i) => {
       controls[i].remove.hidden = !slot.image;
       controls[i].caption.textContent = slot.image ? 'Cambiar foto' : 'Elegir foto';
-      controls[i].cropButton.hidden = !slot.image;
-      controls[i].cropButton.textContent = loaded.length === 1 ? 'Ajustar imagen' : 'Ajustar imagen ' + (i + 1);
-      controls[i].cropButton.setAttribute('aria-expanded', String(selected === i));
     });
-    $('touchArea').hidden = $('cropButtons').hidden = !loaded.length;
-    $('cropControls').hidden = selected < 0 || !slots[selected].image;
-    if (!$('cropControls').hidden) {
-      for (const input of $('cropControls').querySelectorAll('[data-key]')) input.value = slots[selected][input.dataset.key];
-    }
+    $('touchArea').hidden = !loaded.length;
     $('download').disabled = !loaded.length || !headline || !frameReady;
   }
 
@@ -91,7 +90,6 @@
     slots[i].revision++;
     slots[i].image = null;
     controls[i].file.value = '';
-    if (selected === i) selected = -1;
     resetCrop(i);
   }
 
@@ -102,11 +100,7 @@
       <div class="photo-actions"><label class="upload"><span>Elegir foto</span><input type="file" accept="image/*" aria-label="Elegir foto ${i+1}"></label><button type="button" class="remove" hidden>Quitar</button></div>`;
     $('photos').append(card);
     const file = card.querySelector('input'), remove = card.querySelector('.remove');
-    const cropButton = document.createElement('button');
-    cropButton.type = 'button';
-    cropButton.onclick = () => { selected = selected === i ? -1 : i; render(); };
-    $('cropButtons').append(cropButton);
-    controls.push({file, remove, cropButton, caption: card.querySelector('.upload span')});
+    controls.push({file, remove, caption: card.querySelector('.upload span')});
     file.addEventListener('change', async () => {
       const selected = file.files[0];
       if (!selected) return;
@@ -122,11 +116,6 @@
     });
     remove.onclick = () => { removePhoto(i); status(''); render(); };
   });
-  for (const input of $('cropControls').querySelectorAll('[data-key]')) {
-    input.oninput = () => { if (selected >= 0) { slots[selected][input.dataset.key] = Number(input.value); render(); } };
-  }
-  $('centerCrop').onclick = () => { if (selected >= 0) { resetCrop(selected); render(); } };
-
   const touch = $('touchArea'), pointers = new Map();
   let gesture = null;
   const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
@@ -142,33 +131,47 @@
     const base = Math.max(width/slot.image.naturalWidth, PHOTO_H/slot.image.naturalHeight)/100;
     return {w:slot.image.naturalWidth*base, h:slot.image.naturalHeight*base};
   }
-  function anchor(i, left, width) {
-    const slot = slots[i], c = center(), {w,h} = geometry(slot,width);
-    gesture = {i,left,width,d:c.d,zoom:slot.zoom, x:(c.x-left+(w*slot.zoom-width)*slot.x/100)/(w*slot.zoom), y:(c.y+(h*slot.zoom-PHOTO_H)*slot.y/100)/(h*slot.zoom)};
+  function photoAt(p) {
+    const loaded = slots.map((slot,i) => slot.image ? i : -1).filter(i => i >= 0);
+    const width = W / loaded.length, cell = clamp(Math.floor(p.x / width), 0, loaded.length - 1);
+    return {i:loaded[cell], left:cell*width, width};
   }
-  touch.onpointerdown = event => {
-    if (pointers.size >= 2 || (event.pointerType === 'mouse' && event.button !== 0)) return;
-    const loaded = slots.map((slot,i)=>slot.image ? i : -1).filter(i=>i>=0);
-    if (!loaded.length) return;
-    const p = point(event), width = W/loaded.length, cell = clamp(Math.floor(p.x/width),0,loaded.length-1);
-    pointers.set(event.pointerId,p);
-    touch.setPointerCapture(event.pointerId);
-    if (gesture) anchor(gesture.i,gesture.left,gesture.width);
-    else anchor(loaded[cell],cell*width,width);
-  };
-  touch.onpointermove = event => {
-    if (!gesture || !pointers.has(event.pointerId)) return;
-    pointers.set(event.pointerId,point(event));
-    const {i,left,width,d,zoom,x,y} = gesture, slot = slots[i], c = center(), g = geometry(slot,width);
-    slot.zoom = clamp(d > 0 ? zoom*c.d/d : zoom,100,300);
+  function anchor({i, left, width}, c) {
+    const slot = slots[i], {w,h} = geometry(slot,width);
+    return {i,left,width,d:c.d,zoom:slot.zoom, x:(c.x-left+(w*slot.zoom-width)*slot.x/100)/(w*slot.zoom), y:(c.y+(h*slot.zoom-PHOTO_H)*slot.y/100)/(h*slot.zoom)};
+  }
+  function position({i,left,width,x,y}, c, zoom) {
+    const slot = slots[i], g = geometry(slot,width);
+    slot.zoom = clamp(zoom,100,300);
     const w=g.w*slot.zoom, h=g.h*slot.zoom;
     if (w-width > .001) slot.x = clamp((x*w-c.x+left)/(w-width)*100,0,100);
     if (h-PHOTO_H > .001) slot.y = clamp((y*h-c.y)/(h-PHOTO_H)*100,0,100);
     render();
+  }
+  touch.addEventListener('wheel', event => {
+    if (gesture || !slots.some(slot => slot.image) || !event.deltaY) return;
+    event.preventDefault();
+    const p = point(event), photo = anchor(photoAt(p),p);
+    const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 120 : 1);
+    position(photo,p,photo.zoom * Math.exp(clamp(-delta * .002,-.25,.25)));
+  }, {passive:false});
+  touch.onpointerdown = event => {
+    if (pointers.size >= 2 || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    if (!slots.some(slot => slot.image)) return;
+    const p = point(event);
+    pointers.set(event.pointerId,p);
+    touch.setPointerCapture(event.pointerId);
+    gesture = anchor(gesture || photoAt(p), center());
+  };
+  touch.onpointermove = event => {
+    if (!gesture || !pointers.has(event.pointerId)) return;
+    pointers.set(event.pointerId,point(event));
+    const c = center();
+    position(gesture, c, gesture.d > 0 ? gesture.zoom*c.d/gesture.d : gesture.zoom);
   };
   touch.onpointerup = touch.onpointercancel = touch.onlostpointercapture = event => {
     if (!pointers.delete(event.pointerId)) return;
-    if (pointers.size && gesture) anchor(gesture.i,gesture.left,gesture.width); else gesture=null;
+    if (pointers.size && gesture) gesture = anchor(gesture,center()); else gesture=null;
   };
 
   function tab(name) {
@@ -206,7 +209,20 @@
       setTimeout(() => URL.revokeObjectURL(url), 30000);
     }, 'image/png');
   };
-  frame.onload = () => { frameReady = true; render(); };
+  frame.onload = () => {
+    const probe = document.createElement('canvas');
+    probe.width = 120; probe.height = H;
+    const scan = probe.getContext('2d', {willReadFrequently:true});
+    scan.drawImage(frame,0,0,120,H);
+    const rgba = scan.getImageData(0,PHOTO_H,120,H-PHOTO_H).data;
+    // Find the first wide, opaque footer stripe, even if the PNG is replaced.
+    for (let row = 48; row < H-PHOTO_H; row++) {
+      let covered = 0;
+      for (let x = 7; x < 113; x++) if (rgba[(row*120+x)*4+3] > 96) covered++;
+      if (covered >= 72) { footerTop = PHOTO_H+row; break; }
+    }
+    frameReady = true; render();
+  };
   frame.onerror = () => status('No se pudo cargar el marco del diseño.');
   frame.src = './marco.png?v=16';
   render();
