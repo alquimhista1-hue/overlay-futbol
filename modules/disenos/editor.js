@@ -4,6 +4,8 @@
   const canvas = $('preview'), ctx = canvas.getContext('2d');
   const slots = Array.from({length: 2}, () => ({image: null, x: 50, y: 50, zoom: 100, revision: 0}));
   const controls = [];
+  let selected = -1, frameReady = false;
+  const frame = new Image();
   const status = message => { $('status').textContent = message; };
 
   function drawPhoto(context, slot, left, width, height) {
@@ -56,15 +58,20 @@
       const start = PHOTO_H + 8 + (H - PHOTO_H - 8 - lines.length * leading) / 2 + leading / 2;
       lines.forEach((line, i) => ctx.fillText(line, 78, start + i * leading));
     }
+    if (frameReady) ctx.drawImage(frame, 0, 0, W, H);
     slots.forEach((slot, i) => {
-      const {crop, adjust, remove, side} = controls[i];
-      crop.hidden = adjust.hidden = remove.hidden = !slot.image;
-      side.textContent = slot.image ? (loaded.length === 1 ? 'Ancho completo' : i === 0 ? 'Mitad izquierda' : 'Mitad derecha') : (i === 0 ? 'Principal' : 'Opcional');
-      if (!slot.image) return;
-      crop.width = 320; crop.height = Math.round(320 * PHOTO_H / width);
-      drawPhoto(crop.getContext('2d'), slot, 0, crop.width, crop.height);
+      controls[i].remove.hidden = !slot.image;
+      controls[i].caption.textContent = slot.image ? 'Cambiar foto' : 'Elegir foto';
+      controls[i].cropButton.hidden = !slot.image;
+      controls[i].cropButton.textContent = loaded.length === 1 ? 'Ajustar imagen' : 'Ajustar imagen ' + (i + 1);
+      controls[i].cropButton.setAttribute('aria-expanded', String(selected === i));
     });
-    $('download').disabled = !loaded.length || !headline;
+    $('touchArea').hidden = $('cropButtons').hidden = !loaded.length;
+    $('cropControls').hidden = selected < 0 || !slots[selected].image;
+    if (!$('cropControls').hidden) {
+      for (const input of $('cropControls').querySelectorAll('[data-key]')) input.value = slots[selected][input.dataset.key];
+    }
+    $('download').disabled = !loaded.length || !headline || !frameReady;
   }
 
   function decode(file) {
@@ -78,26 +85,28 @@
 
   function resetCrop(i) {
     Object.assign(slots[i], {x: 50, y: 50, zoom: 100});
-    for (const key of ['x', 'y', 'zoom']) controls[i].card.querySelector('[data-key="' + key + '"]').value = slots[i][key];
+
   }
   function removePhoto(i) {
     slots[i].revision++;
     slots[i].image = null;
     controls[i].file.value = '';
-    controls[i].adjust.open = false;
+    if (selected === i) selected = -1;
     resetCrop(i);
   }
 
   slots.forEach((slot, i) => {
     const card = document.createElement('article');
     card.className = 'photo-card';
-    card.innerHTML = `<h2>Foto ${i + 1} <small class="hint"></small></h2>
-      <canvas class="crop" aria-label="Encuadre de foto ${i + 1}" hidden></canvas>
-      <div class="photo-actions"><label class="upload"><span>Elegir foto</span><input type="file" accept="image/*" aria-label="Elegir foto ${i + 1}"></label><button type="button" class="remove" hidden>Quitar</button></div>
-      <details hidden><summary>Ajustar encuadre</summary><label>Ampliación<input data-key="zoom" type="range" min="100" max="300" value="100"></label><label>Posición horizontal<input data-key="x" type="range" min="0" max="100" value="50"></label><label>Posición vertical<input data-key="y" type="range" min="0" max="100" value="50"></label><button type="button" class="reset-crop">Centrar y restablecer</button></details>`;
+    card.innerHTML = `<h2>Foto ${i+1} ${i ? '<small class="hint">Opcional</small>' : ''}</h2>
+      <div class="photo-actions"><label class="upload"><span>Elegir foto</span><input type="file" accept="image/*" aria-label="Elegir foto ${i+1}"></label><button type="button" class="remove" hidden>Quitar</button></div>`;
     $('photos').append(card);
-    const file = card.querySelector('input[type=file]'), remove = card.querySelector('.remove');
-    controls.push({card, file, remove, crop: card.querySelector('.crop'), adjust: card.querySelector('details'), side: card.querySelector('small')});
+    const file = card.querySelector('input'), remove = card.querySelector('.remove');
+    const cropButton = document.createElement('button');
+    cropButton.type = 'button';
+    cropButton.onclick = () => { selected = selected === i ? -1 : i; render(); };
+    $('cropButtons').append(cropButton);
+    controls.push({file, remove, cropButton, caption: card.querySelector('.upload span')});
     file.addEventListener('change', async () => {
       const selected = file.files[0];
       if (!selected) return;
@@ -112,11 +121,55 @@
       }
     });
     remove.onclick = () => { removePhoto(i); status(''); render(); };
-    card.querySelector('.reset-crop').onclick = () => { resetCrop(i); render(); };
-    card.querySelectorAll('[data-key]').forEach(input => input.addEventListener('input', () => {
-      slot[input.dataset.key] = Number(input.value); render();
-    }));
   });
+  for (const input of $('cropControls').querySelectorAll('[data-key]')) {
+    input.oninput = () => { if (selected >= 0) { slots[selected][input.dataset.key] = Number(input.value); render(); } };
+  }
+  $('centerCrop').onclick = () => { if (selected >= 0) { resetCrop(selected); render(); } };
+
+  const touch = $('touchArea'), pointers = new Map();
+  let gesture = null;
+  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+  function point(event) {
+    const r = touch.getBoundingClientRect();
+    return {x: (event.clientX - r.left) * W / r.width, y: (event.clientY - r.top) * PHOTO_H / r.height};
+  }
+  function center() {
+    const [a,b] = pointers.values();
+    return b ? {x:(a.x+b.x)/2,y:(a.y+b.y)/2,d:Math.hypot(a.x-b.x,a.y-b.y)} : {...a,d:0};
+  }
+  function geometry(slot, width) {
+    const base = Math.max(width/slot.image.naturalWidth, PHOTO_H/slot.image.naturalHeight)/100;
+    return {w:slot.image.naturalWidth*base, h:slot.image.naturalHeight*base};
+  }
+  function anchor(i, left, width) {
+    const slot = slots[i], c = center(), {w,h} = geometry(slot,width);
+    gesture = {i,left,width,d:c.d,zoom:slot.zoom, x:(c.x-left+(w*slot.zoom-width)*slot.x/100)/(w*slot.zoom), y:(c.y+(h*slot.zoom-PHOTO_H)*slot.y/100)/(h*slot.zoom)};
+  }
+  touch.onpointerdown = event => {
+    if (pointers.size >= 2 || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    const loaded = slots.map((slot,i)=>slot.image ? i : -1).filter(i=>i>=0);
+    if (!loaded.length) return;
+    const p = point(event), width = W/loaded.length, cell = clamp(Math.floor(p.x/width),0,loaded.length-1);
+    pointers.set(event.pointerId,p);
+    touch.setPointerCapture(event.pointerId);
+    if (gesture) anchor(gesture.i,gesture.left,gesture.width);
+    else anchor(loaded[cell],cell*width,width);
+  };
+  touch.onpointermove = event => {
+    if (!gesture || !pointers.has(event.pointerId)) return;
+    pointers.set(event.pointerId,point(event));
+    const {i,left,width,d,zoom,x,y} = gesture, slot = slots[i], c = center(), g = geometry(slot,width);
+    slot.zoom = clamp(d > 0 ? zoom*c.d/d : zoom,100,300);
+    const w=g.w*slot.zoom, h=g.h*slot.zoom;
+    if (w-width > .001) slot.x = clamp((x*w-c.x+left)/(w-width)*100,0,100);
+    if (h-PHOTO_H > .001) slot.y = clamp((y*h-c.y)/(h-PHOTO_H)*100,0,100);
+    render();
+  };
+  touch.onpointerup = touch.onpointercancel = touch.onlostpointercapture = event => {
+    if (!pointers.delete(event.pointerId)) return;
+    if (pointers.size && gesture) anchor(gesture.i,gesture.left,gesture.width); else gesture=null;
+  };
 
   function tab(name) {
     $('config').hidden = name !== 'config';
@@ -126,7 +179,6 @@
       button.classList.toggle('active', selected);
       button.setAttribute('aria-pressed', String(selected));
     });
-    status(name === 'preview' && (!slots.some(slot => slot.image) || !$('headline').value.trim()) ? 'Agrega al menos una foto y un titular para descargar el diseño.' : '');
     render();
   }
   document.querySelectorAll('[data-tab]').forEach(button => button.onclick = () => tab(button.dataset.tab));
@@ -138,7 +190,7 @@
     $('count').textContent = $('headline').value.length + ' / 220';
     render();
   });
-  $('newDesign').onclick = () => $('resetDialog').showModal();
+  $('newDesign').onclick = () => { $('resetDialog').returnValue = ''; $('resetDialog').showModal(); };
   $('resetDialog').addEventListener('close', () => {
     if ($('resetDialog').returnValue !== 'reset') return;
     removePhoto(0); removePhoto(1); $('headline').value = ''; $('count').textContent = '0 / 220'; tab('config');
@@ -154,5 +206,8 @@
       setTimeout(() => URL.revokeObjectURL(url), 30000);
     }, 'image/png');
   };
+  frame.onload = () => { frameReady = true; render(); };
+  frame.onerror = () => status('No se pudo cargar el marco del diseño.');
+  frame.src = './marco.svg?v=15';
   render();
 })();
