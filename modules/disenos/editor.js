@@ -53,37 +53,25 @@
   }
 
   function balanceLines(text, limit) {
-    const original = wrap(text, limit);
-    const count = original.length;
-    if (count < 2) return original;
-    const words = text.split(/\s+/).filter(Boolean);
-    if (words.some(word => ctx.measureText(word).width > limit)) return original;
-    const last = original[count - 1];
-    if (last.includes(' ') && ctx.measureText(last).width >= limit * .55) return original;
-
-    // Keep the same line count and choose breaks with similar visual widths.
-    const memo = new Map();
-    const width = ctx.measureText(text.replace(/\s+/g, ' ')).width / count;
-    function fit(start, remaining) {
-      if (!remaining) return start === words.length ? {cost:0, lines:[]} : null;
-      const key = start + ':' + remaining;
-      if (memo.has(key)) return memo.get(key);
-      let line = '', best = null;
-      for (let end = start; end <= words.length - remaining; end++) {
-        line += (line ? ' ' : '') + words[end];
-        const measured = ctx.measureText(line).width;
-        if (measured > limit) break;
-        if (remaining === 1 && end !== words.length - 1) continue;
-        const tail = fit(end + 1, remaining - 1);
-        if (!tail) continue;
-        const orphan = remaining === 1 && end === start ? limit * limit : 0;
-        const cost = (measured - width) ** 2 + orphan + tail.cost;
-        if (!best || cost < best.cost) best = {cost, lines:[line,...tail.lines]};
-      }
-      memo.set(key,best);
-      return best;
+    const lines = wrap(text, limit);
+    if (lines.length < 2) return lines;
+    const width = line => ctx.measureText(line).width;
+    const last = lines.at(-1), previous = lines.at(-2);
+    const widest = Math.max(...lines.map(width));
+    // A long final word can already make a good centered line.
+    if (width(last) >= widest * .40) return lines;
+    const words = previous.split(' ');
+    if (text.split(/\s+/).some(word => width(word) > limit)) return lines;
+    let best = null, gap = Math.abs(width(previous) - width(last));
+    for (let move = 1; move <= 2 && words.length - move >= 2; move++) {
+      const upper = words.slice(0, -move).join(' ');
+      const lower = words.slice(-move).join(' ') + ' ' + last;
+      const up = width(upper), down = width(lower);
+      if (down > limit || up < widest * .50) continue;
+      const difference = Math.abs(up - down);
+      if (difference < gap) { gap = difference; best = [upper, lower]; }
     }
-    return fit(0,count)?.lines || original;
+    return best ? [...lines.slice(0, -2), ...best] : lines;
   }
 
   function render() {
