@@ -6,8 +6,8 @@
   const controls = [];
   let frameReady = false, footerTop = H;
   const frame = new Image();
-  const fonts = ['700 1px "Barlow Condensed"', '700 1px "Oswald"', '700 1px "Fira Sans Condensed"', '800 1px "Archivo"', '800 1px "Montserrat"'];
-  let fontIndex = 0, fontRevision = 0, fontReady = false;
+  const fonts = {1:'700 1px "Oswald"', 2:'700 1px "Fira Sans Condensed"'};
+  let fontIndex = 1, fontRevision = 0, fontReady = false;
   function chooseFont(index) {
     fontIndex = index;
     const revision = ++fontRevision;
@@ -52,6 +52,40 @@
     return lines;
   }
 
+  function balanceLines(text, limit) {
+    const original = wrap(text, limit);
+    const count = original.length;
+    if (count < 2) return original;
+    const words = text.split(/\s+/).filter(Boolean);
+    if (words.some(word => ctx.measureText(word).width > limit)) return original;
+    const last = original[count - 1];
+    if (last.includes(' ') && ctx.measureText(last).width >= limit * .55) return original;
+
+    // Keep the same line count and choose breaks with similar visual widths.
+    const memo = new Map();
+    const width = ctx.measureText(text.replace(/\s+/g, ' ')).width / count;
+    function fit(start, remaining) {
+      if (!remaining) return start === words.length ? {cost:0, lines:[]} : null;
+      const key = start + ':' + remaining;
+      if (memo.has(key)) return memo.get(key);
+      let line = '', best = null;
+      for (let end = start; end <= words.length - remaining; end++) {
+        line += (line ? ' ' : '') + words[end];
+        const measured = ctx.measureText(line).width;
+        if (measured > limit) break;
+        if (remaining === 1 && end !== words.length - 1) continue;
+        const tail = fit(end + 1, remaining - 1);
+        if (!tail) continue;
+        const orphan = remaining === 1 && end === start ? limit * limit : 0;
+        const cost = (measured - width) ** 2 + orphan + tail.cost;
+        if (!best || cost < best.cost) best = {cost, lines:[line,...tail.lines]};
+      }
+      memo.set(key,best);
+      return best;
+    }
+    return fit(0,count)?.lines || original;
+  }
+
   function render() {
     const loaded = slots.filter(slot => slot.image);
     const width = W / Math.max(1, loaded.length);
@@ -67,7 +101,7 @@
       ctx.textBaseline = 'alphabetic';
       for (let size = 94; size >= 1; size--) {
         ctx.font = fonts[fontIndex].replace("1px", size + "px") + ", sans-serif";
-        const lines = wrap(headline, W - 140);
+        const lines = balanceLines(headline, W - 140);
         const metrics = lines.map(line => ctx.measureText(line));
         const above = Math.max(...metrics.map(m => m.actualBoundingBoxAscent));
         const below = Math.max(...metrics.map(m => m.actualBoundingBoxDescent));
@@ -211,7 +245,7 @@
   $('newDesign').onclick = () => { $('resetDialog').returnValue = ''; $('resetDialog').showModal(); };
   $('resetDialog').addEventListener('close', () => {
     if ($('resetDialog').returnValue !== 'reset') return;
-    removePhoto(0); removePhoto(1); $('headline').value = ''; $('count').textContent = '0 / 220'; tab('config'); chooseFont(0);
+    removePhoto(0); removePhoto(1); $('headline').value = ''; $('count').textContent = '0 / 220'; tab('config'); chooseFont(1);
   });
   $('resetDialog').addEventListener('cancel', () => { $('resetDialog').returnValue = ''; });
   $('download').onclick = () => {
@@ -240,5 +274,5 @@
   };
   frame.onerror = () => status('No se pudo cargar el marco del diseño.');
   frame.src = './marco.png?v=16';
-  chooseFont(0);
+  chooseFont(1);
 })();
