@@ -43,20 +43,20 @@
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = '#e7edf5'; ctx.fillRect(0, 0, W, PHOTO_H);
     loaded.forEach((slot, i) => drawPhoto(ctx, slot, i * width, width, PHOTO_H));
-    ctx.fillStyle = '#122238'; ctx.fillRect(0, PHOTO_H, W, 8);
+    const gray = ctx.createLinearGradient(0, PHOTO_H, 0, H); gray.addColorStop(0, '#e4e7eb'); gray.addColorStop(1, '#f9fafb'); ctx.fillStyle = gray; ctx.fillRect(0, PHOTO_H, W, H - PHOTO_H); ctx.fillStyle = '#122238'; ctx.fillRect(0, PHOTO_H, W, 8);
     const headline = $('headline').value.trim();
     if (headline) {
-      let size = 79, lines, leading;
+      let size = 94, lines, leading;
       do {
         ctx.font = `700 ${size}px Arial, sans-serif`;
-        lines = wrap(headline, W - 156);
+        lines = wrap(headline, W - 140);
         leading = Math.ceil(size * 1.09);
-        if (lines.length * leading <= 395) break;
+        if (lines.length * leading <= 420) break;
         size--;
       } while (size > 0);
       ctx.textBaseline = 'middle';
       const start = PHOTO_H + 8 + (H - PHOTO_H - 8 - lines.length * leading) / 2 + leading / 2;
-      lines.forEach((line, i) => ctx.fillText(line, 78, start + i * leading));
+      lines.forEach((line, i) => ctx.fillText(line, 70, start + i * leading));
     }
     if (frameReady) ctx.drawImage(frame, 0, 0, W, H);
     slots.forEach((slot, i) => {
@@ -208,6 +208,6 @@
   };
   frame.onload = () => { frameReady = true; render(); };
   frame.onerror = () => status('No se pudo cargar el marco del diseño.');
-  frame.src = './marco.svg?v=15';
+  frame.src = './marco.png?v=16';
   render();
 })();
