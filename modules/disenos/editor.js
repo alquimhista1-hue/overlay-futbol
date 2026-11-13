@@ -6,6 +6,21 @@
   const controls = [];
   let frameReady = false, footerTop = H;
   const frame = new Image();
+  const fonts = ['700 1px "Barlow Condensed"', '700 1px "Oswald"', '700 1px "Fira Sans Condensed"', '800 1px "Archivo"', '800 1px "Montserrat"'];
+  let fontIndex = 0, fontRevision = 0, fontReady = false;
+  function chooseFont(index) {
+    fontIndex = index;
+    const revision = ++fontRevision;
+    fontReady = false;
+    document.querySelectorAll('[data-font]').forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.font) === index)));
+    render();
+    document.fonts.load(fonts[index], 'Titular español: áéíóúüñ ¿¡').then(() => {
+      if (revision !== fontRevision) return;
+      fontReady = true;
+      render();
+    }).catch(() => { if (revision === fontRevision) status('No se pudo cargar esa tipografía. Prueba otra opción.'); });
+  }
+  document.querySelectorAll('[data-font]').forEach(button => button.onclick = () => chooseFont(Number(button.dataset.font)));
   const status = message => { $('status').textContent = message; };
 
   function drawPhoto(context, slot, left, width, height) {
@@ -51,7 +66,7 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
       for (let size = 94; size >= 1; size--) {
-        ctx.font = `900 ${size}px "Arial Black", system-ui, sans-serif`;
+        ctx.font = fonts[fontIndex].replace("1px", size + "px") + ", sans-serif";
         const lines = wrap(headline, W - 140);
         const metrics = lines.map(line => ctx.measureText(line));
         const above = Math.max(...metrics.map(m => m.actualBoundingBoxAscent));
@@ -70,7 +85,7 @@
       controls[i].caption.textContent = slot.image ? 'Cambiar foto' : 'Elegir foto';
     });
     $('touchArea').hidden = !loaded.length;
-    $('download').disabled = !loaded.length || !headline || !frameReady;
+    $('download').disabled = !loaded.length || !headline || !frameReady || !fontReady;
   }
 
   function decode(file) {
@@ -196,7 +211,7 @@
   $('newDesign').onclick = () => { $('resetDialog').returnValue = ''; $('resetDialog').showModal(); };
   $('resetDialog').addEventListener('close', () => {
     if ($('resetDialog').returnValue !== 'reset') return;
-    removePhoto(0); removePhoto(1); $('headline').value = ''; $('count').textContent = '0 / 220'; tab('config');
+    removePhoto(0); removePhoto(1); $('headline').value = ''; $('count').textContent = '0 / 220'; tab('config'); chooseFont(0);
   });
   $('resetDialog').addEventListener('cancel', () => { $('resetDialog').returnValue = ''; });
   $('download').onclick = () => {
@@ -225,5 +240,5 @@
   };
   frame.onerror = () => status('No se pudo cargar el marco del diseño.');
   frame.src = './marco.png?v=16';
-  render();
+  chooseFont(0);
 })();
