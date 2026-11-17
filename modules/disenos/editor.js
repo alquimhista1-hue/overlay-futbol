@@ -6,7 +6,7 @@
   const controls = [];
   let frameReady = false, footerTop = H;
   const frame = new Image(), logo = new Image();
-  const templates = [['classic','Clásica'],['latest','Lo último'],['top','Titular arriba']];
+  const templates = [['classic','Clásica'],['top','Titular arriba']];
   let templateIndex=0, cropEnabled=false;
   const touchDevice=matchMedia('(pointer:coarse), (hover:none)');
   let photoTop = 0, photoHeight = PHOTO_H, topFits = true;
@@ -93,71 +93,32 @@
     }
     return {lines:[],height:0,font:''};
   }
-  function paintText(layout, x, top, align, color, emphasis='') {
+  function paintText(layout, x, top, align, color) {
     if (!layout.lines.length) return;
     ctx.font=layout.font; ctx.textBaseline='alphabetic'; ctx.textAlign=align;
-    const phrase=emphasis.toLocaleLowerCase('es').trim().replace(/\s+/g,' ');
-    const match=phrase ? layout.lines.join(' ').toLocaleLowerCase('es').indexOf(phrase) : -1;
-    let offset=0;
-    layout.lines.forEach((line,i)=>{
-      const y=top+layout.ascent+i*layout.step;
-      ctx.textAlign=align;
-      ctx.fillStyle=color; ctx.fillText(line,x,y);
-      if(match>=0 && match<offset+line.length && match+phrase.length>offset){
-        // Redraw the same line through a clip so kerning and centering do not change.
-        const left=x-(align==='center'?ctx.measureText(line).width/2:0);
-        const from=Math.max(0,match-offset), to=Math.min(line.length,match+phrase.length-offset);
-        const start=left+ctx.measureText(line.slice(0,from)).width;
-        const end=left+ctx.measureText(line.slice(0,to)).width;
-        ctx.save();ctx.beginPath();ctx.rect(start-1,y-layout.step,end-start+2,layout.step*1.35);ctx.clip();
-        ctx.fillStyle='#ffe53c';ctx.fillText(line,x,y);ctx.restore();
-      }
-      offset+=line.length+1;
-    });
+    ctx.fillStyle=color;
+    layout.lines.forEach((line,i)=>ctx.fillText(line,x,top+layout.ascent+i*layout.step));
   }
   function paintLogo(x,y){
     if(!logo.complete || !logo.naturalWidth)return;
     // The OBS asset is transparent outside the logo; use only its logo region.
     ctx.drawImage(logo,1056,56,184,120,x,y,168,110);
   }
-  function renderAlternate(template, headline, loaded, width) {
-    const font=size=>fonts[fontIndex].replace('1px',size+'px')+', sans-serif';
+  function renderTop(headline, loaded, width) {
     ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
-    if(template==='top'){
-      const text=headline.toLocaleUpperCase('es'), words=text.split(/\s+/).filter(Boolean);
-      const title=fitText(text,W-64,TOP_BAND-56,54,size=>'900 '+size+'px "Arial Black", system-ui, sans-serif',3);
-      topFits=words.length<=TOP_WORD_LIMIT && (!text || !!title.lines.length);
-      photoTop=TOP_BAND; photoHeight=H-photoTop;
-      ctx.fillStyle='#e7edf5';ctx.fillRect(0,photoTop,W,photoHeight);
-      loaded.forEach((slot,i)=>drawPhoto(ctx,slot,i*width,width,photoHeight,photoTop));
-      paintText(title,32,(TOP_BAND-title.height)/2,'left','#111');
-      const limit=$('titleLimit');limit.hidden=false;
-      const note='15 a '+TOP_WORD_LIMIT+' palabras';
-      const message=topFits ? note : 'Máximo '+TOP_WORD_LIMIT+' palabras. Acorta el titular para descargar.';
-      if(limit.textContent!==message)limit.textContent=message;
-      $('headline').setAttribute('aria-invalid',String(!topFits));
-      paintLogo(W-220,photoTop+34);
-      return;
-    }
-    const label=$('editionLabel').value.trim().toLocaleUpperCase('es');
-    photoHeight=H;
-    ctx.fillStyle='#e7edf5';ctx.fillRect(0,0,W,H);
-    loaded.forEach((slot,i)=>drawPhoto(ctx,slot,i*width,width,H));
-    const shade=ctx.createLinearGradient(0,620,0,1060);
-    shade.addColorStop(0,'rgba(0,0,0,0)');shade.addColorStop(.65,'rgba(0,0,0,.85)');shade.addColorStop(1,'#050607');
-    ctx.fillStyle=shade;ctx.fillRect(0,620,W,H-620);
-    paintLogo(38,34);
-    const title=fitText(headline,W-184,280,79,font);
-    const contentHeight=title.height+(label?76:0);
-    let top=1312-contentHeight;
-    if(label){
-      ctx.font='700 31px system-ui,sans-serif';
-      const badge=Math.max(180,ctx.measureText(label).width+52);
-      ctx.fillStyle='#c81022';ctx.beginPath();ctx.roundRect((W-badge)/2,top,badge,52,26);ctx.fill();
-      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';ctx.fillText(label,W/2,top+26);
-      top+=76;
-    }
-    paintText(title,W/2,top,'center','#fff',$('highlightPhrase').value);
+    const text=headline.toLocaleUpperCase('es'), words=text.split(/\s+/).filter(Boolean);
+    const title=fitText(text,W-64,TOP_BAND-56,54,size=>'900 '+size+'px "Arial Black", system-ui, sans-serif',3);
+    topFits=words.length<=TOP_WORD_LIMIT && (!text || !!title.lines.length);
+    photoTop=TOP_BAND; photoHeight=H-photoTop;
+    ctx.fillStyle='#e7edf5';ctx.fillRect(0,photoTop,W,photoHeight);
+    loaded.forEach((slot,i)=>drawPhoto(ctx,slot,i*width,width,photoHeight,photoTop));
+    paintText(title,32,(TOP_BAND-title.height)/2,'left','#111');
+    const limit=$('titleLimit');
+    const note='15 a '+TOP_WORD_LIMIT+' palabras';
+    const message=topFits ? note : 'Máximo '+TOP_WORD_LIMIT+' palabras.';
+    if(limit.textContent!==message)limit.textContent=message;
+    $('headline').setAttribute('aria-invalid',String(!topFits));
+    paintLogo(W-220,photoTop+34);
   }
 
   function render() {
@@ -165,7 +126,7 @@
     const width = W / Math.max(1, loaded.length);
     const headline = $('headline').value.trim(), template = templates[templateIndex][0];
     photoTop = 0; photoHeight = PHOTO_H; topFits = true;
-    if(template !== 'top'){ $('titleLimit').hidden=true; $('headline').removeAttribute('aria-invalid'); }
+    if(template !== 'top'){ $('titleLimit').textContent=''; $('headline').removeAttribute('aria-invalid'); }
     if (template === 'classic') {
       ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
       ctx.fillStyle = '#e7edf5'; ctx.fillRect(0, 0, W, PHOTO_H);
@@ -194,10 +155,9 @@
       }
       if (frameReady) ctx.drawImage(frame, 0, 0, W, H);
     } else {
-      renderAlternate(template, headline, loaded, width);
+      renderTop(headline, loaded, width);
     }
-    $('latestOptions').hidden = template !== 'latest';
-    document.querySelector('.font-picks').hidden = template === 'top';
+    document.querySelectorAll('[data-font]').forEach(button => { button.disabled = template === 'top'; });
     $('touchArea').style.setProperty('--photo-top', photoTop/H*100+'%');
     $('touchArea').style.setProperty('--photo-height', photoHeight/H*100+'%');
     slots.forEach((slot, i) => {
@@ -316,7 +276,7 @@
 
   function clearGesture(){gesture=null;pointers.clear();}
   function stepTemplate(delta){
-    clearGesture();cropEnabled=false;
+    clearGesture();
     templateIndex=(templateIndex+delta+templates.length)%templates.length;
     render();
   }
@@ -324,7 +284,6 @@
   $('templateNext').onclick=()=>stepTemplate(1);
   $('cropToggle').onclick=()=>{clearGesture();cropEnabled=!cropEnabled;render();};
   touchDevice.addEventListener('change',()=>{clearGesture();cropEnabled=false;render();});
-  for(const id of ['editionLabel','highlightPhrase']) $(id).addEventListener('input',()=>{clearGesture();render();});
   $('headline').addEventListener('input', () => {
 
     render();
@@ -332,7 +291,7 @@
   $('newDesign').onclick = () => { $('resetDialog').returnValue = ''; $('resetDialog').showModal(); };
   $('resetDialog').addEventListener('close', () => {
     if ($('resetDialog').returnValue !== 'reset') return;
-    removePhoto(0); removePhoto(1); clearGesture(); templateIndex=0; cropEnabled=false; $('editionLabel').value='LO ÚLTIMO'; $('highlightPhrase').value=''; $('headline').value = ''; chooseFont(1); $('headline').focus();
+    removePhoto(0); removePhoto(1); clearGesture(); templateIndex=0; cropEnabled=false; $('headline').value = ''; chooseFont(1); $('headline').focus();
   });
   $('resetDialog').addEventListener('cancel', () => { $('resetDialog').returnValue = ''; });
   $('download').onclick = () => {
