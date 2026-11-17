@@ -300,14 +300,38 @@
   $('templateNext').onclick=()=>stepTemplate(1);
   $('cropToggle').onclick=()=>{clearGesture();cropEnabled=!cropEnabled;render();scheduleCropLock();};
   touchDevice.addEventListener('change',()=>{clearGesture();cropEnabled=false;render();scheduleCropLock();});
-  $('headline').addEventListener('input', () => {
+  const headlineInput = $('headline');
+  function fitHeadlineInput() {
+    headlineInput.style.height = '';
+    headlineInput.style.fontSize = '';
+    const baseSize = parseFloat(getComputedStyle(headlineInput).fontSize);
+    for (let size = baseSize; size > 12 && headlineInput.scrollHeight > headlineInput.clientHeight; size--) {
+      headlineInput.style.fontSize = Math.max(12, size - 1) + 'px';
+    }
+    const overflow = headlineInput.scrollHeight - headlineInput.clientHeight;
+    if (overflow > 0) headlineInput.style.height = headlineInput.offsetHeight + overflow + 'px';
+    headlineInput.scrollTop = 0;
+  }
 
+  function updateHeadline(event) {
+    if (event.isComposing) return;
+    const words = [...headlineInput.value.matchAll(/\S+/g)];
+    if (words.length > WORD_LIMIT) {
+      const caret = headlineInput.selectionStart;
+      headlineInput.value = headlineInput.value.slice(0, words[WORD_LIMIT].index).trimEnd();
+      headlineInput.setSelectionRange(caret, caret);
+    }
+    fitHeadlineInput();
     render();
-  });
+  }
+
+  headlineInput.addEventListener('input', updateHeadline);
+  headlineInput.addEventListener('compositionend', updateHeadline);
+  window.addEventListener('resize', fitHeadlineInput);
   $('newDesign').onclick = () => { $('resetDialog').returnValue = ''; $('resetDialog').showModal(); };
   $('resetDialog').addEventListener('close', () => {
     if ($('resetDialog').returnValue !== 'reset') return;
-    removePhoto(0); removePhoto(1); clearGesture(); templateIndex=0; cropEnabled=false; $('headline').value = ''; chooseFont(1); $('headline').focus();
+    removePhoto(0); removePhoto(1); clearGesture(); templateIndex=0; cropEnabled=false; headlineInput.value = ''; fitHeadlineInput(); chooseFont(1); headlineInput.focus();
   });
   $('resetDialog').addEventListener('cancel', () => { $('resetDialog').returnValue = ''; });
   $('download').onclick = () => {
