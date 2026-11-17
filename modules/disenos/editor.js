@@ -282,6 +282,7 @@
     } catch {
       $('draftStatus').textContent = 'Borrador local no disponible';
     } finally {
+      $('photosPanel').open = !slots.some(slot => slot.image) || matchMedia('(min-width:42rem)').matches;
       restoring = false; $('config').inert = false; $('newDesign').disabled = false; render();
     }
   }
