@@ -1,5 +1,5 @@
 (() => {
-  const W = 1200, H = 1400, PHOTO_H = 875, TOP_BAND = 258, TOP_WORD_LIMIT = 22;
+  const W = 1200, H = 1400, PHOTO_H = 875, TOP_BAND = 258, WORD_LIMIT = 16;
   const $ = id => document.getElementById(id);
   const canvas = $('preview'), ctx = canvas.getContext('2d');
   const slots = Array.from({length: 2}, () => ({image: null, x: 50, y: 50, zoom: 100, revision: 0}));
@@ -9,7 +9,7 @@
   const templates = [['classic','Clásica'],['top','Titular arriba']];
   let templateIndex=0, cropEnabled=false;
   const touchDevice=matchMedia('(pointer:coarse), (hover:none)');
-  let photoTop = 0, photoHeight = PHOTO_H, topFits = true;
+  let photoTop = 0, photoHeight = PHOTO_H, titleFits = true;
   const fonts = {1:'700 1px "Oswald"', 2:'700 1px "Fira Sans Condensed"'};
   let fontIndex = 1, fontRevision = 0, fontReady = false;
   function chooseFont(index) {
@@ -106,18 +106,14 @@
   }
   function renderTop(headline, loaded, width) {
     ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
-    const text=headline.toLocaleUpperCase('es'), words=text.split(/\s+/).filter(Boolean);
-    const title=fitText(text,W-64,TOP_BAND-56,54,size=>'900 '+size+'px "Arial Black", system-ui, sans-serif',3);
-    topFits=words.length<=TOP_WORD_LIMIT && (!text || !!title.lines.length);
+    const text=headline.toLocaleUpperCase('es');
+    const margin=76;
+    const title=fitText(text,W-2*margin,TOP_BAND-64,54,size=>'900 '+size+'px "Arial Black", system-ui, sans-serif',3);
+    titleFits=!text || !!title.lines.length;
     photoTop=TOP_BAND; photoHeight=H-photoTop;
     ctx.fillStyle='#e7edf5';ctx.fillRect(0,photoTop,W,photoHeight);
     loaded.forEach((slot,i)=>drawPhoto(ctx,slot,i*width,width,photoHeight,photoTop));
-    paintText(title,32,(TOP_BAND-title.height)/2,'left','#111');
-    const limit=$('titleLimit');
-    const note='15 a '+TOP_WORD_LIMIT+' palabras';
-    const message=topFits ? note : 'Máximo '+TOP_WORD_LIMIT+' palabras.';
-    if(limit.textContent!==message)limit.textContent=message;
-    $('headline').setAttribute('aria-invalid',String(!topFits));
+    paintText(title,margin,(TOP_BAND-title.height)/2,'left','#111');
     paintLogo(W-220,photoTop+34);
   }
 
@@ -125,8 +121,9 @@
     const loaded = slots.filter(slot => slot.image);
     const width = W / Math.max(1, loaded.length);
     const headline = $('headline').value.trim(), template = templates[templateIndex][0];
-    photoTop = 0; photoHeight = PHOTO_H; topFits = true;
-    if(template !== 'top'){ $('titleLimit').textContent=''; $('headline').removeAttribute('aria-invalid'); }
+    photoTop = 0; photoHeight = PHOTO_H; titleFits = true;
+    const wordCount = headline ? headline.split(/\s+/).length : 0;
+    const withinLimit = wordCount <= WORD_LIMIT;
     if (template === 'classic') {
       ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
       ctx.fillStyle = '#e7edf5'; ctx.fillRect(0, 0, W, PHOTO_H);
@@ -135,7 +132,7 @@
       if (headline) {
         // Export margins are measured in canvas pixels, not interface spacing.
         const top = PHOTO_H + 52;
-        const textWidth = W - 2 * 112;
+        const textWidth = W - 2 * 120;
         const bottom = Math.max(top + 1, footerTop - 48);
         ctx.textAlign = 'center';
         ctx.textBaseline = 'alphabetic';
@@ -170,7 +167,12 @@
     $('cropToggle').setAttribute('aria-pressed',String(cropEnabled));
     $('cropToggle').textContent = cropEnabled ? 'Terminar encuadre' : 'Encuadrar foto';
     $('touchArea').hidden = !loaded.length || (touchDevice.matches && !cropEnabled);
-    $('download').disabled = !loaded.length || !headline || (template === "classic" && !frameReady) || !topFits || (template !== 'top' && !fontReady);
+    const message = !withinLimit ? 'Acorta el titular. Máximo 16 palabras.' :
+      !titleFits ? 'Acorta el titular para que quepa.' : 'Máximo 16 palabras';
+    const limit = $('titleLimit');
+    if (limit.textContent !== message) limit.textContent = message;
+    $('headline').setAttribute('aria-invalid', String(!withinLimit || !titleFits));
+    $('download').disabled = !loaded.length || !headline || (template === "classic" && !frameReady) || !withinLimit || !titleFits || (template !== 'top' && !fontReady);
   }
 
   function decode(file) {
@@ -254,12 +256,14 @@
     const p = point(event), photo = anchor(photoAt(p),p);
     const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 120 : 1);
     position(photo,p,photo.zoom * Math.exp(clamp(-delta * .002,-.25,.25)));
+    scheduleCropLock();
   }, {passive:false});
   touch.onpointerdown = event => {
     if ((event.pointerType === 'touch' && touchDevice.matches && !cropEnabled) || pointers.size >= 2 || (event.pointerType === 'mouse' && event.button !== 0)) return;
     if (!slots.some(slot => slot.image)) return;
     const p = point(event);
     pointers.set(event.pointerId,p);
+    scheduleCropLock();
     touch.setPointerCapture(event.pointerId);
     gesture = anchor(gesture || photoAt(p), center());
   };
@@ -272,18 +276,30 @@
   touch.onpointerup = touch.onpointercancel = touch.onlostpointercapture = event => {
     if (!pointers.delete(event.pointerId)) return;
     if (pointers.size && gesture) gesture = anchor(gesture,center()); else { gesture=null; }
+    scheduleCropLock();
   };
+
+  let cropTimeout;
+  function scheduleCropLock() {
+    clearTimeout(cropTimeout);
+    if (!cropEnabled || pointers.size) return;
+    cropTimeout = setTimeout(() => {
+      cropEnabled = false;
+      render();
+    }, 2000);
+  }
 
   function clearGesture(){gesture=null;pointers.clear();}
   function stepTemplate(delta){
     clearGesture();
     templateIndex=(templateIndex+delta+templates.length)%templates.length;
+    scheduleCropLock();
     render();
   }
   $('templatePrev').onclick=()=>stepTemplate(-1);
   $('templateNext').onclick=()=>stepTemplate(1);
-  $('cropToggle').onclick=()=>{clearGesture();cropEnabled=!cropEnabled;render();};
-  touchDevice.addEventListener('change',()=>{clearGesture();cropEnabled=false;render();});
+  $('cropToggle').onclick=()=>{clearGesture();cropEnabled=!cropEnabled;render();scheduleCropLock();};
+  touchDevice.addEventListener('change',()=>{clearGesture();cropEnabled=false;render();scheduleCropLock();});
   $('headline').addEventListener('input', () => {
 
     render();
