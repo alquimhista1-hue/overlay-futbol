@@ -20,7 +20,7 @@
       render();
     }).catch(() => { if (revision === fontRevision) status('No se pudo cargar esa tipografía. Prueba otra opción.'); });
   }
-  document.querySelectorAll('[data-font]').forEach(button => button.onclick = () => chooseFont(Number(button.dataset.font)));
+  document.querySelectorAll('[data-font]').forEach(button => button.onclick = () => { chooseFont(Number(button.dataset.font)); saveDraft(); });
   const status = message => { $('status').textContent = message; };
 
   function drawPhoto(context, slot, left, width, height) {
@@ -89,7 +89,9 @@
       ctx.textBaseline = 'alphabetic';
       for (let size = 94; size >= 1; size--) {
         ctx.font = fonts[fontIndex].replace("1px", size + "px") + ", sans-serif";
-        const lines = balanceLines(headline, W - 140);
+        const lines = $('manualLines').checked
+          ? headline.split('\n').flatMap(line => wrap(line, W - 140))
+          : balanceLines(headline, W - 140);
         const metrics = lines.map(line => ctx.measureText(line));
         const above = Math.max(...metrics.map(m => m.actualBoundingBoxAscent));
         const below = Math.max(...metrics.map(m => m.actualBoundingBoxDescent));
@@ -125,7 +127,7 @@
   }
   function removePhoto(i) {
     slots[i].revision++;
-    slots[i].image = null;
+    slots[i].image = null; slots[i].file = null;
     controls[i].file.value = '';
     resetCrop(i);
   }
@@ -146,12 +148,12 @@
       try {
         const image = await decode(selected);
         if (revision !== slot.revision) return;
-        slot.image = image; resetCrop(i); status(''); render();
+        slot.image = image; slot.file = selected; resetCrop(i); status(''); render(); saveDraft();
       } catch {
         if (revision === slot.revision) status('No se pudo abrir la foto. Prueba con JPG, PNG o WebP.');
       }
     });
-    remove.onclick = () => { removePhoto(i); status(''); render(); };
+    remove.onclick = () => { removePhoto(i); status(''); render(); saveDraft(); };
   });
   const touch = $('touchArea'), pointers = new Map();
   let gesture = null;
@@ -190,7 +192,7 @@
     event.preventDefault();
     const p = point(event), photo = anchor(photoAt(p),p);
     const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 120 : 1);
-    position(photo,p,photo.zoom * Math.exp(clamp(-delta * .002,-.25,.25)));
+    position(photo,p,photo.zoom * Math.exp(clamp(-delta * .002,-.25,.25))); saveDraft();
   }, {passive:false});
   touch.onpointerdown = event => {
     if (pointers.size >= 2 || (event.pointerType === 'mouse' && event.button !== 0)) return;
@@ -208,32 +210,18 @@
   };
   touch.onpointerup = touch.onpointercancel = touch.onlostpointercapture = event => {
     if (!pointers.delete(event.pointerId)) return;
-    if (pointers.size && gesture) gesture = anchor(gesture,center()); else gesture=null;
+    if (pointers.size && gesture) gesture = anchor(gesture,center()); else { gesture=null; saveDraft(); }
   };
 
-  function tab(name) {
-    $('config').hidden = name !== 'config';
-    $('previewPanel').hidden = name !== 'preview';
-    document.querySelectorAll('[data-tab]').forEach(button => {
-      const selected = button.dataset.tab === name;
-      button.classList.toggle('active', selected);
-      button.setAttribute('aria-pressed', String(selected));
-    });
-    render();
-  }
-  document.querySelectorAll('[data-tab]').forEach(button => button.onclick = () => tab(button.dataset.tab));
-  $('view').onclick = () => {
-    tab('preview');
-    if (window.parent !== window) parent.postMessage({type: 'studio:tab-change'}, location.origin);
-  };
   $('headline').addEventListener('input', () => {
     $('count').textContent = $('headline').value.length + ' / 220';
-    render();
+    render(); saveDraft();
   });
+  $('manualLines').onchange = () => { $('lineHint').hidden = !$('manualLines').checked; render(); saveDraft(); };
   $('newDesign').onclick = () => { $('resetDialog').returnValue = ''; $('resetDialog').showModal(); };
   $('resetDialog').addEventListener('close', () => {
     if ($('resetDialog').returnValue !== 'reset') return;
-    removePhoto(0); removePhoto(1); $('headline').value = ''; $('count').textContent = '0 / 220'; tab('config'); chooseFont(1);
+    removePhoto(0); removePhoto(1); $('headline').value = ''; $('count').textContent = '0 / 220'; $('manualLines').checked = false; $('lineHint').hidden = true; chooseFont(1); saveDraft(); $('headline').focus();
   });
   $('resetDialog').addEventListener('cancel', () => { $('resetDialog').returnValue = ''; });
   $('download').onclick = () => {
@@ -246,6 +234,58 @@
       setTimeout(() => URL.revokeObjectURL(url), 30000);
     }, 'image/png');
   };
+  const draftKey = window.STUDIO_OWNER || 'device';
+  const db = new Promise((resolve,reject) => {
+    try {
+      const request = indexedDB.open('cdn-studio-designs',1);
+      request.onupgradeneeded = () => request.result.createObjectStore('drafts');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    } catch(error) { reject(error); }
+  });
+  let draftRevision = 0, restoring = true;
+  $('newDesign').disabled = true;
+  function draftRequest(mode, action) {
+    return db.then(database => new Promise((resolve,reject) => {
+      const tx = database.transaction('drafts',mode);
+      const request = action(tx.objectStore('drafts'));
+      tx.oncomplete = () => resolve(request.result);
+      tx.onabort = tx.onerror = () => reject(tx.error || request.error);
+    }));
+  }
+  function saveDraft() {
+    if (restoring) return;
+    const revision = ++draftRevision;
+    const draft = {headline:$('headline').value, manual:$('manualLines').checked, fontIndex,
+      photos:slots.map(({file,x,y,zoom}) => ({file,x,y,zoom}))};
+    $('draftStatus').textContent = 'Guardando…';
+    draftRequest('readwrite', store => draft.headline || draft.photos.some(photo => photo.file)
+      ? store.put(draft,draftKey) : store.delete(draftKey))
+      .then(() => { if (revision === draftRevision) $('draftStatus').textContent = 'Borrador al día en este dispositivo'; })
+      .catch(() => { if (revision === draftRevision) $('draftStatus').textContent = 'No se pudo guardar el borrador'; });
+  }
+  async function restoreDraft() {
+    try {
+      const draft = await draftRequest('readonly', store => store.get(draftKey));
+      if (!draft) { $('draftStatus').textContent = 'Guardado automático en este dispositivo'; return; }
+      $('headline').value = draft.headline || '';
+      $('count').textContent = $('headline').value.length + ' / 220';
+      $('manualLines').checked = !!draft.manual;
+      $('lineHint').hidden = !$('manualLines').checked;
+      const restored = await Promise.allSettled(slots.map(async (slot,i) => {
+        const photo = draft.photos?.[i];
+        if (photo?.file) Object.assign(slot,photo,{image:await decode(photo.file)});
+      }));
+      chooseFont(fonts[draft.fontIndex] ? draft.fontIndex : 1);
+      $('draftStatus').textContent = restored.some(item => item.status === 'rejected')
+        ? 'Borrador recuperado; falta una foto' : 'Borrador recuperado';
+    } catch {
+      $('draftStatus').textContent = 'Borrador local no disponible';
+    } finally {
+      restoring = false; $('config').inert = false; $('newDesign').disabled = false; render();
+    }
+  }
+
   frame.onload = () => {
     const probe = document.createElement('canvas');
     probe.width = 120; probe.height = H;
@@ -263,4 +303,5 @@
   frame.onerror = () => status('No se pudo cargar el marco del diseño.');
   frame.src = './marco.png?v=16';
   chooseFont(1);
+  restoreDraft();
 })();

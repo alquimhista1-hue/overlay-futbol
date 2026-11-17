@@ -19,23 +19,38 @@ details{margin-top:8px}summary{padding:11px 0;cursor:pointer;font-weight:650}det
 @font-face{font-family:"Oswald";src:url("./fuentes/oswald.woff2") format("woff2");font-weight:700;font-display:swap}
 @font-face{font-family:"Fira Sans Condensed";src:url("./fuentes/firasanscondensed.woff2") format("woff2");font-weight:700;font-display:swap}
 .font-picks{display:flex;align-items:center;gap:4px;margin:0 0 8px;flex-wrap:wrap}.font-picks span{font-size:12px;margin-right:4px}.font-picks button{min-height:44px;min-width:44px;padding:4px;border-radius:8px}.font-picks [aria-pressed=true]{background:#051b48;color:white;border-color:#051b48}
+.design-toolbar{display:flex;align-items:center;gap:var(--spacing-2);flex-wrap:wrap;margin-bottom:var(--spacing-2)}
+.design-toolbar p{margin:0;margin-right:auto}.design-toolbar small,.preview-tip{display:block;color:var(--color-text-primary);opacity:.72}.design-toolbar button{border-radius:var(--radius-element)}#config,#previewPanel{min-width:0}
+main{display:grid;gap:var(--spacing-2);align-items:start;max-width:60rem}.design-toolbar,#status{grid-column:1/-1}
+.headline-options,.preview-heading{display:flex;align-items:center;justify-content:space-between;gap:var(--spacing-2)}.headline-options label{font-size:.8125rem}.headline-options .count{margin:0}.preview-heading{margin-bottom:var(--spacing-2)}.preview-tip{margin-top:var(--spacing-2)}
+.font-picks,.photo-grid{border:0;padding:0;margin:var(--spacing-3) 0 0}.design-sheet{margin:0 auto;max-width:27rem}
+@media(min-width:42rem){main{grid-template-columns:minmax(0,2fr) minmax(0,3fr)}}
+@media(max-width:24rem){.design-toolbar p{flex-basis:100%}}
 </style>
 <link rel="stylesheet" href="../../assets/css/astryx-core.css?v=1"><link rel="stylesheet" href="../../assets/css/astryx-cdn.css?v=1"></head>
 <body><main>
-<nav class="tabs" aria-label="Diseños"><button type="button" data-tab="config" class="active" aria-pressed="true">Configuración</button><button type="button" data-tab="preview" aria-pressed="false">Vista previa</button></nav>
-<section id="config">
+<header class="design-toolbar" aria-label="Acciones del diseño">
+  <p><strong>Diseño editorial</strong><small id="draftStatus" role="status">Abriendo borrador…</small></p>
+  <button type="button" id="newDesign">Nuevo diseño</button>
+  <button type="button" class="primary" id="download" disabled>Descargar PNG</button>
+</header>
+<section id="config" aria-label="Editar diseño" inert>
+  <label for="headline"><strong>Titular</strong></label>
+  <textarea id="headline" rows="2" maxlength="220" placeholder="Escribe el titular de la noticia" aria-describedby="lineHint count"></textarea>
+  <footer class="headline-options"><label><input type="checkbox" id="manualLines"> Respetar mis saltos</label><small class="count" id="count">0 / 220</small></footer>
+  <small id="lineHint" hidden>Usa Enter donde quieras comenzar otro renglón.</small>
+  <section class="font-picks" role="group" aria-label="Tipografía del titular"><span>Tipografía</span><button type="button" data-font="1" aria-label="2. Oswald" title="Oswald" aria-pressed="true">2</button><button type="button" data-font="2" aria-label="3. Fira Sans Condensed" title="Fira Sans Condensed" aria-pressed="false">3</button></section>
 
-<div class="photo-grid" id="photos"></div>
-<label for="headline"><strong>Titular</strong></label><textarea id="headline" rows="2" maxlength="220" placeholder="Escribe el titular de la noticia"></textarea><small class="count" id="count">0 / 220</small>
-<button type="button" class="primary" id="view" style="width:100%">Ver vista previa</button>
+  <section class="photo-grid" id="photos" aria-label="Fotografías"></section>
 </section>
-<section id="previewPanel" hidden>
-<div class="font-picks" role="group" aria-label="Tipografía del titular"><span>Tipografía</span><button type="button" data-font="1" aria-label="2. Oswald" title="Oswald" aria-pressed="true">2</button><button type="button" data-font="2" aria-label="3. Fira Sans Condensed" title="Fira Sans Condensed" aria-pressed="false">3</button></div>
-<div class="design-sheet"><div id="touchArea" aria-hidden="true" hidden></div><canvas id="preview" width="1200" height="1400" aria-label="Vista previa del diseño vertical"></canvas></div>
-<div class="actions"><button type="button" class="primary" id="download">Descargar PNG</button><button type="button" id="newDesign">Nuevo diseño</button></div>
+<section id="previewPanel" aria-label="Vista previa en vivo">
+  <header class="preview-heading"><strong>Vista previa</strong><small>1200 × 1400 px</small></header>
+  <figure class="design-sheet"><div id="touchArea" aria-hidden="true" hidden></div><canvas id="preview" width="1200" height="1400" aria-label="Vista previa del diseño vertical"></canvas></figure>
+
+  <small class="preview-tip">Arrastra para encuadrar. Usa dos dedos o la rueda para ampliar.</small>
 </section>
 <p id="status" role="status"></p>
 <dialog id="resetDialog" aria-labelledby="resetTitle"><h2 id="resetTitle">¿Empezar un nuevo diseño?</h2><p>Se quitarán las fotos y el titular actuales.</p><form method="dialog" class="actions"><button value="cancel">Cancelar</button><button class="primary" value="reset">Nuevo diseño</button></form></dialog>
 </main>
-<script src="./editor.js?v=20"></script>
+<script src="./editor.js?v=22"></script>
 </body></html>
