@@ -18,3 +18,11 @@
   outline: max(var(--border-width), 0.125rem) solid var(--blue, #126bbc);
   outline-offset: var(--spacing-1);
 }
+
+/* Keep supporting text readable on light surfaces. */
+#auth .muted,#account .muted,#auth label,#account label,
+#config .hint,#config .count,#previewPanel .preview-tip,
+.design-toolbar small,.headline-options label {
+  color:var(--color-text-primary);
+  opacity:1;
+}

@@ -15,11 +15,28 @@ body[data-screen="home"] #home.studio-home{max-width:54rem;width:100%;padding:0;
 body[data-screen="disenos"] .module-page{max-width:54rem;overflow:hidden;border-radius:var(--radius-container)}
 @media(min-width:64rem){
  body:not([data-screen="auth"]){padding-inline:var(--spacing-4)!important;padding-bottom:var(--spacing-4)!important}
- #workspace{padding-inline-start:14rem}
+ #workspace{padding-inline-start:16rem}
  #workspace .shell-header{max-width:68rem}
- #workspace .main-nav{inset:0 auto 0 0;transform:none;width:13rem;border-radius:0;display:flex;flex-direction:column;justify-content:flex-start;gap:var(--spacing-2);padding:var(--spacing-4);overflow:auto}
+ #workspace .main-nav{inset:0 auto 0 0;transform:none;width:15rem;border-radius:0;display:flex;flex-direction:column;justify-content:flex-start;gap:var(--spacing-2);padding:var(--spacing-4);overflow:auto}
  #workspace .main-nav button{flex:0 0 auto;display:flex;flex-direction:row;justify-content:flex-start;align-items:center;gap:var(--spacing-2);width:100%;text-align:left;padding:var(--spacing-2);min-height:2.75rem}
  .sidebar-brand{display:block;margin-bottom:var(--spacing-4);font-weight:800;color:var(--color-text-primary)}.sidebar-brand small{display:block;font-weight:400}
  body[data-screen="disenos"] .module-page{max-width:68rem}
  .studio-actions{grid-template-columns:repeat(3,minmax(0,1fr))}.studio-actions .featured-action{grid-column:auto}
+}
+
+/* Prioritize readable navigation in both layouts. */
+#workspace .main-nav {background:var(--color-background-surface);}
+#workspace .main-nav button {color:var(--color-text-primary);font-weight:650;}
+#workspace .main-nav button.active {background:var(--navy);color:white;}
+.studio-actions button strong {font-size:1.05rem;}
+.studio-actions button:not(.featured-action) small,
+#homeRecent button small,.sidebar-brand small {color:var(--color-text-primary);}
+.studio-actions button:not(.featured-action):hover,
+#homeRecent button:hover {background:var(--color-background-body);}
+@media(min-width:64rem) {
+  #workspace .main-nav button {font-size:1.0625rem;line-height:1.35;min-height:3.25rem;}
+  #workspace .main-nav button svg {width:1.375rem;height:1.375rem;}
+  #workspace .main-nav button:not(.active):hover {background:var(--color-background-body);}
+  .sidebar-brand {font-size:1.375rem;line-height:1.35;}
+  .sidebar-brand small {font-size:.875rem;margin-top:var(--spacing-1);}
 }
