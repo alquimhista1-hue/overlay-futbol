@@ -132,8 +132,8 @@
       loaded.forEach((slot,i)=>drawPhoto(ctx,slot,i*width,width,photoHeight,photoTop));
       paintText(title,32,(TOP_BAND-title.height)/2,'left','#111');
       const limit=$('titleLimit');limit.hidden=false;
-      const note=words.length+' / '+TOP_WORD_LIMIT+' palabras';
-      const message=topFits ? note : note+' Acorta el titular para descargar.';
+      const note='15 a '+TOP_WORD_LIMIT+' palabras';
+      const message=topFits ? note : 'Máximo '+TOP_WORD_LIMIT+' palabras. Acorta el titular para descargar.';
       if(limit.textContent!==message)limit.textContent=message;
       $('headline').setAttribute('aria-invalid',String(!topFits));
       paintLogo(W-220,photoTop+34);
@@ -236,7 +236,7 @@
   slots.forEach((slot, i) => {
     const card = document.createElement('article');
     card.className = 'photo-card';
-    card.innerHTML = `<h2>Foto ${i+1} ${i ? '<small class="hint">Opcional</small>' : ''}</h2>
+    card.innerHTML = `<h2>Foto ${i+1}</h2>
       <div class="photo-actions"><label class="upload"><span>Elegir foto</span><input type="file" accept="image/*" aria-label="Elegir foto ${i+1}"></label><button type="button" class="remove" hidden>Quitar</button></div>`;
     $('photos').append(card);
     const file = card.querySelector('input'), remove = card.querySelector('.remove');
@@ -326,13 +326,13 @@
   touchDevice.addEventListener('change',()=>{clearGesture();cropEnabled=false;render();});
   for(const id of ['editionLabel','highlightPhrase']) $(id).addEventListener('input',()=>{clearGesture();render();});
   $('headline').addEventListener('input', () => {
-    $('count').textContent = $('headline').value.length + ' / 220';
+
     render();
   });
   $('newDesign').onclick = () => { $('resetDialog').returnValue = ''; $('resetDialog').showModal(); };
   $('resetDialog').addEventListener('close', () => {
     if ($('resetDialog').returnValue !== 'reset') return;
-    removePhoto(0); removePhoto(1); clearGesture(); templateIndex=0; cropEnabled=false; $('editionLabel').value='LO ÚLTIMO'; $('highlightPhrase').value=''; $('headline').value = ''; $('count').textContent = '0 / 220'; chooseFont(1); $('headline').focus();
+    removePhoto(0); removePhoto(1); clearGesture(); templateIndex=0; cropEnabled=false; $('editionLabel').value='LO ÚLTIMO'; $('highlightPhrase').value=''; $('headline').value = ''; chooseFont(1); $('headline').focus();
   });
   $('resetDialog').addEventListener('cancel', () => { $('resetDialog').returnValue = ''; });
   $('download').onclick = () => {
@@ -362,6 +362,5 @@
   frame.onerror = () => status('No se pudo cargar el marco del diseño.');
   logo.onload = render; logo.src = '../transmision/assets/images/logos/logo.png';
   frame.src = './marco.png?v=16';
-  $('photosPanel').open=true;
   chooseFont(1);
 })();
