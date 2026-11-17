@@ -83,15 +83,17 @@
     const gray = ctx.createLinearGradient(0, PHOTO_H, 0, H); gray.addColorStop(0, '#e4e7eb'); gray.addColorStop(1, '#f9fafb'); ctx.fillStyle = gray; ctx.fillRect(0, PHOTO_H, W, H - PHOTO_H); ctx.fillStyle = '#122238'; ctx.fillRect(0, PHOTO_H, W, 8);
     const headline = $('headline').value.trim();
     if (headline) {
-      const top = PHOTO_H + 28;
-      const bottom = Math.max(top + 1, footerTop - 24);
+      // Export margins are measured in canvas pixels, not interface spacing.
+      const top = PHOTO_H + 52;
+      const textWidth = W - 2 * 112;
+      const bottom = Math.max(top + 1, footerTop - 48);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
       for (let size = 94; size >= 1; size--) {
         ctx.font = fonts[fontIndex].replace("1px", size + "px") + ", sans-serif";
         const lines = $('manualLines').checked
-          ? headline.split('\n').flatMap(line => wrap(line, W - 140))
-          : balanceLines(headline, W - 140);
+          ? headline.split('\n').flatMap(line => wrap(line, textWidth))
+          : balanceLines(headline, textWidth);
         const metrics = lines.map(line => ctx.measureText(line));
         const above = Math.max(...metrics.map(m => m.actualBoundingBoxAscent));
         const below = Math.max(...metrics.map(m => m.actualBoundingBoxDescent));
