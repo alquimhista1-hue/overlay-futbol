@@ -1,12 +1,12 @@
 (() => {
-  const W = 1200, H = 1400, PHOTO_H = 875;
+  const W = 1200, H = 1400, PHOTO_H = 875, TOP_BAND = 258, TOP_WORD_LIMIT = 22;
   const $ = id => document.getElementById(id);
   const canvas = $('preview'), ctx = canvas.getContext('2d');
   const slots = Array.from({length: 2}, () => ({image: null, x: 50, y: 50, zoom: 100, revision: 0}));
   const controls = [];
   let frameReady = false, footerTop = H;
   const frame = new Image(), logo = new Image();
-  let photoTop = 0, photoHeight = PHOTO_H;
+  let photoTop = 0, photoHeight = PHOTO_H, topFits = true;
   const fonts = {1:'700 1px "Oswald"', 2:'700 1px "Fira Sans Condensed"'};
   let fontIndex = 1, fontRevision = 0, fontReady = false;
   function chooseFont(index) {
@@ -75,11 +75,11 @@
     return best ? [...lines.slice(0, -2), ...best] : lines;
   }
 
-  function fitText(value, width, maxHeight, maxSize, font, manual=false) {
+  function fitText(value, width, maxHeight, maxSize, font) {
     if (!value) return {lines:[], step:0, ascent:0, height:0, font:''};
     for (let size=maxSize; size>0; size--) {
       ctx.font=font(size);
-      const lines=manual ? value.split('\n').flatMap(line=>wrap(line,width)) : balanceLines(value,width);
+      const lines=balanceLines(value,width);
       const metrics=lines.map(line=>ctx.measureText(line));
       const ascent=Math.max(...metrics.map(m=>m.actualBoundingBoxAscent));
       const descent=Math.max(...metrics.map(m=>m.actualBoundingBoxDescent));
@@ -113,23 +113,35 @@
   }
   function paintLogo(x,y){
     if(!logo.complete || !logo.naturalWidth)return;
-    const ratio=Math.min(168/logo.naturalWidth,100/logo.naturalHeight);
-    ctx.save();ctx.fillStyle='rgba(255,255,255,.90)';ctx.beginPath();ctx.roundRect(x,y,182,110,18);ctx.fill();
-    ctx.drawImage(logo,x+(182-logo.naturalWidth*ratio)/2,y+(110-logo.naturalHeight*ratio)/2,logo.naturalWidth*ratio,logo.naturalHeight*ratio);ctx.restore();
+    // The OBS asset is transparent outside the logo; use only its logo region.
+    ctx.drawImage(logo,1056,56,184,120,x,y,168,110);
   }
   function renderAlternate(template, headline, loaded, width) {
-    const manual=$('manualLines').checked, font=size=>fonts[fontIndex].replace('1px',size+'px')+', sans-serif';
+    const font=size=>fonts[fontIndex].replace('1px',size+'px')+', sans-serif';
     ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
     if(template==='top'){
-      const title=fitText(headline.toLocaleUpperCase('es'),W-136,370,92,font,manual);
-      photoTop=Math.max(184,Math.ceil(title.height+104)); photoHeight=H-photoTop;
+      const text=headline.toLocaleUpperCase('es'), words=text.split(/\s+/).filter(Boolean);
+      ctx.font='900 54px "Arial Black", system-ui, sans-serif';
+      const lines=wrap(text,W-64), step=62;
+      const metrics=lines.map(line=>ctx.measureText(line));
+      const ascent=Math.max(0,...metrics.map(m=>m.actualBoundingBoxAscent));
+      const descent=Math.max(0,...metrics.map(m=>m.actualBoundingBoxDescent));
+      const height=ascent+descent+Math.max(0,lines.length-1)*step;
+      topFits=words.length<=TOP_WORD_LIMIT && lines.length<=3 && height<=TOP_BAND-56
+        && words.every(word=>ctx.measureText(word).width<=W-64);
+      photoTop=TOP_BAND; photoHeight=H-photoTop;
       ctx.fillStyle='#e7edf5';ctx.fillRect(0,photoTop,W,photoHeight);
       loaded.forEach((slot,i)=>drawPhoto(ctx,slot,i*width,width,photoHeight,photoTop));
-      paintText(title,68,(photoTop-title.height)/2,'left','#111');
+      if(topFits)paintText({lines,ascent,step,font:ctx.font},32,(TOP_BAND-height)/2,'left','#111');
+      const limit=$('titleLimit');limit.hidden=false;
+      const note=words.length+' / '+TOP_WORD_LIMIT+' palabras · Hasta 3 líneas.';
+      const message=topFits ? note : note+' Acorta el titular para descargar.';
+      if(limit.textContent!==message)limit.textContent=message;
+      $('headline').setAttribute('aria-invalid',String(!topFits));
       if($('topLogo').checked)paintLogo(W-220,photoTop+34);
       return;
     }
-    const label=$('editionLabel').value.trim().toLocaleUpperCase('es'), sub=$('subtitle').value.trim();
+    const label=$('editionLabel').value.trim().toLocaleUpperCase('es');
     photoHeight=H;
     ctx.fillStyle='#e7edf5';ctx.fillRect(0,0,W,H);
     loaded.forEach((slot,i)=>drawPhoto(ctx,slot,i*width,width,H));
@@ -137,10 +149,9 @@
     shade.addColorStop(0,'rgba(0,0,0,0)');shade.addColorStop(.65,'rgba(0,0,0,.85)');shade.addColorStop(1,'#050607');
     ctx.fillStyle=shade;ctx.fillRect(0,620,W,H-620);
     paintLogo(38,34);
-    const subtitle=fitText(sub,W-210,180,50,size=>'400 '+size+'px system-ui,sans-serif');
-    const title=fitText(headline,W-184,Math.min(280,390-subtitle.height),79,font,manual);
-    const contentHeight=title.height+(subtitle.lines.length?22+subtitle.height:0)+(label?76:0);
-    let top=1294-contentHeight;
+    const title=fitText(headline,W-184,280,79,font);
+    const contentHeight=title.height+(label?76:0);
+    let top=1312-contentHeight;
     if(label){
       ctx.font='700 31px system-ui,sans-serif';
       const badge=Math.max(180,ctx.measureText(label).width+52);
@@ -149,15 +160,14 @@
       top+=76;
     }
     paintText(title,W/2,top,'center','#fff',$('highlightPhrase').value);
-    paintText(subtitle,W/2,top+title.height+22,'center','#fff');
-    ctx.font='650 24px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#e7edf5';ctx.fillText('CDN Escuintla',W/2,1355);
   }
 
   function render() {
     const loaded = slots.filter(slot => slot.image);
     const width = W / Math.max(1, loaded.length);
     const headline = $('headline').value.trim(), template = $('template').value;
-    photoTop = 0; photoHeight = PHOTO_H;
+    photoTop = 0; photoHeight = PHOTO_H; topFits = true;
+    if(template !== 'top'){ $('titleLimit').hidden=true; $('headline').removeAttribute('aria-invalid'); }
     if (template === 'classic') {
       ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
       ctx.fillStyle = '#e7edf5'; ctx.fillRect(0, 0, W, PHOTO_H);
@@ -172,9 +182,7 @@
         ctx.textBaseline = 'alphabetic';
         for (let size = 94; size >= 1; size--) {
           ctx.font = fonts[fontIndex].replace("1px", size + "px") + ", sans-serif";
-          const lines = $('manualLines').checked
-            ? headline.split('\n').flatMap(line => wrap(line, textWidth))
-            : balanceLines(headline, textWidth);
+          const lines = balanceLines(headline, textWidth);
           const metrics = lines.map(line => ctx.measureText(line));
           const above = Math.max(...metrics.map(m => m.actualBoundingBoxAscent));
           const below = Math.max(...metrics.map(m => m.actualBoundingBoxDescent));
@@ -199,7 +207,7 @@
       controls[i].caption.textContent = slot.image ? 'Cambiar foto' : 'Elegir foto';
     });
     $('touchArea').hidden = !loaded.length;
-    $('download').disabled = !loaded.length || !headline || (template === "classic" && !frameReady) || !fontReady;
+    $('download').disabled = !loaded.length || !headline || (template === "classic" && !frameReady) || !topFits || (template !== 'top' && !fontReady);
   }
 
   function decode(file) {
@@ -303,29 +311,27 @@
     if (pointers.size && gesture) gesture = anchor(gesture,center()); else { gesture=null; saveDraft(); }
   };
 
-  const templateFields = ['template','editionLabel','highlightPhrase','subtitle','topLogo'];
+  const templateFields = ['template','editionLabel','highlightPhrase','topLogo'];
   for(const id of templateFields) $(id).addEventListener('input',()=>{
     gesture=null;pointers.clear();render();saveDraft();
   });
   function templateOptions(){
-    return {template:$('template').value,editionLabel:$('editionLabel').value,highlightPhrase:$('highlightPhrase').value,subtitle:$('subtitle').value,topLogo:$('topLogo').checked};
+    return {template:$('template').value,editionLabel:$('editionLabel').value,highlightPhrase:$('highlightPhrase').value,topLogo:$('topLogo').checked};
   }
   function restoreOptions(options={}){
     $('template').value=['classic','latest','top'].includes(options.template)?options.template:'classic';
     $('editionLabel').value=options.editionLabel??'LO ÚLTIMO';
     $('highlightPhrase').value=options.highlightPhrase??'';
-    $('subtitle').value=options.subtitle??'';
     $('topLogo').checked=!!options.topLogo;
   }
   $('headline').addEventListener('input', () => {
     $('count').textContent = $('headline').value.length + ' / 220';
     render(); saveDraft();
   });
-  $('manualLines').onchange = () => { $('lineHint').hidden = !$('manualLines').checked; render(); saveDraft(); };
   $('newDesign').onclick = () => { $('resetDialog').returnValue = ''; $('resetDialog').showModal(); };
   $('resetDialog').addEventListener('close', () => {
     if ($('resetDialog').returnValue !== 'reset') return;
-    removePhoto(0); removePhoto(1); restoreOptions(); $('headline').value = ''; $('count').textContent = '0 / 220'; $('manualLines').checked = false; $('lineHint').hidden = true; chooseFont(1); saveDraft(); $('headline').focus();
+    removePhoto(0); removePhoto(1); restoreOptions(); $('headline').value = ''; $('count').textContent = '0 / 220'; chooseFont(1); saveDraft(); $('headline').focus();
   });
   $('resetDialog').addEventListener('cancel', () => { $('resetDialog').returnValue = ''; });
   $('download').onclick = () => {
@@ -360,7 +366,7 @@
   function saveDraft() {
     if (restoring) return;
     const revision = ++draftRevision;
-    const draft = {options:templateOptions(),headline:$('headline').value, manual:$('manualLines').checked, fontIndex,
+    const draft = {options:templateOptions(),headline:$('headline').value, fontIndex,
       photos:slots.map(({file,x,y,zoom}) => ({file,x,y,zoom}))};
     $('draftStatus').textContent = 'Guardando…';
     draftRequest('readwrite', store => draft.headline || draft.photos.some(photo => photo.file)
@@ -375,8 +381,6 @@
       restoreOptions(draft.options);
       $('headline').value = draft.headline || '';
       $('count').textContent = $('headline').value.length + ' / 220';
-      $('manualLines').checked = !!draft.manual;
-      $('lineHint').hidden = !$('manualLines').checked;
       const restored = await Promise.allSettled(slots.map(async (slot,i) => {
         const photo = draft.photos?.[i];
         if (photo?.file) Object.assign(slot,photo,{image:await decode(photo.file)});
@@ -407,7 +411,7 @@
     frameReady = true; render();
   };
   frame.onerror = () => status('No se pudo cargar el marco del diseño.');
-  logo.onload = render; logo.src = '../../assets/images/cdn-logo.png';
+  logo.onload = render; logo.src = '../transmision/assets/images/logos/logo.png';
   frame.src = './marco.png?v=16';
   chooseFont(1);
   restoreDraft();
