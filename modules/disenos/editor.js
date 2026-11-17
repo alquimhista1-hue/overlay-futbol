@@ -75,11 +75,12 @@
     return best ? [...lines.slice(0, -2), ...best] : lines;
   }
 
-  function fitText(value, width, maxHeight, maxSize, font) {
+  function fitText(value, width, maxHeight, maxSize, font, maxLines=Infinity) {
     if (!value) return {lines:[], step:0, ascent:0, height:0, font:''};
     for (let size=maxSize; size>0; size--) {
       ctx.font=font(size);
       const lines=balanceLines(value,width);
+      if(lines.length>maxLines) continue;
       const metrics=lines.map(line=>ctx.measureText(line));
       const ascent=Math.max(...metrics.map(m=>m.actualBoundingBoxAscent));
       const descent=Math.max(...metrics.map(m=>m.actualBoundingBoxDescent));
@@ -121,24 +122,18 @@
     ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
     if(template==='top'){
       const text=headline.toLocaleUpperCase('es'), words=text.split(/\s+/).filter(Boolean);
-      ctx.font='900 54px "Arial Black", system-ui, sans-serif';
-      const lines=wrap(text,W-64), step=62;
-      const metrics=lines.map(line=>ctx.measureText(line));
-      const ascent=Math.max(0,...metrics.map(m=>m.actualBoundingBoxAscent));
-      const descent=Math.max(0,...metrics.map(m=>m.actualBoundingBoxDescent));
-      const height=ascent+descent+Math.max(0,lines.length-1)*step;
-      topFits=words.length<=TOP_WORD_LIMIT && lines.length<=3 && height<=TOP_BAND-56
-        && words.every(word=>ctx.measureText(word).width<=W-64);
+      const title=fitText(text,W-64,TOP_BAND-56,54,size=>'900 '+size+'px "Arial Black", system-ui, sans-serif',3);
+      topFits=words.length<=TOP_WORD_LIMIT && (!text || !!title.lines.length);
       photoTop=TOP_BAND; photoHeight=H-photoTop;
       ctx.fillStyle='#e7edf5';ctx.fillRect(0,photoTop,W,photoHeight);
       loaded.forEach((slot,i)=>drawPhoto(ctx,slot,i*width,width,photoHeight,photoTop));
-      if(topFits)paintText({lines,ascent,step,font:ctx.font},32,(TOP_BAND-height)/2,'left','#111');
+      paintText(title,32,(TOP_BAND-title.height)/2,'left','#111');
       const limit=$('titleLimit');limit.hidden=false;
-      const note=words.length+' / '+TOP_WORD_LIMIT+' palabras · Hasta 3 líneas.';
+      const note=words.length+' / '+TOP_WORD_LIMIT+' palabras';
       const message=topFits ? note : note+' Acorta el titular para descargar.';
       if(limit.textContent!==message)limit.textContent=message;
       $('headline').setAttribute('aria-invalid',String(!topFits));
-      if($('topLogo').checked)paintLogo(W-220,photoTop+34);
+      paintLogo(W-220,photoTop+34);
       return;
     }
     const label=$('editionLabel').value.trim().toLocaleUpperCase('es');
@@ -199,7 +194,7 @@
       renderAlternate(template, headline, loaded, width);
     }
     $('latestOptions').hidden = template !== 'latest';
-    $('topOptions').hidden = template !== 'top';
+    document.querySelector('.font-picks').hidden = template === 'top';
     $('touchArea').style.setProperty('--photo-top', photoTop/H*100+'%');
     $('touchArea').style.setProperty('--photo-height', photoHeight/H*100+'%');
     slots.forEach((slot, i) => {
@@ -311,18 +306,17 @@
     if (pointers.size && gesture) gesture = anchor(gesture,center()); else { gesture=null; saveDraft(); }
   };
 
-  const templateFields = ['template','editionLabel','highlightPhrase','topLogo'];
+  const templateFields = ['template','editionLabel','highlightPhrase'];
   for(const id of templateFields) $(id).addEventListener('input',()=>{
     gesture=null;pointers.clear();render();saveDraft();
   });
   function templateOptions(){
-    return {template:$('template').value,editionLabel:$('editionLabel').value,highlightPhrase:$('highlightPhrase').value,topLogo:$('topLogo').checked};
+    return {template:$('template').value,editionLabel:$('editionLabel').value,highlightPhrase:$('highlightPhrase').value};
   }
   function restoreOptions(options={}){
     $('template').value=['classic','latest','top'].includes(options.template)?options.template:'classic';
     $('editionLabel').value=options.editionLabel??'LO ÚLTIMO';
     $('highlightPhrase').value=options.highlightPhrase??'';
-    $('topLogo').checked=!!options.topLogo;
   }
   $('headline').addEventListener('input', () => {
     $('count').textContent = $('headline').value.length + ' / 220';
