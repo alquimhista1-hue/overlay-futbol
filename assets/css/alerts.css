@@ -1,0 +1,18 @@
+#studioAlert {
+  position:fixed; inset:var(--alert-y,50%) auto auto 50%; transform:translate(-50%,-50%);
+  z-index:2147483647; width:max-content; max-width:min(28rem,calc(100% - 2rem));
+  padding:.875rem 1.125rem; border-radius:var(--radius-container, .75rem);
+  background:#051b48; color:white; box-shadow:0 .5rem 2rem #051b4840;
+  text-align:center; font:650 1rem/1.45 system-ui,sans-serif; overflow-wrap:anywhere;
+  opacity:0; pointer-events:none;
+}
+#studioAlert[data-visible=true]{opacity:1}
+body #notice:not(:empty),body.match-view #notice:not(:empty){
+  top:50%;bottom:auto;left:50%;right:auto;transform:translate(-50%,-50%);
+}
+/* Embedded notices are announced by the shell, above its navigation. */
+html[data-studio-embedded] #notice:not(:empty){position:absolute!important;width:1px!important;height:1px!important;padding:0!important;overflow:hidden!important;clip-path:inset(50%);pointer-events:none}
+html[data-studio-embedded] dialog[open]{
+  position:fixed;inset:var(--studio-dialog-center,50%) auto auto 50%;
+  margin:0;transform:translate(-50%,-50%);max-height:var(--studio-dialog-height,calc(100% - 1.5rem));overflow:auto;
+}
