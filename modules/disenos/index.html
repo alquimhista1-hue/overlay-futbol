@@ -33,6 +33,11 @@ main{display:grid;gap:var(--spacing-2);align-items:start;max-width:60rem}.design
 .design-toolbar{margin-bottom:0}
 @media(min-width:42rem){main{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}.design-sheet{max-width:34rem}}
 @media(max-width:41.99rem){.design-sheet{max-width:20rem}}
+
+.template-choice,.template-options label{display:grid;gap:var(--spacing-1);margin-bottom:var(--spacing-2);font-weight:650}
+.template-options{margin:var(--spacing-2) 0;padding:var(--spacing-2);border:var(--border-width) solid var(--color-border);border-radius:var(--radius-element)}
+.template-choice select,.template-options input:not([type=checkbox]){width:100%;min-height:2.75rem;padding:var(--spacing-2);font:inherit;color:var(--color-text-primary);background:var(--color-background-surface);border:var(--border-width) solid var(--color-border);border-radius:var(--radius-element)}
+#touchArea{bottom:auto;top:var(--photo-top,0%);height:var(--photo-height,62.5%)}
 </style>
 <link rel="stylesheet" href="../../assets/css/astryx-core.css?v=1"><link rel="stylesheet" href="../../assets/css/astryx-cdn.css?v=25"><link rel="stylesheet" href="../../assets/css/alerts.css?v=26"><script defer src="../../assets/js/alerts.js?v=26"></script></head>
 <body><main>
@@ -43,6 +48,9 @@ main{display:grid;gap:var(--spacing-2);align-items:start;max-width:60rem}.design
 </header>
 <section id="previewPanel" aria-label="Vista previa en vivo">
   <header class="preview-heading"><strong>Vista previa</strong><small>1200 × 1400 px</small></header>
+  <label class="template-choice">Plantilla
+    <select id="template"><option value="classic">Clásica</option><option value="latest">Lo último</option><option value="top">Titular arriba</option></select>
+  </label>
   <figure class="design-sheet"><div id="touchArea" aria-hidden="true" hidden></div><canvas id="preview" width="1200" height="1400" aria-label="Vista previa del diseño vertical"></canvas></figure>
 
   <small class="preview-tip">Arrastra para encuadrar. Usa dos dedos o la rueda para ampliar.</small>
@@ -57,10 +65,17 @@ main{display:grid;gap:var(--spacing-2);align-items:start;max-width:60rem}.design
 
 
   </details>
-  <details id="photosPanel"><summary>Fotos</summary>  <section class="photo-grid" id="photos" aria-label="Fotografías"></section></details>
+  <fieldset id="latestOptions" class="template-options" hidden>
+  <legend>Lo último</legend>
+  <label>Etiqueta <input id="editionLabel" maxlength="26" value="LO ÚLTIMO"></label>
+  <label>Frase destacada <input id="highlightPhrase" maxlength="90" placeholder="Escribe una frase del titular"></label>
+  <label>Texto complementario <textarea id="subtitle" rows="2" maxlength="160" placeholder="Opcional"></textarea></label>
+</fieldset>
+<label id="topOptions" class="template-options" hidden><input type="checkbox" id="topLogo"> Mostrar logo de CDN</label>
+<details id="photosPanel"><summary>Fotos</summary>  <section class="photo-grid" id="photos" aria-label="Fotografías"></section></details>
 </section>
 <p id="status" role="status"></p>
 <dialog id="resetDialog" aria-labelledby="resetTitle"><h2 id="resetTitle">¿Empezar un nuevo diseño?</h2><p>Se quitarán las fotos y el titular actuales.</p><form method="dialog" class="actions"><button value="cancel">Cancelar</button><button class="primary" value="reset">Nuevo diseño</button></form></dialog>
 </main>
-<script src="./editor.js?v=24"></script>
+<script src="./editor.js?v=27"></script>
 </body></html>

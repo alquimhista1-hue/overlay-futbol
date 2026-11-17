@@ -5,7 +5,8 @@
   const slots = Array.from({length: 2}, () => ({image: null, x: 50, y: 50, zoom: 100, revision: 0}));
   const controls = [];
   let frameReady = false, footerTop = H;
-  const frame = new Image();
+  const frame = new Image(), logo = new Image();
+  let photoTop = 0, photoHeight = PHOTO_H;
   const fonts = {1:'700 1px "Oswald"', 2:'700 1px "Fira Sans Condensed"'};
   let fontIndex = 1, fontRevision = 0, fontReady = false;
   function chooseFont(index) {
@@ -23,15 +24,15 @@
   document.querySelectorAll('[data-font]').forEach(button => button.onclick = () => { chooseFont(Number(button.dataset.font)); saveDraft(); });
   const status = message => { $('status').textContent = message; };
 
-  function drawPhoto(context, slot, left, width, height) {
+  function drawPhoto(context, slot, left, width, height, top = 0) {
     const image = slot.image;
     const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight) * slot.zoom / 100;
     const w = image.naturalWidth * scale, h = image.naturalHeight * scale;
     context.save();
     context.beginPath();
-    context.rect(left, 0, width, height);
+    context.rect(left, top, width, height);
     context.clip();
-    context.drawImage(image, left - (w - width) * slot.x / 100, -(h - height) * slot.y / 100, w, h);
+    context.drawImage(image, left - (w - width) * slot.x / 100, top - (h - height) * slot.y / 100, w, h);
     context.restore();
   }
 
@@ -74,44 +75,131 @@
     return best ? [...lines.slice(0, -2), ...best] : lines;
   }
 
+  function fitText(value, width, maxHeight, maxSize, font, manual=false) {
+    if (!value) return {lines:[], step:0, ascent:0, height:0, font:''};
+    for (let size=maxSize; size>0; size--) {
+      ctx.font=font(size);
+      const lines=manual ? value.split('\n').flatMap(line=>wrap(line,width)) : balanceLines(value,width);
+      const metrics=lines.map(line=>ctx.measureText(line));
+      const ascent=Math.max(...metrics.map(m=>m.actualBoundingBoxAscent));
+      const descent=Math.max(...metrics.map(m=>m.actualBoundingBoxDescent));
+      const step=Math.max(Math.ceil(size*1.12),ascent+descent+4);
+      const height=ascent+descent+(lines.length-1)*step;
+      if (height<=maxHeight) return {lines,step,ascent,height,font:ctx.font};
+    }
+    return {lines:[],height:0,font:''};
+  }
+  function paintText(layout, x, top, align, color, emphasis='') {
+    if (!layout.lines.length) return;
+    ctx.font=layout.font; ctx.textBaseline='alphabetic'; ctx.textAlign=align;
+    const phrase=emphasis.toLocaleLowerCase('es').trim().replace(/\s+/g,' ');
+    const match=phrase ? layout.lines.join(' ').toLocaleLowerCase('es').indexOf(phrase) : -1;
+    let offset=0;
+    layout.lines.forEach((line,i)=>{
+      const y=top+layout.ascent+i*layout.step;
+      ctx.textAlign=align;
+      ctx.fillStyle=color; ctx.fillText(line,x,y);
+      if(match>=0 && match<offset+line.length && match+phrase.length>offset){
+        // Redraw the same line through a clip so kerning and centering do not change.
+        const left=x-(align==='center'?ctx.measureText(line).width/2:0);
+        const from=Math.max(0,match-offset), to=Math.min(line.length,match+phrase.length-offset);
+        const start=left+ctx.measureText(line.slice(0,from)).width;
+        const end=left+ctx.measureText(line.slice(0,to)).width;
+        ctx.save();ctx.beginPath();ctx.rect(start-1,y-layout.step,end-start+2,layout.step*1.35);ctx.clip();
+        ctx.fillStyle='#ffe53c';ctx.fillText(line,x,y);ctx.restore();
+      }
+      offset+=line.length+1;
+    });
+  }
+  function paintLogo(x,y){
+    if(!logo.complete || !logo.naturalWidth)return;
+    const ratio=Math.min(168/logo.naturalWidth,100/logo.naturalHeight);
+    ctx.save();ctx.fillStyle='rgba(255,255,255,.90)';ctx.beginPath();ctx.roundRect(x,y,182,110,18);ctx.fill();
+    ctx.drawImage(logo,x+(182-logo.naturalWidth*ratio)/2,y+(110-logo.naturalHeight*ratio)/2,logo.naturalWidth*ratio,logo.naturalHeight*ratio);ctx.restore();
+  }
+  function renderAlternate(template, headline, loaded, width) {
+    const manual=$('manualLines').checked, font=size=>fonts[fontIndex].replace('1px',size+'px')+', sans-serif';
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+    if(template==='top'){
+      const title=fitText(headline.toLocaleUpperCase('es'),W-136,370,92,font,manual);
+      photoTop=Math.max(184,Math.ceil(title.height+104)); photoHeight=H-photoTop;
+      ctx.fillStyle='#e7edf5';ctx.fillRect(0,photoTop,W,photoHeight);
+      loaded.forEach((slot,i)=>drawPhoto(ctx,slot,i*width,width,photoHeight,photoTop));
+      paintText(title,68,(photoTop-title.height)/2,'left','#111');
+      if($('topLogo').checked)paintLogo(W-220,photoTop+34);
+      return;
+    }
+    const label=$('editionLabel').value.trim().toLocaleUpperCase('es'), sub=$('subtitle').value.trim();
+    photoHeight=H;
+    ctx.fillStyle='#e7edf5';ctx.fillRect(0,0,W,H);
+    loaded.forEach((slot,i)=>drawPhoto(ctx,slot,i*width,width,H));
+    const shade=ctx.createLinearGradient(0,620,0,1060);
+    shade.addColorStop(0,'rgba(0,0,0,0)');shade.addColorStop(.65,'rgba(0,0,0,.85)');shade.addColorStop(1,'#050607');
+    ctx.fillStyle=shade;ctx.fillRect(0,620,W,H-620);
+    paintLogo(38,34);
+    const subtitle=fitText(sub,W-210,180,50,size=>'400 '+size+'px system-ui,sans-serif');
+    const title=fitText(headline,W-184,Math.min(280,390-subtitle.height),79,font,manual);
+    const contentHeight=title.height+(subtitle.lines.length?22+subtitle.height:0)+(label?76:0);
+    let top=1294-contentHeight;
+    if(label){
+      ctx.font='700 31px system-ui,sans-serif';
+      const badge=Math.max(180,ctx.measureText(label).width+52);
+      ctx.fillStyle='#c81022';ctx.beginPath();ctx.roundRect((W-badge)/2,top,badge,52,26);ctx.fill();
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';ctx.fillText(label,W/2,top+26);
+      top+=76;
+    }
+    paintText(title,W/2,top,'center','#fff',$('highlightPhrase').value);
+    paintText(subtitle,W/2,top+title.height+22,'center','#fff');
+    ctx.font='650 24px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#e7edf5';ctx.fillText('CDN Escuintla',W/2,1355);
+  }
+
   function render() {
     const loaded = slots.filter(slot => slot.image);
     const width = W / Math.max(1, loaded.length);
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#e7edf5'; ctx.fillRect(0, 0, W, PHOTO_H);
-    loaded.forEach((slot, i) => drawPhoto(ctx, slot, i * width, width, PHOTO_H));
-    const gray = ctx.createLinearGradient(0, PHOTO_H, 0, H); gray.addColorStop(0, '#e4e7eb'); gray.addColorStop(1, '#f9fafb'); ctx.fillStyle = gray; ctx.fillRect(0, PHOTO_H, W, H - PHOTO_H); ctx.fillStyle = '#122238'; ctx.fillRect(0, PHOTO_H, W, 8);
-    const headline = $('headline').value.trim();
-    if (headline) {
-      // Export margins are measured in canvas pixels, not interface spacing.
-      const top = PHOTO_H + 52;
-      const textWidth = W - 2 * 112;
-      const bottom = Math.max(top + 1, footerTop - 48);
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'alphabetic';
-      for (let size = 94; size >= 1; size--) {
-        ctx.font = fonts[fontIndex].replace("1px", size + "px") + ", sans-serif";
-        const lines = $('manualLines').checked
-          ? headline.split('\n').flatMap(line => wrap(line, textWidth))
-          : balanceLines(headline, textWidth);
-        const metrics = lines.map(line => ctx.measureText(line));
-        const above = Math.max(...metrics.map(m => m.actualBoundingBoxAscent));
-        const below = Math.max(...metrics.map(m => m.actualBoundingBoxDescent));
-        const step = Math.max(Math.ceil(size * 1.10), above + below + 4);
-        const height = above + below + (lines.length - 1) * step;
-        if (height > bottom - top) continue;
-        const first = top + (bottom - top - height) / 2 + above;
-        lines.forEach((line, i) => ctx.fillText(line, W / 2, first + i * step));
-        break;
+    const headline = $('headline').value.trim(), template = $('template').value;
+    photoTop = 0; photoHeight = PHOTO_H;
+    if (template === 'classic') {
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#e7edf5'; ctx.fillRect(0, 0, W, PHOTO_H);
+      loaded.forEach((slot, i) => drawPhoto(ctx, slot, i * width, width, PHOTO_H));
+      const gray = ctx.createLinearGradient(0, PHOTO_H, 0, H); gray.addColorStop(0, '#e4e7eb'); gray.addColorStop(1, '#f9fafb'); ctx.fillStyle = gray; ctx.fillRect(0, PHOTO_H, W, H - PHOTO_H); ctx.fillStyle = '#122238'; ctx.fillRect(0, PHOTO_H, W, 8);
+      if (headline) {
+        // Export margins are measured in canvas pixels, not interface spacing.
+        const top = PHOTO_H + 52;
+        const textWidth = W - 2 * 112;
+        const bottom = Math.max(top + 1, footerTop - 48);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        for (let size = 94; size >= 1; size--) {
+          ctx.font = fonts[fontIndex].replace("1px", size + "px") + ", sans-serif";
+          const lines = $('manualLines').checked
+            ? headline.split('\n').flatMap(line => wrap(line, textWidth))
+            : balanceLines(headline, textWidth);
+          const metrics = lines.map(line => ctx.measureText(line));
+          const above = Math.max(...metrics.map(m => m.actualBoundingBoxAscent));
+          const below = Math.max(...metrics.map(m => m.actualBoundingBoxDescent));
+          const step = Math.max(Math.ceil(size * 1.10), above + below + 4);
+          const height = above + below + (lines.length - 1) * step;
+          if (height > bottom - top) continue;
+          const first = top + (bottom - top - height) / 2 + above;
+          lines.forEach((line, i) => ctx.fillText(line, W / 2, first + i * step));
+          break;
+        }
       }
+      if (frameReady) ctx.drawImage(frame, 0, 0, W, H);
+    } else {
+      renderAlternate(template, headline, loaded, width);
     }
-    if (frameReady) ctx.drawImage(frame, 0, 0, W, H);
+    $('latestOptions').hidden = template !== 'latest';
+    $('topOptions').hidden = template !== 'top';
+    $('touchArea').style.setProperty('--photo-top', photoTop/H*100+'%');
+    $('touchArea').style.setProperty('--photo-height', photoHeight/H*100+'%');
     slots.forEach((slot, i) => {
       controls[i].remove.hidden = !slot.image;
       controls[i].caption.textContent = slot.image ? 'Cambiar foto' : 'Elegir foto';
     });
     $('touchArea').hidden = !loaded.length;
-    $('download').disabled = !loaded.length || !headline || !frameReady || !fontReady;
+    $('download').disabled = !loaded.length || !headline || (template === "classic" && !frameReady) || !fontReady;
   }
 
   function decode(file) {
@@ -162,14 +250,14 @@
   const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
   function point(event) {
     const r = touch.getBoundingClientRect();
-    return {x: (event.clientX - r.left) * W / r.width, y: (event.clientY - r.top) * PHOTO_H / r.height};
+    return {x: (event.clientX - r.left) * W / r.width, y: (event.clientY - r.top) * photoHeight / r.height};
   }
   function center() {
     const [a,b] = pointers.values();
     return b ? {x:(a.x+b.x)/2,y:(a.y+b.y)/2,d:Math.hypot(a.x-b.x,a.y-b.y)} : {...a,d:0};
   }
   function geometry(slot, width) {
-    const base = Math.max(width/slot.image.naturalWidth, PHOTO_H/slot.image.naturalHeight)/100;
+    const base = Math.max(width/slot.image.naturalWidth, photoHeight/slot.image.naturalHeight)/100;
     return {w:slot.image.naturalWidth*base, h:slot.image.naturalHeight*base};
   }
   function photoAt(p) {
@@ -179,14 +267,14 @@
   }
   function anchor({i, left, width}, c) {
     const slot = slots[i], {w,h} = geometry(slot,width);
-    return {i,left,width,d:c.d,zoom:slot.zoom, x:(c.x-left+(w*slot.zoom-width)*slot.x/100)/(w*slot.zoom), y:(c.y+(h*slot.zoom-PHOTO_H)*slot.y/100)/(h*slot.zoom)};
+    return {i,left,width,d:c.d,zoom:slot.zoom, x:(c.x-left+(w*slot.zoom-width)*slot.x/100)/(w*slot.zoom), y:(c.y+(h*slot.zoom-photoHeight)*slot.y/100)/(h*slot.zoom)};
   }
   function position({i,left,width,x,y}, c, zoom) {
     const slot = slots[i], g = geometry(slot,width);
     slot.zoom = clamp(zoom,100,300);
     const w=g.w*slot.zoom, h=g.h*slot.zoom;
     if (w-width > .001) slot.x = clamp((x*w-c.x+left)/(w-width)*100,0,100);
-    if (h-PHOTO_H > .001) slot.y = clamp((y*h-c.y)/(h-PHOTO_H)*100,0,100);
+    if (h-photoHeight > .001) slot.y = clamp((y*h-c.y)/(h-photoHeight)*100,0,100);
     render();
   }
   touch.addEventListener('wheel', event => {
@@ -215,6 +303,20 @@
     if (pointers.size && gesture) gesture = anchor(gesture,center()); else { gesture=null; saveDraft(); }
   };
 
+  const templateFields = ['template','editionLabel','highlightPhrase','subtitle','topLogo'];
+  for(const id of templateFields) $(id).addEventListener('input',()=>{
+    gesture=null;pointers.clear();render();saveDraft();
+  });
+  function templateOptions(){
+    return {template:$('template').value,editionLabel:$('editionLabel').value,highlightPhrase:$('highlightPhrase').value,subtitle:$('subtitle').value,topLogo:$('topLogo').checked};
+  }
+  function restoreOptions(options={}){
+    $('template').value=['classic','latest','top'].includes(options.template)?options.template:'classic';
+    $('editionLabel').value=options.editionLabel??'LO ÚLTIMO';
+    $('highlightPhrase').value=options.highlightPhrase??'';
+    $('subtitle').value=options.subtitle??'';
+    $('topLogo').checked=!!options.topLogo;
+  }
   $('headline').addEventListener('input', () => {
     $('count').textContent = $('headline').value.length + ' / 220';
     render(); saveDraft();
@@ -223,7 +325,7 @@
   $('newDesign').onclick = () => { $('resetDialog').returnValue = ''; $('resetDialog').showModal(); };
   $('resetDialog').addEventListener('close', () => {
     if ($('resetDialog').returnValue !== 'reset') return;
-    removePhoto(0); removePhoto(1); $('headline').value = ''; $('count').textContent = '0 / 220'; $('manualLines').checked = false; $('lineHint').hidden = true; chooseFont(1); saveDraft(); $('headline').focus();
+    removePhoto(0); removePhoto(1); restoreOptions(); $('headline').value = ''; $('count').textContent = '0 / 220'; $('manualLines').checked = false; $('lineHint').hidden = true; chooseFont(1); saveDraft(); $('headline').focus();
   });
   $('resetDialog').addEventListener('cancel', () => { $('resetDialog').returnValue = ''; });
   $('download').onclick = () => {
@@ -258,7 +360,7 @@
   function saveDraft() {
     if (restoring) return;
     const revision = ++draftRevision;
-    const draft = {headline:$('headline').value, manual:$('manualLines').checked, fontIndex,
+    const draft = {options:templateOptions(),headline:$('headline').value, manual:$('manualLines').checked, fontIndex,
       photos:slots.map(({file,x,y,zoom}) => ({file,x,y,zoom}))};
     $('draftStatus').textContent = 'Guardando…';
     draftRequest('readwrite', store => draft.headline || draft.photos.some(photo => photo.file)
@@ -270,6 +372,7 @@
     try {
       const draft = await draftRequest('readonly', store => store.get(draftKey));
       if (!draft) { $('draftStatus').textContent = 'Guardado automático en este dispositivo'; return; }
+      restoreOptions(draft.options);
       $('headline').value = draft.headline || '';
       $('count').textContent = $('headline').value.length + ' / 220';
       $('manualLines').checked = !!draft.manual;
@@ -304,6 +407,7 @@
     frameReady = true; render();
   };
   frame.onerror = () => status('No se pudo cargar el marco del diseño.');
+  logo.onload = render; logo.src = '../../assets/images/cdn-logo.png';
   frame.src = './marco.png?v=16';
   chooseFont(1);
   restoreDraft();
