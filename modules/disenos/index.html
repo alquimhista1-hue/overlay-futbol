@@ -55,12 +55,13 @@ main{display:grid;gap:var(--spacing-2);align-items:start;max-width:60rem}.design
 .template-switch svg{display:block;width:1.625rem;height:1.625rem}
 #config #headline{display:block;margin:0;min-height:3.25rem;padding:var(--spacing-2);border-radius:var(--radius-element)}
 .template-limit{font-size:.6875rem;line-height:1.25;min-height:2lh;font-weight:550;margin:var(--spacing-1) 0 0}
-.media-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--spacing-2);margin:var(--spacing-2) 0 0;padding:0;border:0;align-items:start}
-#config .photo-grid{margin:0;gap:var(--spacing-1)}
-#config .photo-card{padding:var(--spacing-1);border-radius:var(--radius-element)}
+.media-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--spacing-2);margin:var(--spacing-2) auto 0;padding:0;border:0;align-items:start;max-width:34rem}
+#previewPanel .photo-grid{margin:0;gap:var(--spacing-1)}
+#previewPanel .photo-card{padding:var(--spacing-1);border-radius:var(--radius-element)}
 .photo-actions{margin-top:var(--spacing-1)}
 .photo-actions .upload,.photo-actions .remove{min-height:2.125rem;padding:var(--spacing-1);font-size:.8125rem}
 .media-controls .font-picks{display:grid;justify-items:center;gap:var(--spacing-1);margin:0}
+@media(max-width:41.99rem){.media-controls{max-width:20rem}}
 .media-controls .font-picks span{margin:0;font-size:.6875rem}
 .media-controls .font-picks button{min-width:2.125rem;min-height:2rem}
 #cropToggle{width:auto;min-height:1.875rem;margin:var(--spacing-2) 0 0;padding:.1875rem var(--spacing-2);font-size:.8125rem}
@@ -82,16 +83,16 @@ main{display:grid;gap:var(--spacing-2);align-items:start;max-width:60rem}.design
     <output id="templateName" aria-live="polite">Clásica</output>
     <button type="button" id="templateNext" aria-label="Plantilla siguiente"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16m-7-7 7 7-7 7"/></svg></button>
   </nav>
-  <section class="media-controls" aria-label="Fotos y tipografía">
-    <section class="photo-grid" id="photos" aria-label="Fotografías"></section>
-    <section class="font-picks" role="group" aria-label="Tipografía del titular"><span>Tipografía</span><button type="button" data-font="1" aria-label="2. Oswald" title="Oswald" aria-pressed="true">2</button><button type="button" data-font="2" aria-label="3. Fira Sans Condensed" title="Fira Sans Condensed" aria-pressed="false">3</button></section>
-  </section>
   <textarea id="headline" aria-label="Titular" rows="2" maxlength="220" placeholder="Escribe el titular de la noticia" aria-describedby="titleLimit"></textarea>
   <p id="titleLimit" class="template-limit" role="status"></p>
   <button type="button" id="cropToggle" aria-pressed="false" hidden>Encuadrar foto</button>
 </section>
 <section id="previewPanel" aria-label="Vista previa en vivo">
   <figure class="design-sheet"><div id="touchArea" aria-hidden="true" hidden></div><canvas id="preview" width="1200" height="1400" aria-label="Vista previa del diseño vertical"></canvas></figure>
+  <section class="media-controls" aria-label="Fotos y tipografía">
+    <section class="photo-grid" id="photos" aria-label="Fotografías"></section>
+    <section class="font-picks" role="group" aria-label="Tipografía del titular"><span>Tipografía</span><button type="button" data-font="1" aria-label="2. Oswald" title="Oswald" aria-pressed="true">2</button><button type="button" data-font="2" aria-label="3. Fira Sans Condensed" title="Fira Sans Condensed" aria-pressed="false">3</button></section>
+  </section>
 </section>
 <p id="status" role="status"></p>
 <dialog id="resetDialog" aria-labelledby="resetTitle"><h2 id="resetTitle">¿Empezar un nuevo diseño?</h2><p>Se quitarán las fotos y el titular actuales.</p><form method="dialog" class="actions"><button value="cancel">Cancelar</button><button class="primary" value="reset">Nuevo diseño</button></form></dialog>
