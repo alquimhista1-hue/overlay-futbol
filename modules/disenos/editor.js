@@ -6,6 +6,9 @@
   const controls = [];
   let frameReady = false, footerTop = H;
   const frame = new Image(), logo = new Image();
+  const templates = [['classic','Clásica'],['latest','Lo último'],['top','Titular arriba']];
+  let templateIndex=0, cropEnabled=false;
+  const touchDevice=matchMedia('(pointer:coarse), (hover:none)');
   let photoTop = 0, photoHeight = PHOTO_H, topFits = true;
   const fonts = {1:'700 1px "Oswald"', 2:'700 1px "Fira Sans Condensed"'};
   let fontIndex = 1, fontRevision = 0, fontReady = false;
@@ -21,7 +24,7 @@
       render();
     }).catch(() => { if (revision === fontRevision) status('No se pudo cargar esa tipografía. Prueba otra opción.'); });
   }
-  document.querySelectorAll('[data-font]').forEach(button => button.onclick = () => { chooseFont(Number(button.dataset.font)); saveDraft(); });
+  document.querySelectorAll('[data-font]').forEach(button => button.onclick = () => { chooseFont(Number(button.dataset.font)); });
   const status = message => { $('status').textContent = message; };
 
   function drawPhoto(context, slot, left, width, height, top = 0) {
@@ -160,7 +163,7 @@
   function render() {
     const loaded = slots.filter(slot => slot.image);
     const width = W / Math.max(1, loaded.length);
-    const headline = $('headline').value.trim(), template = $('template').value;
+    const headline = $('headline').value.trim(), template = templates[templateIndex][0];
     photoTop = 0; photoHeight = PHOTO_H; topFits = true;
     if(template !== 'top'){ $('titleLimit').hidden=true; $('headline').removeAttribute('aria-invalid'); }
     if (template === 'classic') {
@@ -201,7 +204,12 @@
       controls[i].remove.hidden = !slot.image;
       controls[i].caption.textContent = slot.image ? 'Cambiar foto' : 'Elegir foto';
     });
-    $('touchArea').hidden = !loaded.length;
+    $('templateName').textContent = templates[templateIndex][1];
+    if(!loaded.length)cropEnabled=false;
+    $('cropToggle').hidden = !loaded.length || !touchDevice.matches;
+    $('cropToggle').setAttribute('aria-pressed',String(cropEnabled));
+    $('cropToggle').textContent = cropEnabled ? 'Terminar encuadre' : 'Encuadrar foto';
+    $('touchArea').hidden = !loaded.length || (touchDevice.matches && !cropEnabled);
     $('download').disabled = !loaded.length || !headline || (template === "classic" && !frameReady) || !topFits || (template !== 'top' && !fontReady);
   }
 
@@ -220,7 +228,7 @@
   }
   function removePhoto(i) {
     slots[i].revision++;
-    slots[i].image = null; slots[i].file = null;
+    slots[i].image = null;
     controls[i].file.value = '';
     resetCrop(i);
   }
@@ -241,12 +249,12 @@
       try {
         const image = await decode(selected);
         if (revision !== slot.revision) return;
-        slot.image = image; slot.file = selected; resetCrop(i); status(''); render(); saveDraft();
+        slot.image = image; resetCrop(i); status(''); render();
       } catch {
         if (revision === slot.revision) status('No se pudo abrir la foto. Prueba con JPG, PNG o WebP.');
       }
     });
-    remove.onclick = () => { removePhoto(i); status(''); render(); saveDraft(); };
+    remove.onclick = () => { removePhoto(i); status(''); render(); };
   });
   const touch = $('touchArea'), pointers = new Map();
   let gesture = null;
@@ -285,10 +293,10 @@
     event.preventDefault();
     const p = point(event), photo = anchor(photoAt(p),p);
     const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 120 : 1);
-    position(photo,p,photo.zoom * Math.exp(clamp(-delta * .002,-.25,.25))); saveDraft();
+    position(photo,p,photo.zoom * Math.exp(clamp(-delta * .002,-.25,.25)));
   }, {passive:false});
   touch.onpointerdown = event => {
-    if (pointers.size >= 2 || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    if ((event.pointerType === 'touch' && touchDevice.matches && !cropEnabled) || pointers.size >= 2 || (event.pointerType === 'mouse' && event.button !== 0)) return;
     if (!slots.some(slot => slot.image)) return;
     const p = point(event);
     pointers.set(event.pointerId,p);
@@ -303,29 +311,28 @@
   };
   touch.onpointerup = touch.onpointercancel = touch.onlostpointercapture = event => {
     if (!pointers.delete(event.pointerId)) return;
-    if (pointers.size && gesture) gesture = anchor(gesture,center()); else { gesture=null; saveDraft(); }
+    if (pointers.size && gesture) gesture = anchor(gesture,center()); else { gesture=null; }
   };
 
-  const templateFields = ['template','editionLabel','highlightPhrase'];
-  for(const id of templateFields) $(id).addEventListener('input',()=>{
-    gesture=null;pointers.clear();render();saveDraft();
-  });
-  function templateOptions(){
-    return {template:$('template').value,editionLabel:$('editionLabel').value,highlightPhrase:$('highlightPhrase').value};
+  function clearGesture(){gesture=null;pointers.clear();}
+  function stepTemplate(delta){
+    clearGesture();cropEnabled=false;
+    templateIndex=(templateIndex+delta+templates.length)%templates.length;
+    render();
   }
-  function restoreOptions(options={}){
-    $('template').value=['classic','latest','top'].includes(options.template)?options.template:'classic';
-    $('editionLabel').value=options.editionLabel??'LO ÚLTIMO';
-    $('highlightPhrase').value=options.highlightPhrase??'';
-  }
+  $('templatePrev').onclick=()=>stepTemplate(-1);
+  $('templateNext').onclick=()=>stepTemplate(1);
+  $('cropToggle').onclick=()=>{clearGesture();cropEnabled=!cropEnabled;render();};
+  touchDevice.addEventListener('change',()=>{clearGesture();cropEnabled=false;render();});
+  for(const id of ['editionLabel','highlightPhrase']) $(id).addEventListener('input',()=>{clearGesture();render();});
   $('headline').addEventListener('input', () => {
     $('count').textContent = $('headline').value.length + ' / 220';
-    render(); saveDraft();
+    render();
   });
   $('newDesign').onclick = () => { $('resetDialog').returnValue = ''; $('resetDialog').showModal(); };
   $('resetDialog').addEventListener('close', () => {
     if ($('resetDialog').returnValue !== 'reset') return;
-    removePhoto(0); removePhoto(1); restoreOptions(); $('headline').value = ''; $('count').textContent = '0 / 220'; chooseFont(1); saveDraft(); $('headline').focus();
+    removePhoto(0); removePhoto(1); clearGesture(); templateIndex=0; cropEnabled=false; $('editionLabel').value='LO ÚLTIMO'; $('highlightPhrase').value=''; $('headline').value = ''; $('count').textContent = '0 / 220'; chooseFont(1); $('headline').focus();
   });
   $('resetDialog').addEventListener('cancel', () => { $('resetDialog').returnValue = ''; });
   $('download').onclick = () => {
@@ -338,58 +345,6 @@
       setTimeout(() => URL.revokeObjectURL(url), 30000);
     }, 'image/png');
   };
-  const draftKey = window.STUDIO_OWNER || 'device';
-  const db = new Promise((resolve,reject) => {
-    try {
-      const request = indexedDB.open('cdn-studio-designs',1);
-      request.onupgradeneeded = () => request.result.createObjectStore('drafts');
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    } catch(error) { reject(error); }
-  });
-  let draftRevision = 0, restoring = true;
-  $('newDesign').disabled = true;
-  function draftRequest(mode, action) {
-    return db.then(database => new Promise((resolve,reject) => {
-      const tx = database.transaction('drafts',mode);
-      const request = action(tx.objectStore('drafts'));
-      tx.oncomplete = () => resolve(request.result);
-      tx.onabort = tx.onerror = () => reject(tx.error || request.error);
-    }));
-  }
-  function saveDraft() {
-    if (restoring) return;
-    const revision = ++draftRevision;
-    const draft = {options:templateOptions(),headline:$('headline').value, fontIndex,
-      photos:slots.map(({file,x,y,zoom}) => ({file,x,y,zoom}))};
-    $('draftStatus').textContent = 'Guardando…';
-    draftRequest('readwrite', store => draft.headline || draft.photos.some(photo => photo.file)
-      ? store.put(draft,draftKey) : store.delete(draftKey))
-      .then(() => { if (revision === draftRevision) $('draftStatus').textContent = 'Borrador al día en este dispositivo'; })
-      .catch(() => { if (revision === draftRevision) $('draftStatus').textContent = 'No se pudo guardar el borrador'; });
-  }
-  async function restoreDraft() {
-    try {
-      const draft = await draftRequest('readonly', store => store.get(draftKey));
-      if (!draft) { $('draftStatus').textContent = 'Guardado automático en este dispositivo'; return; }
-      restoreOptions(draft.options);
-      $('headline').value = draft.headline || '';
-      $('count').textContent = $('headline').value.length + ' / 220';
-      const restored = await Promise.allSettled(slots.map(async (slot,i) => {
-        const photo = draft.photos?.[i];
-        if (photo?.file) Object.assign(slot,photo,{image:await decode(photo.file)});
-      }));
-      chooseFont(fonts[draft.fontIndex] ? draft.fontIndex : 1);
-      $('draftStatus').textContent = restored.some(item => item.status === 'rejected')
-        ? 'Borrador recuperado; falta una foto' : 'Borrador recuperado';
-    } catch {
-      $('draftStatus').textContent = 'Borrador local no disponible';
-    } finally {
-      $('photosPanel').open = !slots.some(slot => slot.image) || matchMedia('(min-width:42rem)').matches;
-      restoring = false; $('config').inert = false; $('newDesign').disabled = false; render();
-    }
-  }
-
   frame.onload = () => {
     const probe = document.createElement('canvas');
     probe.width = 120; probe.height = H;
@@ -407,6 +362,6 @@
   frame.onerror = () => status('No se pudo cargar el marco del diseño.');
   logo.onload = render; logo.src = '../transmision/assets/images/logos/logo.png';
   frame.src = './marco.png?v=16';
+  $('photosPanel').open=true;
   chooseFont(1);
-  restoreDraft();
 })();
