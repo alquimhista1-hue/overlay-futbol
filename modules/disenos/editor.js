@@ -108,7 +108,7 @@
     ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
     const text=headline.toLocaleUpperCase('es');
     const margin=76;
-    const title=fitText(text,W-2*margin,TOP_BAND-64,54,size=>'900 '+size+'px "Arial Black", system-ui, sans-serif',3);
+    const title=fitText(text,W-2*margin,TOP_BAND-64,64,size=>fonts[fontIndex].replace("1px",size+"px")+", sans-serif",3);
     titleFits=!text || !!title.lines.length;
     photoTop=TOP_BAND; photoHeight=H-photoTop;
     ctx.fillStyle='#e7edf5';ctx.fillRect(0,photoTop,W,photoHeight);
@@ -154,7 +154,6 @@
     } else {
       renderTop(headline, loaded, width);
     }
-    document.querySelectorAll('[data-font]').forEach(button => { button.disabled = template === 'top'; });
     $('touchArea').style.setProperty('--photo-top', photoTop/H*100+'%');
     $('touchArea').style.setProperty('--photo-height', photoHeight/H*100+'%');
     slots.forEach((slot, i) => {
@@ -168,11 +167,12 @@
     $('cropToggle').textContent = cropEnabled ? 'Terminar encuadre' : 'Encuadrar foto';
     $('touchArea').hidden = !loaded.length || (touchDevice.matches && !cropEnabled);
     const message = !withinLimit ? 'Acorta el titular. Máximo 16 palabras.' :
-      !titleFits ? 'Acorta el titular para que quepa.' : 'Máximo 16 palabras';
+      !titleFits ? 'Acorta el titular para que quepa.' : '';
     const limit = $('titleLimit');
     if (limit.textContent !== message) limit.textContent = message;
+    limit.hidden = !message;
     $('headline').setAttribute('aria-invalid', String(!withinLimit || !titleFits));
-    $('download').disabled = !loaded.length || !headline || (template === "classic" && !frameReady) || !withinLimit || !titleFits || (template !== 'top' && !fontReady);
+    $('download').disabled = !loaded.length || !headline || (template === "classic" && !frameReady) || !withinLimit || !titleFits || !fontReady;
   }
 
   function decode(file) {

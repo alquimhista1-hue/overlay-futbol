@@ -1,5 +1,7 @@
 /* CDN Studio · responsive workspace, using Astryx Core tokens. */
 .sidebar-brand{display:none}
+body[data-screen="home"] .shell-header{gap:var(--spacing-3);margin-bottom:var(--spacing-3)}
+body[data-screen="home"] .shell-header .avatar{flex-shrink:0}
 body[data-screen="home"] #content{display:block}
 body[data-screen="home"] #home.studio-home{max-width:54rem;width:100%;padding:0;background:transparent;text-align:left;color:var(--color-text-primary)}
 .studio-hero{color:white;padding:var(--spacing-4) var(--spacing-2);margin-bottom:var(--spacing-2)}
