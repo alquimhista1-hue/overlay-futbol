@@ -1,0 +1,20 @@
+/* Astryx Core tokens in the existing static CDN Studio interface. */
+:root { color-scheme: light; }
+#auth, #home, #account, #config, #previewPanel {
+  background: var(--color-background-surface);
+  border-radius: var(--radius-container);
+}
+#auth input, #profileForm input, #passwordChangeForm input, #headline {
+  border-radius: var(--radius-element);
+}
+#auth button, #account button, .tool-grid button, .main-nav button,
+#config button, #config .upload, #previewPanel button, nav.tabs button {
+  border-radius: var(--radius-element);
+}
+.tool-grid, .photo-grid, .actions, .tabs { gap: var(--spacing-2); }
+#config .photo-card { background: var(--color-background-body); border-color: var(--color-border); }
+#config, #previewPanel { padding: var(--spacing-3); }
+:is(#auth,#workspace,#config,#previewPanel,nav.tabs) :focus-visible {
+  outline: max(var(--border-width), 0.125rem) solid var(--blue, #126bbc);
+  outline-offset: var(--spacing-1);
+}
