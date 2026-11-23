@@ -1,5 +1,5 @@
 (() => {
-  const W = 1200, H = 1400, PHOTO_H = 875, TOP_BAND = 258, WORD_LIMIT = 16;
+  const W = 1200, H = 1400, PHOTO_H = 875, TOP_BAND = 258, WORD_LIMIT = 20;
   const $ = id => document.getElementById(id);
   const canvas = $('preview'), ctx = canvas.getContext('2d');
   const slots = Array.from({length: 2}, () => ({image: null, x: 50, y: 50, zoom: 100, revision: 0}));
@@ -11,7 +11,7 @@
   const touchDevice=matchMedia('(pointer:coarse), (hover:none)');
   let photoTop = 0, photoHeight = PHOTO_H, titleFits = true;
   const fonts = {1:'700 1px "Oswald"', 2:'700 1px "Fira Sans Condensed"'};
-  let fontIndex = 1, fontRevision = 0, fontReady = false;
+  let fontIndex = 2, fontRevision = 0, fontReady = false;
   function chooseFont(index) {
     fontIndex = index;
     const revision = ++fontRevision;
@@ -22,7 +22,7 @@
       if (revision !== fontRevision) return;
       fontReady = true;
       render();
-    }).catch(() => { if (revision === fontRevision) status('No se pudo cargar esa tipografía. Prueba otra opción.'); });
+    }).catch(() => { if (revision === fontRevision) status('No se pudo cargar la tipografía. Recarga el editor.'); });
   }
   document.querySelectorAll('[data-font]').forEach(button => button.onclick = () => { chooseFont(Number(button.dataset.font)); });
   const status = message => { $('status').textContent = message; };
@@ -158,7 +158,16 @@
     $('touchArea').style.setProperty('--photo-height', photoHeight/H*100+'%');
     slots.forEach((slot, i) => {
       controls[i].remove.hidden = !slot.image;
-      controls[i].caption.textContent = slot.image ? 'Cambiar foto' : 'Elegir foto';
+      controls[i].card.hidden = !slot.image;
+      if (controls[i].thumbnailImage !== slot.image) {
+        controls[i].thumbnailImage = slot.image;
+        if (slot.image) {
+          const thumbnail = document.createElement('canvas');
+          thumbnail.width = 160; thumbnail.height = 120;
+          thumbnail.getContext('2d').drawImage(slot.image, 0, 0, 160, 120);
+          controls[i].thumbnail.src = thumbnail.toDataURL('image/jpeg', 0.8);
+        } else controls[i].thumbnail.removeAttribute('src');
+      }
     });
     $('templateName').textContent = templates[templateIndex][1];
     if(!loaded.length)cropEnabled=false;
@@ -166,7 +175,7 @@
     $('cropToggle').setAttribute('aria-pressed',String(cropEnabled));
     $('cropToggle').textContent = cropEnabled ? 'Terminar encuadre' : 'Encuadrar foto';
     $('touchArea').hidden = !loaded.length || (touchDevice.matches && !cropEnabled);
-    const message = !withinLimit ? 'Acorta el titular. Máximo 16 palabras.' :
+    const message = !withinLimit ? 'Acorta el titular. Máximo 20 palabras.' :
       !titleFits ? 'Acorta el titular para que quepa.' : '';
     const limit = $('titleLimit');
     if (limit.textContent !== message) limit.textContent = message;
@@ -191,32 +200,48 @@
   function removePhoto(i) {
     slots[i].revision++;
     slots[i].image = null;
-    controls[i].file.value = '';
+    if (controls[i].file) controls[i].file.value = '';
     resetCrop(i);
   }
 
   slots.forEach((slot, i) => {
     const card = document.createElement('article');
     card.className = 'photo-card';
-    card.innerHTML = `<h2>Foto ${i+1}</h2>
-      <div class="photo-actions"><label class="upload"><span>Elegir foto</span><input type="file" accept="image/*" aria-label="Elegir foto ${i+1}"></label><button type="button" class="remove" hidden>Quitar</button></div>`;
+    card.hidden = true;
+    card.innerHTML = '<img class="photo-thumbnail" alt="Foto '+(i+1)+'"><div class="photo-actions"><label class="upload">Cambiar<input type="file" accept="image/*" aria-label="Cambiar foto '+(i+1)+'"></label><button type="button" class="remove">Quitar</button></div>';
     $('photos').append(card);
-    const file = card.querySelector('input'), remove = card.querySelector('.remove');
-    controls.push({file, remove, caption: card.querySelector('.upload span')});
-    file.addEventListener('change', async () => {
-      const selected = file.files[0];
-      if (!selected) return;
-      const revision = ++slot.revision;
-      file.value = '';
-      try {
-        const image = await decode(selected);
-        if (revision !== slot.revision) return;
-        slot.image = image; resetCrop(i); status(''); render();
-      } catch {
-        if (revision === slot.revision) status('No se pudo abrir la foto. Prueba con JPG, PNG o WebP.');
-      }
+    const file=card.querySelector('input'), remove=card.querySelector('.remove');
+    controls.push({card,file,remove,thumbnail:card.querySelector('img')});
+    file.addEventListener('change', () => {
+      const selected=file.files[0];file.value='';
+      if(selected) loadPhotos([selected],i);
     });
-    remove.onclick = () => { removePhoto(i); status(''); render(); };
+    remove.onclick=()=>{removePhoto(i);status('');render();};
+  });
+
+  async function loadPhotos(files, target) {
+    const selected=Array.from(files);
+    if(selected.length>2){status('Selecciona un máximo de dos fotos.');return;}
+    if(!selected.length)return;
+    const indices=target===undefined?selected.map((_,i)=>i):[target];
+    const revisions=indices.map(i=>++slots[i].revision);
+    // A batch replaces the complete selection, including pending image loads.
+    if(target===undefined && selected.length===1) removePhoto(1);
+    try {
+      const images=await Promise.all(selected.map(decode));
+      images.forEach((image,j)=>{
+        const i=indices[j];
+        if(slots[i].revision!==revisions[j])return;
+        slots[i].image=image;resetCrop(i);
+      });
+      clearGesture();status('');render();
+    } catch {
+      status('No se pudieron abrir las fotos. Prueba con JPG, PNG o WebP.');
+    }
+  }
+  $('photoUpload').addEventListener('change',event=>{
+    const files=Array.from(event.target.files);event.target.value='';
+    loadPhotos(files);
   });
   const touch = $('touchArea'), pointers = new Map();
   let gesture = null;
@@ -331,18 +356,31 @@
   $('newDesign').onclick = () => { $('resetDialog').returnValue = ''; $('resetDialog').showModal(); };
   $('resetDialog').addEventListener('close', () => {
     if ($('resetDialog').returnValue !== 'reset') return;
-    removePhoto(0); removePhoto(1); clearGesture(); templateIndex=0; cropEnabled=false; headlineInput.value = ''; fitHeadlineInput(); chooseFont(1); headlineInput.focus();
+    removePhoto(0); removePhoto(1); clearGesture(); templateIndex=0; cropEnabled=false; headlineInput.value = ''; fitHeadlineInput(); chooseFont(2); headlineInput.focus();
   });
   $('resetDialog').addEventListener('cancel', () => { $('resetDialog').returnValue = ''; });
+  let lastDownloadStamp='', downloadNumber=0;
+  function downloadName() {
+    const date=new Date(), pad=value=>String(value).padStart(2,'0');
+    const stamp=[pad(date.getDate()),pad(date.getMonth()+1),date.getFullYear()].join('-')+'_'+[date.getHours(),date.getMinutes(),date.getSeconds()].map(pad).join('-');
+    const key='cdn-design-download-'+stamp;
+    downloadNumber=stamp===lastDownloadStamp?downloadNumber:0;
+    try {downloadNumber=Math.max(downloadNumber,Number(localStorage.getItem(key))||0);} catch {}
+    downloadNumber++;
+    try {if(lastDownloadStamp && lastDownloadStamp!==stamp)localStorage.removeItem('cdn-design-download-'+lastDownloadStamp);localStorage.setItem(key,String(downloadNumber));} catch {}
+    lastDownloadStamp=stamp;
+    return 'CDN-'+stamp+(downloadNumber>1?'-'+downloadNumber:'')+'.jpg';
+  }
   $('download').onclick = () => {
     render();
+    if ($('download').disabled) return;
     canvas.toBlob(blob => {
-      if (!blob) { status('No se pudo generar el PNG. Intenta de nuevo.'); return; }
+      if (!blob) { status('No se pudo generar el JPG. Intenta de nuevo.'); return; }
       const link = document.createElement('a'), url = URL.createObjectURL(blob);
-      link.href = url; link.download = 'CDN-noticia-1200x1400.png';
+      link.href = url; link.download = downloadName();
       document.body.append(link); link.click(); link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 30000);
-    }, 'image/png');
+    }, 'image/jpeg', 0.95);
   };
   frame.onload = () => {
     const probe = document.createElement('canvas');
@@ -361,5 +399,5 @@
   frame.onerror = () => status('No se pudo cargar el marco del diseño.');
   logo.onload = render; logo.src = '../transmision/assets/images/logos/logo.png';
   frame.src = './marco.png?v=16';
-  chooseFont(1);
+  chooseFont(2);
 })();

@@ -42,3 +42,10 @@ body[data-screen="disenos"] .module-page{max-width:54rem;overflow:hidden;border-
   .sidebar-brand {font-size:1.375rem;line-height:1.35;}
   .sidebar-brand small {font-size:.875rem;margin-top:var(--spacing-1);}
 }
+
+/* Wait for the session before showing the login fields. */
+#sessionLoading{min-height:calc(100dvh - 8rem);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--spacing-3);color:white;text-align:center}
+#sessionLoading img{width:5rem;height:5rem;object-fit:contain}
+.session-spinner{width:2rem;height:2rem;border:3px solid #ffffff50;border-top-color:white;border-radius:50%;animation:session-spin .8s linear infinite}
+@keyframes session-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.session-spinner{animation:none}}
