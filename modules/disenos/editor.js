@@ -135,37 +135,44 @@
     }
   }
 
-  function paintEmphasisBlock(value, x, top, width, height, maxSize) {
-    const phrases=value.trim().toLocaleUpperCase('es').split(/\n+/).flatMap(phrase=>{
-      const words=phrase.trim().split(/\s+/).filter(Boolean), lines=[];
-      for(let i=0;i<words.length;i+=2) lines.push(words.slice(i,i+2).join(' '));
-      return lines;
-    });
-    if(!phrases.length)return;
-    const gap=6;
-    for(let size=maxSize;size>=1;size--){
-      const rows=phrases.map((line,index)=>{
-        const emphasis=index%2===1, fontSize=Math.round(size*(emphasis?1.35:1));
-        ctx.font=fonts[fontIndex].replace('1px',fontSize+'px')+', sans-serif';
-        const metrics=ctx.measureText(line);
-        return {line,font:ctx.font,color:emphasis?'#f6ba38':'#fff',width:metrics.width,ascent:metrics.actualBoundingBoxAscent,descent:metrics.actualBoundingBoxDescent};
-      });
-      const total=rows.reduce((sum,row)=>sum+row.ascent+row.descent,0)+gap*(rows.length-1);
-      if(total>height || rows.some(row=>row.width>width))continue;
-      ctx.save();
-      ctx.shadowColor='rgba(0,0,0,.88)';
-      ctx.shadowBlur=12;
-      ctx.shadowOffsetX=2;
-      ctx.shadowOffsetY=5;
-      let y=top+(height-total)/2;
-      for(const row of rows){
-        ctx.font=row.font;ctx.fillStyle=row.color;ctx.textAlign='center';ctx.textBaseline='alphabetic';
-        ctx.fillText(row.line,x,y+row.ascent);
-        y+=row.ascent+row.descent+gap;
+  function headlinePhrases(value) {
+    const text=value.trim().toLocaleUpperCase('es');
+    if(!text)return [];
+    const connectors=new Set('A AL DE DEL LA LAS EL LOS UN UNA UNOS UNAS EN CON SIN POR PARA Y E O U NI QUE SI SU SUS MI MIS'.split(' '));
+    const isConnector=word=>connectors.has(word.replace(/[.,:;!?¡¿“”"]/g,''));
+    const manual=text.split(/\n+/).map(line=>line.trim().replace(/\s+/g,' ')).filter(Boolean);
+    if(manual.length>1){
+      for(let i=0;i<manual.length-1;i++){
+        const words=manual[i].split(' '), carry=[];
+        while(words.length && isConnector(words.at(-1)))carry.unshift(words.pop());
+        manual[i]=words.join(' ');
+        if(carry.length)manual[i+1]=carry.join(' ')+' '+manual[i+1];
       }
-      ctx.restore();
-      return;
+      if(manual.length>1 && manual.at(-1).split(' ').every(isConnector)){
+        manual[manual.length-2]+=' '+manual.pop();
+      }
+      return manual.filter(Boolean);
     }
+    const words=text.split(/\s+/);
+    const lineCount=Math.min(5,Math.max(1,Math.ceil(words.length/3)));
+    const target=words.length/lineCount;
+    const memo=new Map();
+    function distribute(start,remaining) {
+      if(!remaining)return start===words.length?{cost:0,lines:[]}:null;
+      const key=start+':'+remaining;
+      if(memo.has(key))return memo.get(key);
+      let best=null;
+      for(let end=start+1;end<=words.length-(remaining-1);end++){
+        const group=words.slice(start,end), length=group.length;
+        if(group.every(isConnector) || (end<words.length && isConnector(group.at(-1))))continue;
+        const rest=distribute(end,remaining-1);
+        if(!rest)continue;
+        const cost=rest.cost+(length-target)**2+(length===1?2:0);
+        if(!best || cost<best.cost)best={cost,lines:[group.join(' '),...rest.lines]};
+      }
+      memo.set(key,best);return best;
+    }
+    return distribute(0,lineCount)?.lines || [text];
   }
 
   function renderSplit(headline,loaded,width) {
@@ -179,19 +186,14 @@
     bottomShade.addColorStop(0,'rgba(3,21,62,0)');bottomShade.addColorStop(1,'rgba(3,21,62,.96)');
     ctx.fillStyle=bottomShade;ctx.fillRect(0,850,W,H-850);
     paintCircle();
-    paintEmphasisBlock(headline,W/2,150,700,370,70);
-    paintEmphasisBlock($('bottomHeadline').value,900,1020,480,270,50);
+    paintEqualWidthBlock(headline,W/2,150,700,370);
+    paintEqualWidthBlock($('bottomHeadline').value,900,1020,480,270);
     paintLogo(38,24);
   }
 
   function paintEqualWidthBlock(value,x,top,width,height) {
-    const text=value.trim().toLocaleUpperCase('es');
-    if(!text)return;
-    let phrases=text.split(/\n+/).map(line=>line.trim()).filter(Boolean);
-    if(phrases.length===1){
-      const words=text.split(/\s+/);phrases=[];
-      for(let i=0;i<words.length;i+=2)phrases.push(words.slice(i,i+2).join(' '));
-    }
+    const phrases=headlinePhrases(value);
+    if(!phrases.length)return;
     const gap=6;
     const sizes=phrases.map(line=>{
       ctx.font='800 100px "Barlow Condensed", sans-serif';
@@ -205,7 +207,7 @@
         return {line,font:ctx.font,ascent:metrics.actualBoundingBoxAscent,descent:metrics.actualBoundingBoxDescent};
       });
       const total=rows.reduce((sum,row)=>sum+row.ascent+row.descent,0)+gap*(rows.length-1);
-      if(total>height)continue;
+      if(total>height || sizes.some(size=>size*factor>160))continue;
       ctx.save();ctx.shadowColor='rgba(0,0,0,.88)';ctx.shadowBlur=12;ctx.shadowOffsetY=5;
       let y=top+(height-total)/2;
       rows.forEach((row,index)=>{
@@ -231,7 +233,7 @@
     upperShade.addColorStop(0,'rgba(3,21,62,.1)');upperShade.addColorStop(1,'rgba(3,21,62,.7)');
     ctx.fillStyle=upperShade;ctx.fillRect(0,170,W,480);
     paintCircle();
-    paintEqualWidthBlock(headline,820,210,600,320);
+    paintEqualWidthBlock(headline,600,290,760,330);
     paintEqualWidthBlock($('bottomHeadline').value,600,1030,760,220);
     paintLogo(38,24);
   }
@@ -314,7 +316,7 @@
     });
     $('circleOptions').hidden=!hasCircle();
     $('splitTextOptions').hidden=!hasTextBlocks();
-    $('splitHelp').textContent=isTriple()?'Una frase por línea. Todas se ajustan al mismo ancho. Hasta 20 palabras por bloque.':'Líneas automáticas de hasta dos palabras. Las líneas alternan blanco y dorado. Puedes usar Enter para separar una frase.';
+    $('splitHelp').textContent='Frases automáticas ajustadas al mismo ancho. Usa Enter para indicar tus propias frases.';
     $('photoUpload').setAttribute('aria-label',isTriple()?'Seleccionar hasta tres fotos':'Seleccionar una o dos fotos');
     $('headline').setAttribute('aria-label',hasTextBlocks()?'Texto superior':'Titular');
     $('circleAdjust').hidden=!circle.image;
