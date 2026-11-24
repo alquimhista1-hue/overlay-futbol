@@ -192,7 +192,7 @@
     paintLogo(38,24);
   }
 
-  function paintEqualWidthBlock(value,x,top,width,height,randomAccent=false) {
+  function paintEqualWidthBlock(value,x,top,width,height,randomAccent=false,alignBottom=false) {
     const phrases=headlinePhrases(value);
     if(!phrases.length)return;
     const font=size=>fonts[fontIndex].replace('1px',size+'px')+', sans-serif';
@@ -208,8 +208,8 @@
         const metrics=ctx.measureText(line),cap=ctx.measureText('H');
         return {line,font:ctx.font,ascent:metrics.actualBoundingBoxAscent,descent:metrics.actualBoundingBoxDescent,cap:cap.actualBoundingBoxAscent};
       });
-      // All lines share a cap-height gap, including lines with accents or quotes.
-      const gap=Math.max(6,...rows.map(row=>row.ascent-row.cap+2));
+      // Accents rise above the cap height without changing the spacing of the letter bodies.
+      const gap=6;
       let cursor=0;
       rows.forEach(row=>{row.baseline=cursor+row.cap;cursor+=row.cap+gap;});
       const inkTop=Math.min(...rows.map(row=>row.baseline-row.ascent));
@@ -217,11 +217,15 @@
       const total=inkBottom-inkTop;
       if(total>height || sizes.some(size=>size*factor>160))continue;
       ctx.save();ctx.shadowColor='rgba(0,0,0,.98)';ctx.shadowBlur=18;ctx.shadowOffsetX=2;ctx.shadowOffsetY=6;
-      const offset=top+(height-total)/2-inkTop;
+      const offset=alignBottom?top+height-inkBottom:top+(height-total)/2-inkTop;
       rows.forEach((row,index)=>{
         ctx.font=row.font;ctx.textAlign='center';ctx.textBaseline='alphabetic';
         ctx.fillStyle=(randomAccent?index===accentIndex:index%2)?'#f6ba38':'#fff';
-        ctx.fillText(row.line,x,offset+row.baseline);
+        const baseline=offset+row.baseline;
+        ctx.shadowBlur=30;ctx.strokeStyle='rgba(0,0,0,.72)';ctx.lineWidth=2;ctx.lineJoin='round';
+        ctx.strokeText(row.line,x,baseline);
+        ctx.shadowBlur=18;
+        ctx.fillText(row.line,x,baseline);
       });
       ctx.restore();return;
     }
@@ -238,7 +242,7 @@
     shade.addColorStop(0,'rgba(3,21,62,0)');shade.addColorStop(1,'rgba(3,21,62,.97)');
     ctx.fillStyle=shade;ctx.fillRect(0,900,W,390);
     paintCircle();
-    paintEqualWidthBlock(headline,600,325,760,300);
+    paintEqualWidthBlock(headline,600,340,760,300,false,true);
     paintEqualWidthBlock($('bottomHeadline').value,600,1030,760,220);
     paintLogo(38,24);
   }
