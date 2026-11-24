@@ -8,6 +8,7 @@
   const frame = new Image(), logo = new Image();
   const templates = [['classic','Clásica'],['top','Titular arriba'],['collage','Collage circular'],['split','Mitades destacadas'],['triple','Triple con círculo']];
   let templateIndex=0, cropEnabled=false;
+  let collageAccent=Math.floor(Math.random()*3);
   const circle={image:null,x:910,y:690,size:380,zoom:100,revision:0};
   let circleDrag=null;
   const isCollage=()=>templates[templateIndex][0]==='collage';
@@ -191,29 +192,36 @@
     paintLogo(38,24);
   }
 
-  function paintEqualWidthBlock(value,x,top,width,height) {
+  function paintEqualWidthBlock(value,x,top,width,height,randomAccent=false) {
     const phrases=headlinePhrases(value);
     if(!phrases.length)return;
-    const gap=6;
+    const font=size=>fonts[fontIndex].replace('1px',size+'px')+', sans-serif';
     const sizes=phrases.map(line=>{
-      ctx.font='800 100px "Barlow Condensed", sans-serif';
+      ctx.font=font(100);
       return Math.min(1000,100*width/Math.max(1,ctx.measureText(line).width));
     });
+    const accentIndex=[0,Math.floor(phrases.length/2),phrases.length-1][collageAccent];
     for(let factor=1;factor>=.01;factor-=.01){
       const rows=phrases.map((line,index)=>{
         const size=sizes[index]*factor;
-        ctx.font='800 '+size+'px "Barlow Condensed", sans-serif';
-        const metrics=ctx.measureText(line);
-        return {line,font:ctx.font,ascent:metrics.actualBoundingBoxAscent,descent:metrics.actualBoundingBoxDescent};
+        ctx.font=font(size);
+        const metrics=ctx.measureText(line),cap=ctx.measureText('H');
+        return {line,font:ctx.font,ascent:metrics.actualBoundingBoxAscent,descent:metrics.actualBoundingBoxDescent,cap:cap.actualBoundingBoxAscent};
       });
-      const total=rows.reduce((sum,row)=>sum+row.ascent+row.descent,0)+gap*(rows.length-1);
+      // All lines share a cap-height gap, including lines with accents or quotes.
+      const gap=Math.max(6,...rows.map(row=>row.ascent-row.cap+2));
+      let cursor=0;
+      rows.forEach(row=>{row.baseline=cursor+row.cap;cursor+=row.cap+gap;});
+      const inkTop=Math.min(...rows.map(row=>row.baseline-row.ascent));
+      const inkBottom=Math.max(...rows.map(row=>row.baseline+row.descent));
+      const total=inkBottom-inkTop;
       if(total>height || sizes.some(size=>size*factor>160))continue;
-      ctx.save();ctx.shadowColor='rgba(0,0,0,.88)';ctx.shadowBlur=12;ctx.shadowOffsetY=5;
-      let y=top+(height-total)/2;
+      ctx.save();ctx.shadowColor='rgba(0,0,0,.98)';ctx.shadowBlur=18;ctx.shadowOffsetX=2;ctx.shadowOffsetY=6;
+      const offset=top+(height-total)/2-inkTop;
       rows.forEach((row,index)=>{
-        ctx.font=row.font;ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillStyle=index%2?'#f6ba38':'#fff';
-        ctx.fillText(row.line,x,y+row.ascent);
-        y+=row.ascent+row.descent+gap;
+        ctx.font=row.font;ctx.textAlign='center';ctx.textBaseline='alphabetic';
+        ctx.fillStyle=(randomAccent?index===accentIndex:index%2)?'#f6ba38':'#fff';
+        ctx.fillText(row.line,x,offset+row.baseline);
       });
       ctx.restore();return;
     }
@@ -229,11 +237,8 @@
     const shade=ctx.createLinearGradient(0,900,0,1290);
     shade.addColorStop(0,'rgba(3,21,62,0)');shade.addColorStop(1,'rgba(3,21,62,.97)');
     ctx.fillStyle=shade;ctx.fillRect(0,900,W,390);
-    const upperShade=ctx.createLinearGradient(0,170,0,650);
-    upperShade.addColorStop(0,'rgba(3,21,62,.1)');upperShade.addColorStop(1,'rgba(3,21,62,.7)');
-    ctx.fillStyle=upperShade;ctx.fillRect(0,170,W,480);
     paintCircle();
-    paintEqualWidthBlock(headline,600,290,760,330);
+    paintEqualWidthBlock(headline,600,325,760,300);
     paintEqualWidthBlock($('bottomHeadline').value,600,1030,760,220);
     paintLogo(38,24);
   }
@@ -247,10 +252,7 @@
     shade.addColorStop(0,'rgba(3,21,62,0)');shade.addColorStop(.45,'rgba(3,21,62,.88)');shade.addColorStop(1,'#03153e');
     ctx.fillStyle=shade;ctx.fillRect(0,930,W,H-930);
     paintCircle();
-    const title=fitText(headline.toLocaleUpperCase('es'),W-152,290,88,size=>fonts[fontIndex].replace('1px',size+'px')+', sans-serif',4);
-    titleFits=!headline || !!title.lines.length;
-    ctx.fillStyle='#f6ba38';ctx.fillRect(W/2-58,1030,116,8);
-    paintText(title,W/2,970+(290-title.height)/2,'center','#fff');
+    paintEqualWidthBlock(headline,W/2,970,W-152,290,true);
     paintLogo(38,34);
   }
 
@@ -527,6 +529,7 @@
     const previous=templates[templateIndex][0];
     if(hasCircle())circleLayouts[previous]={x:circle.x,y:circle.y,size:circle.size};
     templateIndex=(templateIndex+delta+templates.length)%templates.length;
+    if(isCollage())collageAccent=(collageAccent+1+Math.floor(Math.random()*2))%3;
     if(hasCircle()){
       Object.assign(circle,circleLayouts[templates[templateIndex][0]]);
       $('circleSize').value=circle.size;
@@ -572,7 +575,7 @@
   $('newDesign').onclick = () => { $('resetDialog').returnValue = ''; $('resetDialog').showModal(); };
   $('resetDialog').addEventListener('close', () => {
     if ($('resetDialog').returnValue !== 'reset') return;
-    removePhoto(0); removePhoto(1); removePhoto(2); circle.revision++;Object.assign(circle,{image:null,x:910,y:690,size:380,zoom:100});circleDrag=null;$('circleSize').value=380;$('circleZoom').value=100; clearGesture(); templateIndex=0; cropEnabled=false; headlineInput.value = ''; $('bottomHeadline').value=''; circleLayouts.triple={x:260,y:380,size:380};circleLayouts.collage={x:910,y:690,size:380};circleLayouts.split={x:290,y:1070,size:440}; fitHeadlineInput();fitHeadlineInput($('bottomHeadline')); chooseFont(2); headlineInput.focus();
+    removePhoto(0); removePhoto(1); removePhoto(2); circle.revision++;Object.assign(circle,{image:null,x:910,y:690,size:380,zoom:100});circleDrag=null;$('circleSize').value=380;$('circleZoom').value=100; clearGesture(); templateIndex=0; collageAccent=Math.floor(Math.random()*3); cropEnabled=false; headlineInput.value = ''; $('bottomHeadline').value=''; circleLayouts.triple={x:260,y:380,size:380};circleLayouts.collage={x:910,y:690,size:380};circleLayouts.split={x:290,y:1070,size:440}; fitHeadlineInput();fitHeadlineInput($('bottomHeadline')); chooseFont(2); headlineInput.focus();
   });
   $('resetDialog').addEventListener('cancel', () => { $('resetDialog').returnValue = ''; });
   let lastDownloadStamp='', downloadNumber=0;
