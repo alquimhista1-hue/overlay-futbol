@@ -6,8 +6,11 @@
   const controls = [];
   let frameReady = false, footerTop = H;
   const frame = new Image(), logo = new Image();
-  const templates = [['classic','Clásica'],['top','Titular arriba']];
+  const templates = [['classic','Clásica'],['top','Titular arriba'],['collage','Collage circular']];
   let templateIndex=0, cropEnabled=false;
+  const circle={image:null,x:910,y:690,size:380,zoom:100,revision:0};
+  let circleDrag=null;
+  const isCollage=()=>templates[templateIndex][0]==='collage';
   const touchDevice=matchMedia('(pointer:coarse), (hover:none)');
   let photoTop = 0, photoHeight = PHOTO_H, titleFits = true;
   const fonts = {1:'700 1px "Oswald"', 2:'700 1px "Fira Sans Condensed"'};
@@ -117,6 +120,28 @@
     paintLogo(W-220,photoTop+34);
   }
 
+  function renderCollage(headline, loaded) {
+    photoTop=0;photoHeight=H;
+    ctx.fillStyle='#132743';ctx.fillRect(0,0,W,H);
+    const height=H/Math.max(1,loaded.length);
+    loaded.forEach((slot,i)=>drawPhoto(ctx,slot,0,W,height,i*height));
+    const shade=ctx.createLinearGradient(0,930,0,H);
+    shade.addColorStop(0,'rgba(3,21,62,0)');shade.addColorStop(.45,'rgba(3,21,62,.88)');shade.addColorStop(1,'#03153e');
+    ctx.fillStyle=shade;ctx.fillRect(0,930,W,H-930);
+    if(circle.image){
+      const radius=circle.size/2;
+      ctx.save();ctx.beginPath();ctx.arc(circle.x,circle.y,radius,0,Math.PI*2);ctx.clip();
+      drawPhoto(ctx,{image:circle.image,x:50,y:50,zoom:circle.zoom},circle.x-radius,circle.size,circle.size,circle.y-radius);
+      ctx.restore();
+      ctx.beginPath();ctx.arc(circle.x,circle.y,radius,0,Math.PI*2);ctx.strokeStyle='#fff';ctx.lineWidth=10;ctx.stroke();
+    }
+    const title=fitText(headline.toLocaleUpperCase('es'),W-152,290,88,size=>fonts[fontIndex].replace('1px',size+'px')+', sans-serif',4);
+    titleFits=!headline || !!title.lines.length;
+    ctx.fillStyle='#f6ba38';ctx.fillRect(W/2-58,1030,116,8);
+    paintText(title,W/2,1070+(290-title.height)/2,'center','#fff');
+    paintLogo(38,34);
+  }
+
   function render() {
     const loaded = slots.filter(slot => slot.image);
     const width = W / Math.max(1, loaded.length);
@@ -151,6 +176,8 @@
         }
       }
       if (frameReady) ctx.drawImage(frame, 0, 0, W, H);
+    } else if (template==='collage') {
+      renderCollage(headline,loaded);
     } else {
       renderTop(headline, loaded, width);
     }
@@ -169,6 +196,12 @@
         } else controls[i].thumbnail.removeAttribute('src');
       }
     });
+    $('circleOptions').hidden=!isCollage();
+    $('circleAdjust').hidden=!circle.image;
+    const handle=$('circleHandle');
+    handle.hidden=!isCollage() || !circle.image;
+    handle.style.left=circle.x/W*100+'%';handle.style.top=circle.y/H*100+'%';
+    handle.style.width=circle.size/W*100+'%';handle.style.height=circle.size/H*100+'%';
     $('templateName').textContent = templates[templateIndex][1];
     if(!loaded.length)cropEnabled=false;
     $('cropToggle').hidden = !loaded.length || !touchDevice.matches;
@@ -243,6 +276,45 @@
     const files=Array.from(event.target.files);event.target.value='';
     loadPhotos(files);
   });
+  $('circleUpload').addEventListener('change',async event=>{
+    const file=event.target.files[0];event.target.value='';
+    if(!file)return;
+    const revision=++circle.revision;
+    try{
+      const image=await decode(file);
+      if(revision!==circle.revision)return;
+      circle.image=image;circle.zoom=100;$('circleZoom').value=100;status('');render();
+    }catch{if(revision===circle.revision)status('No se pudo abrir la foto del círculo.');}
+  });
+  function clampCircle() {
+    const radius=circle.size/2+5;
+    circle.x=Math.min(W-radius,Math.max(radius,circle.x));
+    circle.y=Math.min(H-radius,Math.max(radius,circle.y));
+  }
+  $('circleSize').oninput=event=>{circle.size=Number(event.target.value);clampCircle();render();};
+  $('circleZoom').oninput=event=>{circle.zoom=Number(event.target.value);render();};
+  $('removeCircle').onclick=()=>{circle.revision++;circle.image=null;circleDrag=null;render();};
+  const circleHandle=$('circleHandle');
+  circleHandle.onpointerdown=event=>{
+    if(circleDrag || (event.pointerType==='mouse' && event.button!==0))return;
+    const bounds=canvas.getBoundingClientRect();
+    circleDrag={id:event.pointerId,x:event.clientX,y:event.clientY,cx:circle.x,cy:circle.y,scaleX:W/bounds.width,scaleY:H/bounds.height};
+    circleHandle.setPointerCapture(event.pointerId);
+  };
+  circleHandle.onpointermove=event=>{
+    if(!circleDrag || circleDrag.id!==event.pointerId)return;
+    circle.x=circleDrag.cx+(event.clientX-circleDrag.x)*circleDrag.scaleX;
+    circle.y=circleDrag.cy+(event.clientY-circleDrag.y)*circleDrag.scaleY;
+    clampCircle();render();
+  };
+  circleHandle.onpointerup=circleHandle.onpointercancel=circleHandle.onlostpointercapture=()=>{circleDrag=null;};
+  circleHandle.onkeydown=event=>{
+    const moves={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
+    if(!moves[event.key])return;
+    event.preventDefault();
+    const [x,y]=moves[event.key], step=event.shiftKey?30:10;
+    circle.x+=x*step;circle.y+=y*step;clampCircle();render();
+  };
   const touch = $('touchArea'), pointers = new Map();
   let gesture = null;
   const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
@@ -254,25 +326,29 @@
     const [a,b] = pointers.values();
     return b ? {x:(a.x+b.x)/2,y:(a.y+b.y)/2,d:Math.hypot(a.x-b.x,a.y-b.y)} : {...a,d:0};
   }
-  function geometry(slot, width) {
-    const base = Math.max(width/slot.image.naturalWidth, photoHeight/slot.image.naturalHeight)/100;
+  function geometry(slot, width, height=photoHeight) {
+    const base = Math.max(width/slot.image.naturalWidth, height/slot.image.naturalHeight)/100;
     return {w:slot.image.naturalWidth*base, h:slot.image.naturalHeight*base};
   }
   function photoAt(p) {
     const loaded = slots.map((slot,i) => slot.image ? i : -1).filter(i => i >= 0);
+    if(isCollage()){
+      const height=H/loaded.length, cell=clamp(Math.floor(p.y/height),0,loaded.length-1);
+      return {i:loaded[cell],left:0,top:cell*height,width:W,height};
+    }
     const width = W / loaded.length, cell = clamp(Math.floor(p.x / width), 0, loaded.length - 1);
     return {i:loaded[cell], left:cell*width, width};
   }
-  function anchor({i, left, width}, c) {
-    const slot = slots[i], {w,h} = geometry(slot,width);
-    return {i,left,width,d:c.d,zoom:slot.zoom, x:(c.x-left+(w*slot.zoom-width)*slot.x/100)/(w*slot.zoom), y:(c.y+(h*slot.zoom-photoHeight)*slot.y/100)/(h*slot.zoom)};
+  function anchor({i, left, width, top=0, height=photoHeight}, c) {
+    const slot = slots[i], {w,h} = geometry(slot,width,height);
+    return {i,left,width,top,height,d:c.d,zoom:slot.zoom, x:(c.x-left+(w*slot.zoom-width)*slot.x/100)/(w*slot.zoom), y:(c.y-top+(h*slot.zoom-height)*slot.y/100)/(h*slot.zoom)};
   }
-  function position({i,left,width,x,y}, c, zoom) {
-    const slot = slots[i], g = geometry(slot,width);
+  function position({i,left,width,top,height,x,y}, c, zoom) {
+    const slot = slots[i], g = geometry(slot,width,height);
     slot.zoom = clamp(zoom,100,300);
     const w=g.w*slot.zoom, h=g.h*slot.zoom;
     if (w-width > .001) slot.x = clamp((x*w-c.x+left)/(w-width)*100,0,100);
-    if (h-photoHeight > .001) slot.y = clamp((y*h-c.y)/(h-photoHeight)*100,0,100);
+    if (h-height > .001) slot.y = clamp((y*h-c.y+top)/(h-height)*100,0,100);
     render();
   }
   touch.addEventListener('wheel', event => {
@@ -316,7 +392,7 @@
 
   function clearGesture(){gesture=null;pointers.clear();}
   function stepTemplate(delta){
-    clearGesture();
+    clearGesture();circleDrag=null;
     templateIndex=(templateIndex+delta+templates.length)%templates.length;
     scheduleCropLock();
     render();
@@ -356,7 +432,7 @@
   $('newDesign').onclick = () => { $('resetDialog').returnValue = ''; $('resetDialog').showModal(); };
   $('resetDialog').addEventListener('close', () => {
     if ($('resetDialog').returnValue !== 'reset') return;
-    removePhoto(0); removePhoto(1); clearGesture(); templateIndex=0; cropEnabled=false; headlineInput.value = ''; fitHeadlineInput(); chooseFont(2); headlineInput.focus();
+    removePhoto(0); removePhoto(1); circle.revision++;Object.assign(circle,{image:null,x:910,y:690,size:380,zoom:100});circleDrag=null;$('circleSize').value=380;$('circleZoom').value=100; clearGesture(); templateIndex=0; cropEnabled=false; headlineInput.value = ''; fitHeadlineInput(); chooseFont(2); headlineInput.focus();
   });
   $('resetDialog').addEventListener('cancel', () => { $('resetDialog').returnValue = ''; });
   let lastDownloadStamp='', downloadNumber=0;

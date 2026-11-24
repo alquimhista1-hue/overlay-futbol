@@ -75,6 +75,14 @@ main{display:grid;gap:var(--spacing-2);align-items:start;max-width:60rem}.design
  .template-switch button{min-height:2.5rem}
 }
 .photo-thumbnail{display:block;width:100%;height:4rem;object-fit:cover;border-radius:var(--radius-element);margin-bottom:var(--spacing-1)}
+/* Only the circular handle captures touch while the page remains scrollable. */
+#circleHandle{position:absolute;z-index:3;transform:translate(-50%,-50%);min-height:0;min-width:0;padding:0;border:0;border-radius:50%;background:transparent;touch-action:none;cursor:move}
+#circleHandle:active{transform:translate(-50%,-50%);background:transparent}
+#circleHandle:focus-visible{outline:3px solid var(--color-border);outline-offset:3px}
+.media-controls{grid-template-columns:minmax(0,1fr)}
+#circleOptions{padding:0;border:0;margin:0}
+#circleAdjust label{display:block;font-size:.8125rem;margin-top:var(--spacing-2)}
+#circleAdjust input{display:block;width:100%}
 </style>
 <link rel="stylesheet" href="../../assets/css/astryx-core.css?v=1"><link rel="stylesheet" href="../../assets/css/astryx-cdn.css?v=25"><link rel="stylesheet" href="../../assets/css/alerts.css?v=26"><script defer src="../../assets/js/alerts.js?v=26"></script></head>
 <body><main>
@@ -94,14 +102,23 @@ main{display:grid;gap:var(--spacing-2);align-items:start;max-width:60rem}.design
 <section id="previewPanel" aria-label="Vista previa en vivo">
   <figure class="design-sheet"><div id="touchArea" aria-hidden="true" hidden></div><canvas id="preview" width="1200" height="1400" aria-label="Vista previa del diseño vertical"></canvas>
   <button type="button" id="cropToggle" aria-pressed="false" hidden>Encuadrar foto</button>
+  <button type="button" id="circleHandle" hidden aria-label="Mover círculo. Arrastra o usa las flechas del teclado." title="Arrastra para mover el círculo"></button>
   </figure>
 </section>
-  <section class="media-controls" aria-label="Fotos y tipografía">
+  <section class="media-controls" aria-label="Fotografías del diseño">
     <label class="upload">Subir fotos<input id="photoUpload" type="file" accept="image/*" multiple aria-label="Seleccionar una o dos fotos"></label>
     <section class="photo-grid" id="photos" aria-label="Fotografías"></section>
+    <section id="circleOptions" hidden>
+      <label class="upload">Foto del círculo<input id="circleUpload" type="file" accept="image/*"></label>
+      <div id="circleAdjust" hidden>
+        <label>Tamaño del círculo<input id="circleSize" type="range" min="220" max="560" value="380"></label>
+        <label>Zoom de la foto<input id="circleZoom" type="range" min="100" max="300" value="100"></label>
+        <button type="button" id="removeCircle">Quitar círculo</button>
+      </div>
+    </section>
   </section>
 <p id="status" role="status"></p>
 <dialog id="resetDialog" aria-labelledby="resetTitle"><h2 id="resetTitle">¿Empezar un nuevo diseño?</h2><p>Se quitarán las fotos y el titular actuales.</p><form method="dialog" class="actions"><button value="cancel">Cancelar</button><button class="primary" value="reset">Nuevo diseño</button></form></dialog>
 </main>
-<script src="./editor.js?v=39"></script>
+<script src="./editor.js?v=40"></script>
 </body></html>
