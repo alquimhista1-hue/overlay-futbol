@@ -2,18 +2,20 @@
   const W = 1200, H = 1400, PHOTO_H = 875, TOP_BAND = 258, WORD_LIMIT = 20;
   const $ = id => document.getElementById(id);
   const canvas = $('preview'), ctx = canvas.getContext('2d');
-  const slots = Array.from({length: 2}, () => ({image: null, x: 50, y: 50, zoom: 100, revision: 0}));
+  const slots = Array.from({length: 3}, () => ({image: null, x: 50, y: 50, zoom: 100, revision: 0}));
   const controls = [];
   let frameReady = false, footerTop = H;
   const frame = new Image(), logo = new Image();
-  const templates = [['classic','Clásica'],['top','Titular arriba'],['collage','Collage circular'],['split','Mitades destacadas']];
+  const templates = [['classic','Clásica'],['top','Titular arriba'],['collage','Collage circular'],['split','Mitades destacadas'],['triple','Triple con círculo']];
   let templateIndex=0, cropEnabled=false;
   const circle={image:null,x:910,y:690,size:380,zoom:100,revision:0};
   let circleDrag=null;
   const isCollage=()=>templates[templateIndex][0]==='collage';
   const isSplit=()=>templates[templateIndex][0]==='split';
-  const hasCircle=()=>isCollage() || isSplit();
-  const circleLayouts={collage:{x:910,y:690,size:380},split:{x:290,y:1070,size:440}};
+  const isTriple=()=>templates[templateIndex][0]==='triple';
+  const hasCircle=()=>isCollage() || isSplit() || isTriple();
+  const hasTextBlocks=()=>isSplit() || isTriple();
+  const circleLayouts={triple:{x:260,y:380,size:380},collage:{x:910,y:690,size:380},split:{x:290,y:1070,size:440}};
   const touchDevice=matchMedia('(pointer:coarse), (hover:none)');
   let photoTop = 0, photoHeight = PHOTO_H, titleFits = true;
   const fonts = {1:'700 1px "Oswald"', 2:'700 1px "Fira Sans Condensed"', 3:'800 1px "Barlow Condensed"'};
@@ -116,7 +118,7 @@
     const margin=76;
     const title=fitText(text,W-2*margin,TOP_BAND-64,64,size=>fonts[fontIndex].replace("1px",size+"px")+", sans-serif",3);
     titleFits=!text || !!title.lines.length;
-    photoTop=TOP_BAND; photoHeight=H-photoTop;
+    photoTop=TOP_BAND; photoHeight=H-photoTop-110;
     ctx.fillStyle='#e7edf5';ctx.fillRect(0,photoTop,W,photoHeight);
     loaded.forEach((slot,i)=>drawPhoto(ctx,slot,i*width,width,photoHeight,photoTop));
     paintText(title,margin,(TOP_BAND-title.height)/2,'left','#111');
@@ -182,6 +184,58 @@
     paintLogo(38,24);
   }
 
+  function paintEqualWidthBlock(value,x,top,width,height) {
+    const text=value.trim().toLocaleUpperCase('es');
+    if(!text)return;
+    let phrases=text.split(/\n+/).map(line=>line.trim()).filter(Boolean);
+    if(phrases.length===1){
+      const words=text.split(/\s+/);phrases=[];
+      for(let i=0;i<words.length;i+=2)phrases.push(words.slice(i,i+2).join(' '));
+    }
+    const gap=6;
+    const sizes=phrases.map(line=>{
+      ctx.font='800 100px "Barlow Condensed", sans-serif';
+      return Math.min(1000,100*width/Math.max(1,ctx.measureText(line).width));
+    });
+    for(let factor=1;factor>=.01;factor-=.01){
+      const rows=phrases.map((line,index)=>{
+        const size=sizes[index]*factor;
+        ctx.font='800 '+size+'px "Barlow Condensed", sans-serif';
+        const metrics=ctx.measureText(line);
+        return {line,font:ctx.font,ascent:metrics.actualBoundingBoxAscent,descent:metrics.actualBoundingBoxDescent};
+      });
+      const total=rows.reduce((sum,row)=>sum+row.ascent+row.descent,0)+gap*(rows.length-1);
+      if(total>height)continue;
+      ctx.save();ctx.shadowColor='rgba(0,0,0,.88)';ctx.shadowBlur=12;ctx.shadowOffsetY=5;
+      let y=top+(height-total)/2;
+      rows.forEach((row,index)=>{
+        ctx.font=row.font;ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillStyle=index%2?'#f6ba38':'#fff';
+        ctx.fillText(row.line,x,y+row.ascent);
+        y+=row.ascent+row.descent+gap;
+      });
+      ctx.restore();return;
+    }
+  }
+
+  function renderTriple(headline) {
+    photoTop=0;photoHeight=H;
+    ctx.fillStyle='#132743';ctx.fillRect(0,0,W,H);
+    const regions=[{left:0,top:0,width:W,height:690},{left:0,top:690,width:W/2,height:600},{left:W/2,top:690,width:W/2,height:600}];
+    regions.forEach((region,index)=>{
+      if(slots[index].image)drawPhoto(ctx,slots[index],region.left,region.width,region.height,region.top);
+    });
+    const shade=ctx.createLinearGradient(0,900,0,1290);
+    shade.addColorStop(0,'rgba(3,21,62,0)');shade.addColorStop(1,'rgba(3,21,62,.97)');
+    ctx.fillStyle=shade;ctx.fillRect(0,900,W,390);
+    const upperShade=ctx.createLinearGradient(0,170,0,650);
+    upperShade.addColorStop(0,'rgba(3,21,62,.1)');upperShade.addColorStop(1,'rgba(3,21,62,.7)');
+    ctx.fillStyle=upperShade;ctx.fillRect(0,170,W,480);
+    paintCircle();
+    paintEqualWidthBlock(headline,820,210,600,320);
+    paintEqualWidthBlock($('bottomHeadline').value,600,1030,760,220);
+    paintLogo(38,24);
+  }
+
   function renderCollage(headline, loaded) {
     photoTop=0;photoHeight=H;
     ctx.fillStyle='#132743';ctx.fillRect(0,0,W,H);
@@ -194,12 +248,12 @@
     const title=fitText(headline.toLocaleUpperCase('es'),W-152,290,88,size=>fonts[fontIndex].replace('1px',size+'px')+', sans-serif',4);
     titleFits=!headline || !!title.lines.length;
     ctx.fillStyle='#f6ba38';ctx.fillRect(W/2-58,1030,116,8);
-    paintText(title,W/2,1070+(290-title.height)/2,'center','#fff');
+    paintText(title,W/2,970+(290-title.height)/2,'center','#fff');
     paintLogo(38,34);
   }
 
   function render() {
-    const loaded = slots.filter(slot => slot.image);
+    const loaded = slots.slice(0,isTriple()?3:2).filter(slot => slot.image);
     const width = W / Math.max(1, loaded.length);
     const headline = $('headline').value.trim(), template = templates[templateIndex][0];
     photoTop = 0; photoHeight = PHOTO_H; titleFits = true;
@@ -232,6 +286,8 @@
         }
       }
       if (frameReady) ctx.drawImage(frame, 0, 0, W, H);
+    } else if (template==='triple') {
+      renderTriple(headline);
     } else if (template==='split') {
       renderSplit(headline,loaded,width);
     } else if (template==='collage') {
@@ -239,11 +295,13 @@
     } else {
       renderTop(headline, loaded, width);
     }
+    // All templates share the existing PNG's lower branding strip.
+    if(template!=='classic' && frameReady)ctx.drawImage(frame,0,H-110,W,110,0,H-110,W,110);
     $('touchArea').style.setProperty('--photo-top', photoTop/H*100+'%');
     $('touchArea').style.setProperty('--photo-height', photoHeight/H*100+'%');
     slots.forEach((slot, i) => {
       controls[i].remove.hidden = !slot.image;
-      controls[i].card.hidden = !slot.image;
+      controls[i].card.hidden = !slot.image || (i===2 && !isTriple());
       if (controls[i].thumbnailImage !== slot.image) {
         controls[i].thumbnailImage = slot.image;
         if (slot.image) {
@@ -255,8 +313,10 @@
       }
     });
     $('circleOptions').hidden=!hasCircle();
-    $('splitTextOptions').hidden=!isSplit();
-    $('headline').setAttribute('aria-label',isSplit()?'Texto superior':'Titular');
+    $('splitTextOptions').hidden=!hasTextBlocks();
+    $('splitHelp').textContent=isTriple()?'Una frase por línea. Todas se ajustan al mismo ancho. Hasta 20 palabras por bloque.':'Líneas automáticas de hasta dos palabras. Las líneas alternan blanco y dorado. Puedes usar Enter para separar una frase.';
+    $('photoUpload').setAttribute('aria-label',isTriple()?'Seleccionar hasta tres fotos':'Seleccionar una o dos fotos');
+    $('headline').setAttribute('aria-label',hasTextBlocks()?'Texto superior':'Titular');
     $('circleAdjust').hidden=!circle.image;
     const handle=$('circleHandle');
     handle.hidden=!hasCircle() || !circle.image;
@@ -274,7 +334,7 @@
     if (limit.textContent !== message) limit.textContent = message;
     limit.hidden = !message;
     $('headline').setAttribute('aria-invalid', String(!withinLimit || !titleFits));
-    $('download').disabled = !loaded.length || !headline || (template === "classic" && !frameReady) || !withinLimit || !titleFits || !fontReady;
+    $('download').disabled = !loaded.length || !headline || !frameReady || !withinLimit || !titleFits || !fontReady;
   }
 
   function decode(file) {
@@ -314,12 +374,13 @@
 
   async function loadPhotos(files, target) {
     const selected=Array.from(files);
-    if(selected.length>2){status('Selecciona un máximo de dos fotos.');return;}
+    const maximum=isTriple()?3:2;
+    if(selected.length>maximum){status('Selecciona un máximo de '+maximum+' fotos.');return;}
     if(!selected.length)return;
     const indices=target===undefined?selected.map((_,i)=>i):[target];
     const revisions=indices.map(i=>++slots[i].revision);
     // A batch replaces the complete selection, including pending image loads.
-    if(target===undefined && selected.length===1) removePhoto(1);
+    if(target===undefined)for(let i=selected.length;i<slots.length;i++)removePhoto(i);
     try {
       const images=await Promise.all(selected.map(decode));
       images.forEach((image,j)=>{
@@ -349,7 +410,7 @@
   function clampCircle() {
     const radius=circle.size/2+5;
     circle.x=Math.min(W-radius,Math.max(radius,circle.x));
-    circle.y=Math.min(H-radius,Math.max(radius,circle.y));
+    circle.y=Math.min(H-110-radius,Math.max(radius,circle.y));
   }
   $('circleSize').oninput=event=>{circle.size=Number(event.target.value);clampCircle();render();};
   $('circleZoom').oninput=event=>{circle.zoom=Number(event.target.value);render();};
@@ -391,7 +452,15 @@
     return {w:slot.image.naturalWidth*base, h:slot.image.naturalHeight*base};
   }
   function photoAt(p) {
-    const loaded = slots.map((slot,i) => slot.image ? i : -1).filter(i => i >= 0);
+    const loaded = slots.slice(0,isTriple()?3:2).map((slot,i) => slot.image ? i : -1).filter(i => i >= 0);
+    if(isTriple()){
+      const index=p.y<690?0:(p.x<W/2?1:2);
+      if(!slots[index].image){
+        const fallback=loaded[0];
+        return fallback===0?{i:0,left:0,top:0,width:W,height:690}:{i:fallback,left:fallback===1?0:W/2,top:690,width:W/2,height:600};
+      }
+      return index===0?{i:0,left:0,top:0,width:W,height:690}:{i:index,left:index===1?0:W/2,top:690,width:W/2,height:600};
+    }
     if(isCollage()){
       const height=H/loaded.length, cell=clamp(Math.floor(p.y/height),0,loaded.length-1);
       return {i:loaded[cell],left:0,top:cell*height,width:W,height};
@@ -461,7 +530,7 @@
       $('circleSize').value=circle.size;
     }
     scheduleCropLock();
-    chooseFont(isSplit()?3:2);
+    chooseFont(hasTextBlocks()?3:2);
   }
   $('templatePrev').onclick=()=>stepTemplate(-1);
   $('templateNext').onclick=()=>stepTemplate(1);
@@ -501,7 +570,7 @@
   $('newDesign').onclick = () => { $('resetDialog').returnValue = ''; $('resetDialog').showModal(); };
   $('resetDialog').addEventListener('close', () => {
     if ($('resetDialog').returnValue !== 'reset') return;
-    removePhoto(0); removePhoto(1); circle.revision++;Object.assign(circle,{image:null,x:910,y:690,size:380,zoom:100});circleDrag=null;$('circleSize').value=380;$('circleZoom').value=100; clearGesture(); templateIndex=0; cropEnabled=false; headlineInput.value = ''; $('bottomHeadline').value=''; circleLayouts.collage={x:910,y:690,size:380};circleLayouts.split={x:290,y:1070,size:440}; fitHeadlineInput();fitHeadlineInput($('bottomHeadline')); chooseFont(2); headlineInput.focus();
+    removePhoto(0); removePhoto(1); removePhoto(2); circle.revision++;Object.assign(circle,{image:null,x:910,y:690,size:380,zoom:100});circleDrag=null;$('circleSize').value=380;$('circleZoom').value=100; clearGesture(); templateIndex=0; cropEnabled=false; headlineInput.value = ''; $('bottomHeadline').value=''; circleLayouts.triple={x:260,y:380,size:380};circleLayouts.collage={x:910,y:690,size:380};circleLayouts.split={x:290,y:1070,size:440}; fitHeadlineInput();fitHeadlineInput($('bottomHeadline')); chooseFont(2); headlineInput.focus();
   });
   $('resetDialog').addEventListener('cancel', () => { $('resetDialog').returnValue = ''; });
   let lastDownloadStamp='', downloadNumber=0;
