@@ -16,7 +16,7 @@
   const circleLayouts={collage:{x:910,y:690,size:380},split:{x:290,y:1070,size:440}};
   const touchDevice=matchMedia('(pointer:coarse), (hover:none)');
   let photoTop = 0, photoHeight = PHOTO_H, titleFits = true;
-  const fonts = {1:'700 1px "Oswald"', 2:'700 1px "Fira Sans Condensed"'};
+  const fonts = {1:'700 1px "Oswald"', 2:'700 1px "Fira Sans Condensed"', 3:'800 1px "Barlow Condensed"'};
   let fontIndex = 2, fontRevision = 0, fontReady = false;
   function chooseFont(index) {
     fontIndex = index;
@@ -150,12 +150,18 @@
       });
       const total=rows.reduce((sum,row)=>sum+row.ascent+row.descent,0)+gap*(rows.length-1);
       if(total>height || rows.some(row=>row.width>width))continue;
+      ctx.save();
+      ctx.shadowColor='rgba(0,0,0,.88)';
+      ctx.shadowBlur=12;
+      ctx.shadowOffsetX=2;
+      ctx.shadowOffsetY=5;
       let y=top+(height-total)/2;
       for(const row of rows){
         ctx.font=row.font;ctx.fillStyle=row.color;ctx.textAlign='center';ctx.textBaseline='alphabetic';
         ctx.fillText(row.line,x,y+row.ascent);
         y+=row.ascent+row.descent+gap;
       }
+      ctx.restore();
       return;
     }
   }
@@ -171,8 +177,8 @@
     bottomShade.addColorStop(0,'rgba(3,21,62,0)');bottomShade.addColorStop(1,'rgba(3,21,62,.96)');
     ctx.fillStyle=bottomShade;ctx.fillRect(0,850,W,H-850);
     paintCircle();
-    paintEmphasisBlock(headline,W/2,150,660,340,62);
-    paintEmphasisBlock($('bottomHeadline').value,900,1040,480,240,44);
+    paintEmphasisBlock(headline,W/2,150,700,370,70);
+    paintEmphasisBlock($('bottomHeadline').value,900,1020,480,270,50);
     paintLogo(38,24);
   }
 
@@ -455,7 +461,7 @@
       $('circleSize').value=circle.size;
     }
     scheduleCropLock();
-    render();
+    chooseFont(isSplit()?3:2);
   }
   $('templatePrev').onclick=()=>stepTemplate(-1);
   $('templateNext').onclick=()=>stepTemplate(1);
