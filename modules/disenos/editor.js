@@ -8,6 +8,7 @@
   const frame = new Image(), logo = new Image();
   const templates = [['classic','Clásica'],['top','Titular arriba'],['collage','Collage circular'],['split','Mitades destacadas'],['triple','Triple con círculo']];
   let templateIndex=0, cropEnabled=false;
+  let lowerAccent=Math.floor(Math.random()*3);
   let collageAccent=Math.floor(Math.random()*3);
   const circle={image:null,x:910,y:690,size:380,zoom:100,revision:0};
   let circleDrag=null;
@@ -231,6 +232,52 @@
     }
   }
 
+  function paintTripleCaption(value) {
+    const words=value.trim().toLocaleUpperCase('es').split(/\s+/).filter(Boolean);
+    if(!words.length)return;
+    const width=960,height=220,gap=6;
+    const font=size=>'800 '+size+'px "Barlow Condensed", sans-serif';
+    const multiplier=index=>index===lowerAccent?1.15:1;
+    const connectorEnding=line=>/\b(A|AL|DE|DEL|LA|LAS|EL|LOS|UN|UNA|EN|CON|SIN|POR|PARA|Y|O|QUE|SU|SUS)$/.test(line.replace(/[“”"]/g,''));
+    ctx.font=font(100);
+    let phrases=words;
+    if(words.length>=3){
+      let best=-Infinity;
+      for(let first=1;first<words.length-1;first++){
+        for(let second=first+1;second<words.length;second++){
+          const candidate=[words.slice(0,first).join(' '),words.slice(first,second).join(' '),words.slice(second).join(' ')];
+          const widths=candidate.map((line,index)=>ctx.measureText(line).width*multiplier(index));
+          const maximum=Math.max(...widths),minimum=Math.min(...widths);
+          const score=width/maximum*(.7+.3*minimum/maximum)-(connectorEnding(candidate[0])||connectorEnding(candidate[1])?.5:0);
+          if(score>best){best=score;phrases=candidate;}
+        }
+      }
+    }
+    for(let size=120;size>=1;size--){
+      const rows=phrases.map((line,index)=>{
+        ctx.font=font(size*multiplier(index));
+        const metrics=ctx.measureText(line),cap=ctx.measureText('H');
+        return {line,font:ctx.font,width:metrics.width,ascent:metrics.actualBoundingBoxAscent,descent:metrics.actualBoundingBoxDescent,cap:cap.actualBoundingBoxAscent};
+      });
+      let cursor=0;
+      rows.forEach(row=>{row.baseline=cursor+row.cap;cursor+=row.cap+gap;});
+      const inkTop=Math.min(...rows.map(row=>row.baseline-row.ascent));
+      const inkBottom=Math.max(...rows.map(row=>row.baseline+row.descent));
+      const total=inkBottom-inkTop;
+      if(total>height || rows.some(row=>row.width>width))continue;
+      ctx.save();ctx.textAlign='center';ctx.textBaseline='alphabetic';
+      ctx.shadowColor='rgba(0,0,0,.98)';ctx.shadowOffsetX=2;ctx.shadowOffsetY=6;
+      rows.forEach((row,index)=>{
+        const baseline=1250-inkBottom+row.baseline;
+        ctx.font=row.font;ctx.fillStyle=index===lowerAccent?'#f6ba38':'#fff';
+        ctx.shadowBlur=30;ctx.strokeStyle='rgba(0,0,0,.72)';ctx.lineWidth=2;ctx.lineJoin='round';
+        ctx.strokeText(row.line,W/2,baseline);
+        ctx.shadowBlur=18;ctx.fillText(row.line,W/2,baseline);
+      });
+      ctx.restore();return;
+    }
+  }
+
   function renderTriple(headline) {
     photoTop=0;photoHeight=H;
     ctx.fillStyle='#132743';ctx.fillRect(0,0,W,H);
@@ -243,7 +290,7 @@
     ctx.fillStyle=shade;ctx.fillRect(0,900,W,390);
     paintCircle();
     paintEqualWidthBlock(headline,600,340,760,300,false,true);
-    paintEqualWidthBlock($('bottomHeadline').value,600,1030,760,220);
+    paintTripleCaption($('bottomHeadline').value);
     paintLogo(38,24);
   }
 
@@ -322,7 +369,7 @@
     });
     $('circleOptions').hidden=!hasCircle();
     $('splitTextOptions').hidden=!hasTextBlocks();
-    $('splitHelp').textContent='Frases automáticas ajustadas al mismo ancho. Usa Enter para indicar tus propias frases.';
+    $('splitHelp').textContent=isTriple()?'Texto inferior en tres líneas automáticas. Una línea destaca un 15 % más grande.':'Frases automáticas ajustadas al mismo ancho. Usa Enter para indicar tus propias frases.';
     $('photoUpload').setAttribute('aria-label',isTriple()?'Seleccionar hasta tres fotos':'Seleccionar una o dos fotos');
     $('headline').setAttribute('aria-label',hasTextBlocks()?'Texto superior':'Titular');
     $('circleAdjust').hidden=!circle.image;
@@ -533,6 +580,7 @@
     const previous=templates[templateIndex][0];
     if(hasCircle())circleLayouts[previous]={x:circle.x,y:circle.y,size:circle.size};
     templateIndex=(templateIndex+delta+templates.length)%templates.length;
+    if(isTriple())lowerAccent=(lowerAccent+1+Math.floor(Math.random()*2))%3;
     if(isCollage())collageAccent=(collageAccent+1+Math.floor(Math.random()*2))%3;
     if(hasCircle()){
       Object.assign(circle,circleLayouts[templates[templateIndex][0]]);
@@ -579,7 +627,7 @@
   $('newDesign').onclick = () => { $('resetDialog').returnValue = ''; $('resetDialog').showModal(); };
   $('resetDialog').addEventListener('close', () => {
     if ($('resetDialog').returnValue !== 'reset') return;
-    removePhoto(0); removePhoto(1); removePhoto(2); circle.revision++;Object.assign(circle,{image:null,x:910,y:690,size:380,zoom:100});circleDrag=null;$('circleSize').value=380;$('circleZoom').value=100; clearGesture(); templateIndex=0; collageAccent=Math.floor(Math.random()*3); cropEnabled=false; headlineInput.value = ''; $('bottomHeadline').value=''; circleLayouts.triple={x:260,y:380,size:380};circleLayouts.collage={x:910,y:690,size:380};circleLayouts.split={x:290,y:1070,size:440}; fitHeadlineInput();fitHeadlineInput($('bottomHeadline')); chooseFont(2); headlineInput.focus();
+    removePhoto(0); removePhoto(1); removePhoto(2); circle.revision++;Object.assign(circle,{image:null,x:910,y:690,size:380,zoom:100});circleDrag=null;$('circleSize').value=380;$('circleZoom').value=100; clearGesture(); templateIndex=0; lowerAccent=Math.floor(Math.random()*3); collageAccent=Math.floor(Math.random()*3); cropEnabled=false; headlineInput.value = ''; $('bottomHeadline').value=''; circleLayouts.triple={x:260,y:380,size:380};circleLayouts.collage={x:910,y:690,size:380};circleLayouts.split={x:290,y:1070,size:440}; fitHeadlineInput();fitHeadlineInput($('bottomHeadline')); chooseFont(2); headlineInput.focus();
   });
   $('resetDialog').addEventListener('cancel', () => { $('resetDialog').returnValue = ''; });
   let lastDownloadStamp='', downloadNumber=0;
