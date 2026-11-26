@@ -28,7 +28,9 @@
     fontReady = false;
     document.querySelectorAll('[data-font]').forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.font) === index)));
     render();
-    document.fonts.load(fonts[index], 'Titular español: áéíóúüñ ¿¡').then(() => {
+    const requestedFonts=[fonts[index]];
+    if(hasTextBlocks())requestedFonts.push('400 48px "Barlow Condensed"');
+    Promise.all(requestedFonts.map(font=>document.fonts.load(font,'Titular español: áéíóúüñ ¿¡'))).then(() => {
       if (revision !== fontRevision) return;
       fontReady = true;
       render();
@@ -137,11 +139,11 @@
     }
   }
 
-  function headlinePhrases(value) {
-    const text=value.trim().toLocaleUpperCase('es');
+  function headlinePhrases(value,preserveCase=false) {
+    const text=preserveCase?value.trim():value.trim().toLocaleUpperCase('es');
     if(!text)return [];
     const connectors=new Set('A AL DE DEL LA LAS EL LOS UN UNA UNOS UNAS EN CON SIN POR PARA Y E O U NI QUE SI SU SUS MI MIS'.split(' '));
-    const isConnector=word=>connectors.has(word.replace(/[.,:;!?¡¿“”"]/g,''));
+    const isConnector=word=>connectors.has(word.toLocaleUpperCase('es').replace(/[.,:;!?¡¿“”"]/g,''));
     const manual=text.split(/\n+/).map(line=>line.trim().replace(/\s+/g,' ')).filter(Boolean);
     if(manual.length>1){
       for(let i=0;i<manual.length-1;i++){
@@ -189,14 +191,14 @@
     ctx.fillStyle=bottomShade;ctx.fillRect(0,850,W,H-850);
     paintCircle();
     paintEqualWidthBlock(headline,W/2,150,700,370);
-    paintEqualWidthBlock($('bottomHeadline').value,900,1020,480,270);
+    paintEqualWidthBlock($('bottomHeadline').value,900,1020,480,270,false,false,true);
     paintLogo(38,24);
   }
 
-  function paintEqualWidthBlock(value,x,top,width,height,randomAccent=false,alignBottom=false) {
-    const phrases=headlinePhrases(value);
+  function paintEqualWidthBlock(value,x,top,width,height,randomAccent=false,alignBottom=false,regular=false) {
+    const phrases=headlinePhrases(value,regular);
     if(!phrases.length)return;
-    const font=size=>fonts[fontIndex].replace('1px',size+'px')+', sans-serif';
+    const font=size=>regular?'400 '+size+'px "Barlow Condensed", sans-serif':fonts[fontIndex].replace('1px',size+'px')+', sans-serif';
     const sizes=phrases.map(line=>{
       ctx.font=font(100);
       return Math.min(1000,100*width/Math.max(1,ctx.measureText(line).width));
@@ -212,20 +214,22 @@
       // Accents rise above the cap height without changing the spacing of the letter bodies.
       const gap=6;
       let cursor=0;
-      rows.forEach(row=>{row.baseline=cursor+row.cap;cursor+=row.cap+gap;});
+      rows.forEach(row=>{row.baseline=cursor+row.cap;cursor+=row.cap+(regular?row.descent:0)+gap;});
       const inkTop=Math.min(...rows.map(row=>row.baseline-row.ascent));
       const inkBottom=Math.max(...rows.map(row=>row.baseline+row.descent));
       const total=inkBottom-inkTop;
-      if(total>height || sizes.some(size=>size*factor>160))continue;
+      if(total>height || sizes.some(size=>size*factor>(regular?72:160)))continue;
       ctx.save();ctx.shadowColor='rgba(0,0,0,.98)';ctx.shadowBlur=18;ctx.shadowOffsetX=2;ctx.shadowOffsetY=6;
       const offset=alignBottom?top+height-inkBottom:top+(height-total)/2-inkTop;
       rows.forEach((row,index)=>{
         ctx.font=row.font;ctx.textAlign='center';ctx.textBaseline='alphabetic';
         ctx.fillStyle=(randomAccent?index===accentIndex:index%2)?'#f6ba38':'#fff';
         const baseline=offset+row.baseline;
-        ctx.shadowBlur=30;ctx.strokeStyle='rgba(0,0,0,.72)';ctx.lineWidth=2;ctx.lineJoin='round';
-        ctx.strokeText(row.line,x,baseline);
-        ctx.shadowBlur=18;
+        if(!regular){
+          ctx.shadowBlur=30;ctx.strokeStyle='rgba(0,0,0,.72)';ctx.lineWidth=2;ctx.lineJoin='round';
+          ctx.strokeText(row.line,x,baseline);
+        }
+        ctx.shadowBlur=regular?8:18;
         ctx.fillText(row.line,x,baseline);
       });
       ctx.restore();return;
@@ -233,12 +237,12 @@
   }
 
   function paintTripleCaption(value) {
-    const words=value.trim().toLocaleUpperCase('es').split(/\s+/).filter(Boolean);
+    const words=value.trim().split(/\s+/).filter(Boolean);
     if(!words.length)return;
     const width=960,height=220,gap=6;
-    const font=size=>'800 '+size+'px "Barlow Condensed", sans-serif';
+    const font=size=>'400 '+size+'px "Barlow Condensed", sans-serif';
     const multiplier=index=>index===lowerAccent?1.15:1;
-    const connectorEnding=line=>/\b(A|AL|DE|DEL|LA|LAS|EL|LOS|UN|UNA|EN|CON|SIN|POR|PARA|Y|O|QUE|SU|SUS)$/.test(line.replace(/[“”"]/g,''));
+    const connectorEnding=line=>/\b(A|AL|DE|DEL|LA|LAS|EL|LOS|UN|UNA|EN|CON|SIN|POR|PARA|Y|O|QUE|SU|SUS)$/.test(line.toLocaleUpperCase('es').replace(/[“”"]/g,''));
     ctx.font=font(100);
     let phrases=words;
     if(words.length>=3){
@@ -253,14 +257,14 @@
         }
       }
     }
-    for(let size=120;size>=1;size--){
+    for(let size=64;size>=1;size--){
       const rows=phrases.map((line,index)=>{
         ctx.font=font(size*multiplier(index));
         const metrics=ctx.measureText(line),cap=ctx.measureText('H');
         return {line,font:ctx.font,width:metrics.width,ascent:metrics.actualBoundingBoxAscent,descent:metrics.actualBoundingBoxDescent,cap:cap.actualBoundingBoxAscent};
       });
       let cursor=0;
-      rows.forEach(row=>{row.baseline=cursor+row.cap;cursor+=row.cap+gap;});
+      rows.forEach(row=>{row.baseline=cursor+row.cap;cursor+=row.cap+row.descent+gap;});
       const inkTop=Math.min(...rows.map(row=>row.baseline-row.ascent));
       const inkBottom=Math.max(...rows.map(row=>row.baseline+row.descent));
       const total=inkBottom-inkTop;
@@ -270,9 +274,7 @@
       rows.forEach((row,index)=>{
         const baseline=1250-inkBottom+row.baseline;
         ctx.font=row.font;ctx.fillStyle=index===lowerAccent?'#f6ba38':'#fff';
-        ctx.shadowBlur=30;ctx.strokeStyle='rgba(0,0,0,.72)';ctx.lineWidth=2;ctx.lineJoin='round';
-        ctx.strokeText(row.line,W/2,baseline);
-        ctx.shadowBlur=18;ctx.fillText(row.line,W/2,baseline);
+        ctx.shadowBlur=8;ctx.fillText(row.line,W/2,baseline);
       });
       ctx.restore();return;
     }
