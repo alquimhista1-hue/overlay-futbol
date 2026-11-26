@@ -29,7 +29,7 @@
     document.querySelectorAll('[data-font]').forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.font) === index)));
     render();
     const requestedFonts=[fonts[index]];
-    if(hasTextBlocks())requestedFonts.push('400 48px "Barlow Condensed"');
+    if(hasTextBlocks())requestedFonts.push('700 48px "Barlow Condensed"');
     Promise.all(requestedFonts.map(font=>document.fonts.load(font,'Titular español: áéíóúüñ ¿¡'))).then(() => {
       if (revision !== fontRevision) return;
       fontReady = true;
@@ -198,7 +198,7 @@
   function paintEqualWidthBlock(value,x,top,width,height,randomAccent=false,alignBottom=false,regular=false) {
     const phrases=headlinePhrases(value,regular);
     if(!phrases.length)return;
-    const font=size=>regular?'400 '+size+'px "Barlow Condensed", sans-serif':fonts[fontIndex].replace('1px',size+'px')+', sans-serif';
+    const font=size=>regular?'700 '+size+'px "Barlow Condensed", sans-serif':fonts[fontIndex].replace('1px',size+'px')+', sans-serif';
     const sizes=phrases.map(line=>{
       ctx.font=font(100);
       return Math.min(1000,100*width/Math.max(1,ctx.measureText(line).width));
@@ -225,11 +225,11 @@
         ctx.font=row.font;ctx.textAlign='center';ctx.textBaseline='alphabetic';
         ctx.fillStyle=(randomAccent?index===accentIndex:index%2)?'#f6ba38':'#fff';
         const baseline=offset+row.baseline;
-        if(!regular){
+        {
           ctx.shadowBlur=30;ctx.strokeStyle='rgba(0,0,0,.72)';ctx.lineWidth=2;ctx.lineJoin='round';
           ctx.strokeText(row.line,x,baseline);
         }
-        ctx.shadowBlur=regular?8:18;
+        ctx.shadowBlur=18;
         ctx.fillText(row.line,x,baseline);
       });
       ctx.restore();return;
@@ -240,7 +240,7 @@
     const words=value.trim().split(/\s+/).filter(Boolean);
     if(!words.length)return;
     const width=960,height=220,gap=6;
-    const font=size=>'400 '+size+'px "Barlow Condensed", sans-serif';
+    const font=size=>'700 '+size+'px "Barlow Condensed", sans-serif';
     const multiplier=index=>index===lowerAccent?1.15:1;
     const connectorEnding=line=>/\b(A|AL|DE|DEL|LA|LAS|EL|LOS|UN|UNA|EN|CON|SIN|POR|PARA|Y|O|QUE|SU|SUS)$/.test(line.toLocaleUpperCase('es').replace(/[“”"]/g,''));
     ctx.font=font(100);
@@ -274,7 +274,9 @@
       rows.forEach((row,index)=>{
         const baseline=1250-inkBottom+row.baseline;
         ctx.font=row.font;ctx.fillStyle=index===lowerAccent?'#f6ba38':'#fff';
-        ctx.shadowBlur=8;ctx.fillText(row.line,W/2,baseline);
+        ctx.shadowBlur=30;ctx.strokeStyle='rgba(0,0,0,.72)';ctx.lineWidth=2;ctx.lineJoin='round';
+        ctx.strokeText(row.line,W/2,baseline);
+        ctx.shadowBlur=18;ctx.fillText(row.line,W/2,baseline);
       });
       ctx.restore();return;
     }
